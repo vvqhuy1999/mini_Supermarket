@@ -1,0 +1,17 @@
+# Local profile with SQLite (no Docker needed)
+spring:
+  datasource:
+    url: jdbc:sqlite:./data/supermarket.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.community.dialect.SQLiteDialect
+        format_sql: true
+    database-platform: org.hibernate.community.dialect.SQLiteDialect 
