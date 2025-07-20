@@ -56,4 +56,25 @@ public class ThanhToanServiceImpl implements ThanhToanService {
 
         return thanhToanRepository.save(thanhToan);
     }
+
+    @Override
+    public List<ThanhToan> findAllActive() {
+        return thanhToanRepository.findAllActive();
+    }
+
+    @Override
+    public ThanhToan findActiveById(Integer id) {
+        Optional<ThanhToan> result = thanhToanRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        Optional<ThanhToan> thanhToanOpt = thanhToanRepository.findActiveById(id);
+        if (thanhToanOpt.isPresent()) {
+            ThanhToan thanhToan = thanhToanOpt.get();
+            thanhToan.setIsDeleted(true);
+            thanhToanRepository.save(thanhToan);
+        }
+    }
 } 

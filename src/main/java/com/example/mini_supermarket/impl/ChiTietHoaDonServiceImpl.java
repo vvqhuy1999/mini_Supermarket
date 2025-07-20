@@ -7,16 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChiTietHoaDonServiceImpl implements ChiTietHoaDonService {
-    private ChiTietHoaDonRepository chiTietHoaDonRepository;
 
     @Autowired
-    public ChiTietHoaDonServiceImpl(ChiTietHoaDonRepository chiTietHoaDonRepository) {
-        this.chiTietHoaDonRepository = chiTietHoaDonRepository;
-    }
+    private ChiTietHoaDonRepository chiTietHoaDonRepository;
 
     @Override
     public List<ChiTietHoaDon> findAll() {
@@ -24,36 +20,36 @@ public class ChiTietHoaDonServiceImpl implements ChiTietHoaDonService {
     }
 
     @Override
-    public ChiTietHoaDon findById(Integer theId) {
-        Optional<ChiTietHoaDon> result = chiTietHoaDonRepository.findById(theId);
-        ChiTietHoaDon theChiTietHoaDon = null;
-
-        if (result.isPresent()) {
-            theChiTietHoaDon = result.get();
-        } else {
-            throw new RuntimeException("Did not find ChiTietHoaDon id - " + theId);
-        }
-        return theChiTietHoaDon;
+    public List<ChiTietHoaDon> findAllActive() {
+        return chiTietHoaDonRepository.findAllActive();
     }
 
     @Override
-    public ChiTietHoaDon save(ChiTietHoaDon theChiTietHoaDon) {
-        return chiTietHoaDonRepository.save(theChiTietHoaDon);
+    public ChiTietHoaDon findById(Integer id) {
+        return chiTietHoaDonRepository.findById(id).orElse(null);
     }
 
     @Override
-    public void deleteById(Integer theId) {
-        chiTietHoaDonRepository.deleteById(theId);
+    public ChiTietHoaDon findActiveById(Integer id) {
+        return chiTietHoaDonRepository.findActiveById(id).orElse(null);
     }
 
     @Override
-    public ChiTietHoaDon update(ChiTietHoaDon chiTietHoaDon) {
-        Optional<ChiTietHoaDon> existingChiTietHoaDon = chiTietHoaDonRepository.findById(chiTietHoaDon.getMaCTHD());
-
-        if (!existingChiTietHoaDon.isPresent()) {
-            throw new RuntimeException("Không tìm thấy chi tiết hóa đơn với ID - " + chiTietHoaDon.getMaCTHD());
-        }
-
+    public ChiTietHoaDon save(ChiTietHoaDon chiTietHoaDon) {
         return chiTietHoaDonRepository.save(chiTietHoaDon);
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        chiTietHoaDonRepository.deleteById(id);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        ChiTietHoaDon chiTietHoaDon = findById(id);
+        if (chiTietHoaDon != null) {
+            chiTietHoaDon.setIsDeleted(true);
+            chiTietHoaDonRepository.save(chiTietHoaDon);
+        }
     }
 } 

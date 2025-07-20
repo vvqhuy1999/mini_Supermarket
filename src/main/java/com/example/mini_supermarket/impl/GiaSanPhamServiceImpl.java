@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GiaSanPhamServiceImpl implements GiaSanPhamService {
@@ -21,13 +20,18 @@ public class GiaSanPhamServiceImpl implements GiaSanPhamService {
     }
 
     @Override
+    public List<GiaSanPham> findAllActive() {
+        return giaSanPhamRepository.findAllActive();
+    }
+
+    @Override
     public GiaSanPham findById(Integer id) {
-        Optional<GiaSanPham> giaSanPham = giaSanPhamRepository.findById(id);
-        if (giaSanPham.isPresent()) {
-            return giaSanPham.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy giá sản phẩm có id: " + id);
-        }
+        return giaSanPhamRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public GiaSanPham findActiveById(Integer id) {
+        return giaSanPhamRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class GiaSanPhamServiceImpl implements GiaSanPhamService {
     }
 
     @Override
-    public GiaSanPham update(GiaSanPham giaSanPham) {
-        if (giaSanPhamRepository.existsById(giaSanPham.getMaGia())) {
-            return giaSanPhamRepository.save(giaSanPham);
-        } else {
-            throw new RuntimeException("Không tìm thấy giá sản phẩm có id: " + giaSanPham.getMaGia());
+    public void softDeleteById(Integer id) {
+        GiaSanPham giaSanPham = findById(id);
+        if (giaSanPham != null) {
+            giaSanPham.setIsDeleted(true);
+            giaSanPhamRepository.save(giaSanPham);
         }
     }
 } 

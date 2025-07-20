@@ -8,12 +8,10 @@ import java.util.List;
 @Service
 public interface LichLamViecService {
     List<LichLamViec> findAll();
-
+    List<LichLamViec> findAllActive();
     LichLamViec findById(Integer id);
-
+    LichLamViec findActiveById(Integer id);
     LichLamViec save(LichLamViec lichLamViec);
-
     void deleteById(Integer id);
-
-    LichLamViec update(LichLamViec lichLamViec);
+    void softDeleteById(Integer id);
 } 

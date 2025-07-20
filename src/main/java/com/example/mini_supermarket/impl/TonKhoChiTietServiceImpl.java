@@ -21,6 +21,11 @@ public class TonKhoChiTietServiceImpl implements TonKhoChiTietService {
     }
 
     @Override
+    public List<TonKhoChiTiet> findAllActive() {
+        return tonKhoChiTietRepository.findAllActive();
+    }
+
+    @Override
     public TonKhoChiTiet findById(Integer id) {
         Optional<TonKhoChiTiet> tonKhoChiTiet = tonKhoChiTietRepository.findById(id);
         if (tonKhoChiTiet.isPresent()) {
@@ -28,6 +33,11 @@ public class TonKhoChiTietServiceImpl implements TonKhoChiTietService {
         } else {
             throw new RuntimeException("Không tìm thấy tồn kho chi tiết có id: " + id);
         }
+    }
+
+    @Override
+    public TonKhoChiTiet findActiveById(Integer id) {
+        return tonKhoChiTietRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +51,13 @@ public class TonKhoChiTietServiceImpl implements TonKhoChiTietService {
     }
 
     @Override
-    public TonKhoChiTiet update(TonKhoChiTiet tonKhoChiTiet) {
-        if (tonKhoChiTietRepository.existsById(tonKhoChiTiet.getMaTKCT())) {
-            return tonKhoChiTietRepository.save(tonKhoChiTiet);
-        } else {
-            throw new RuntimeException("Không tìm thấy tồn kho chi tiết có id: " + tonKhoChiTiet.getMaTKCT());
+    public void softDeleteById(Integer id) {
+        TonKhoChiTiet tonKhoChiTiet = findById(id);
+        if (tonKhoChiTiet != null) {
+            tonKhoChiTiet.setIsDeleted(true);
+            tonKhoChiTietRepository.save(tonKhoChiTiet);
         }
     }
+
+
 } 

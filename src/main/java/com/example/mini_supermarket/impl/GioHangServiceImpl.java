@@ -56,4 +56,25 @@ public class GioHangServiceImpl implements GioHangService {
 
         return gioHangRepository.save(gioHang);
     }
+
+    @Override
+    public List<GioHang> findAllActive() {
+        return gioHangRepository.findAllActive();
+    }
+
+    @Override
+    public GioHang findActiveById(Integer id) {
+        Optional<GioHang> result = gioHangRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        Optional<GioHang> gioHangOpt = gioHangRepository.findActiveById(id);
+        if (gioHangOpt.isPresent()) {
+            GioHang gioHang = gioHangOpt.get();
+            gioHang.setIsDeleted(true);
+            gioHangRepository.save(gioHang);
+        }
+    }
 } 

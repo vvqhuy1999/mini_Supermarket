@@ -9,11 +9,17 @@ import java.util.List;
 public interface HoaDonService {
     List<HoaDon> findAll();
 
+    List<HoaDon> findAllActive(); // Chỉ lấy các record chưa bị xóa
+
     HoaDon findById(Integer id);
+
+    HoaDon findActiveById(Integer id); // Chỉ lấy record chưa bị xóa
 
     HoaDon save(HoaDon hoaDon);
 
-    void deleteById(Integer id);
+    void deleteById(Integer id); // Hard delete (giữ lại cho tương thích)
+
+    void softDeleteById(Integer id); // Soft delete - set isDeleted = true
 
     HoaDon update(HoaDon hoaDon);
 } 

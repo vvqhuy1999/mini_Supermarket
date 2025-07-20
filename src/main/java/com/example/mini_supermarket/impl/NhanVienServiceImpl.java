@@ -56,4 +56,25 @@ public class NhanVienServiceImpl implements NhanVienService {
 
         return nhanVienRepository.save(nhanVien);
     }
+
+    @Override
+    public List<NhanVien> findAllActive() {
+        return nhanVienRepository.findAllActive();
+    }
+
+    @Override
+    public NhanVien findActiveById(String id) {
+        Optional<NhanVien> result = nhanVienRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(String id) {
+        Optional<NhanVien> nhanVienOpt = nhanVienRepository.findActiveById(id);
+        if (nhanVienOpt.isPresent()) {
+            NhanVien nhanVien = nhanVienOpt.get();
+            nhanVien.setIsDeleted(true);
+            nhanVienRepository.save(nhanVien);
+        }
+    }
 } 

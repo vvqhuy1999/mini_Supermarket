@@ -48,4 +48,25 @@ public class HinhAnhServiceImpl implements HinhAnhService {
             throw new RuntimeException("Không tìm thấy hình ảnh có id: " + hinhAnh.getMaHinh());
         }
     }
+
+    @Override
+    public List<HinhAnh> findAllActive() {
+        return hinhAnhRepository.findAllActive();
+    }
+
+    @Override
+    public HinhAnh findActiveById(Integer id) {
+        Optional<HinhAnh> result = hinhAnhRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        Optional<HinhAnh> hinhAnhOpt = hinhAnhRepository.findActiveById(id);
+        if (hinhAnhOpt.isPresent()) {
+            HinhAnh hinhAnh = hinhAnhOpt.get();
+            hinhAnh.setIsDeleted(true);
+            hinhAnhRepository.save(hinhAnh);
+        }
+    }
 } 

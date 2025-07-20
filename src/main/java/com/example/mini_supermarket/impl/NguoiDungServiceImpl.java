@@ -56,4 +56,25 @@ public class NguoiDungServiceImpl implements NguoiDungService {
 
         return nguoiDungRepository.save(nguoiDung);
     }
+
+    @Override
+    public List<NguoiDung> findAllActive() {
+        return nguoiDungRepository.findAllActive();
+    }
+
+    @Override
+    public NguoiDung findActiveById(String id) {
+        Optional<NguoiDung> result = nguoiDungRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(String id) {
+        Optional<NguoiDung> nguoiDungOpt = nguoiDungRepository.findActiveById(id);
+        if (nguoiDungOpt.isPresent()) {
+            NguoiDung nguoiDung = nguoiDungOpt.get();
+            nguoiDung.setIsDeleted(true);
+            nguoiDungRepository.save(nguoiDung);
+        }
+    }
 } 

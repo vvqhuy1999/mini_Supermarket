@@ -56,4 +56,25 @@ public class NhaCungCapServiceImpl implements NhaCungCapService {
 
         return nhaCungCapRepository.save(nhaCungCap);
     }
+
+    @Override
+    public List<NhaCungCap> findAllActive() {
+        return nhaCungCapRepository.findAllActive();
+    }
+
+    @Override
+    public NhaCungCap findActiveById(String id) {
+        Optional<NhaCungCap> result = nhaCungCapRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(String id) {
+        Optional<NhaCungCap> nhaCungCapOpt = nhaCungCapRepository.findActiveById(id);
+        if (nhaCungCapOpt.isPresent()) {
+            NhaCungCap nhaCungCap = nhaCungCapOpt.get();
+            nhaCungCap.setIsDeleted(true);
+            nhaCungCapRepository.save(nhaCungCap);
+        }
+    }
 } 

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class LichLamViecServiceImpl implements LichLamViecService {
@@ -21,13 +20,18 @@ public class LichLamViecServiceImpl implements LichLamViecService {
     }
 
     @Override
+    public List<LichLamViec> findAllActive() {
+        return lichLamViecRepository.findAllActive();
+    }
+
+    @Override
     public LichLamViec findById(Integer id) {
-        Optional<LichLamViec> lichLamViec = lichLamViecRepository.findById(id);
-        if (lichLamViec.isPresent()) {
-            return lichLamViec.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy lịch làm việc có id: " + id);
-        }
+        return lichLamViecRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public LichLamViec findActiveById(Integer id) {
+        return lichLamViecRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class LichLamViecServiceImpl implements LichLamViecService {
     }
 
     @Override
-    public LichLamViec update(LichLamViec lichLamViec) {
-        if (lichLamViecRepository.existsById(lichLamViec.getMaLich())) {
-            return lichLamViecRepository.save(lichLamViec);
-        } else {
-            throw new RuntimeException("Không tìm thấy lịch làm việc có id: " + lichLamViec.getMaLich());
+    public void softDeleteById(Integer id) {
+        LichLamViec lichLamViec = findById(id);
+        if (lichLamViec != null) {
+            lichLamViec.setIsDeleted(true);
+            lichLamViecRepository.save(lichLamViec);
         }
     }
 } 

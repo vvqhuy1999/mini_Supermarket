@@ -9,11 +9,17 @@ import java.util.List;
 public interface PhuongThucThanhToanService {
     List<PhuongThucThanhToan> findAll();
 
+    List<PhuongThucThanhToan> findAllActive(); // Chỉ lấy các record chưa bị xóa
+
     PhuongThucThanhToan findById(String id);
+
+    PhuongThucThanhToan findActiveById(String id); // Chỉ lấy record chưa bị xóa
 
     PhuongThucThanhToan save(PhuongThucThanhToan phuongThucThanhToan);
 
-    void deleteById(String id);
+    void deleteById(String id); // Hard delete (giữ lại cho tương thích)
+
+    void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     PhuongThucThanhToan update(PhuongThucThanhToan phuongThucThanhToan);
 } 

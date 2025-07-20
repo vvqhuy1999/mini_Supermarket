@@ -56,4 +56,25 @@ public class CuaHangServiceImpl implements CuaHangService {
 
         return cuaHangRepository.save(cuaHang);
     }
+
+    @Override
+    public List<CuaHang> findAllActive() {
+        return cuaHangRepository.findAllActive();
+    }
+
+    @Override
+    public CuaHang findActiveById(String id) {
+        Optional<CuaHang> result = cuaHangRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(String id) {
+        Optional<CuaHang> cuaHangOpt = cuaHangRepository.findActiveById(id);
+        if (cuaHangOpt.isPresent()) {
+            CuaHang cuaHang = cuaHangOpt.get();
+            cuaHang.setIsDeleted(true);
+            cuaHangRepository.save(cuaHang);
+        }
+    }
 } 

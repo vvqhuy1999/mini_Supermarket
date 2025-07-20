@@ -56,4 +56,25 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
 
         return khuyenMaiRepository.save(khuyenMai);
     }
+
+    @Override
+    public List<KhuyenMai> findAllActive() {
+        return khuyenMaiRepository.findAllActive();
+    }
+
+    @Override
+    public KhuyenMai findActiveById(String id) {
+        Optional<KhuyenMai> result = khuyenMaiRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(String id) {
+        Optional<KhuyenMai> khuyenMaiOpt = khuyenMaiRepository.findActiveById(id);
+        if (khuyenMaiOpt.isPresent()) {
+            KhuyenMai khuyenMai = khuyenMaiOpt.get();
+            khuyenMai.setIsDeleted(true);
+            khuyenMaiRepository.save(khuyenMai);
+        }
+    }
 } 

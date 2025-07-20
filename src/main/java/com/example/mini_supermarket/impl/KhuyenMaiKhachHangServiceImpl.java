@@ -7,16 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class KhuyenMaiKhachHangServiceImpl implements KhuyenMaiKhachHangService {
-    private KhuyenMaiKhachHangRepository khuyenMaiKhachHangRepository;
 
     @Autowired
-    public KhuyenMaiKhachHangServiceImpl(KhuyenMaiKhachHangRepository khuyenMaiKhachHangRepository) {
-        this.khuyenMaiKhachHangRepository = khuyenMaiKhachHangRepository;
-    }
+    private KhuyenMaiKhachHangRepository khuyenMaiKhachHangRepository;
 
     @Override
     public List<KhuyenMaiKhachHang> findAll() {
@@ -24,36 +20,36 @@ public class KhuyenMaiKhachHangServiceImpl implements KhuyenMaiKhachHangService 
     }
 
     @Override
-    public KhuyenMaiKhachHang findById(Integer theId) {
-        Optional<KhuyenMaiKhachHang> result = khuyenMaiKhachHangRepository.findById(theId);
-        KhuyenMaiKhachHang theKhuyenMaiKhachHang = null;
-
-        if (result.isPresent()) {
-            theKhuyenMaiKhachHang = result.get();
-        } else {
-            throw new RuntimeException("Did not find KhuyenMaiKhachHang id - " + theId);
-        }
-        return theKhuyenMaiKhachHang;
+    public List<KhuyenMaiKhachHang> findAllActive() {
+        return khuyenMaiKhachHangRepository.findAllActive();
     }
 
     @Override
-    public KhuyenMaiKhachHang save(KhuyenMaiKhachHang theKhuyenMaiKhachHang) {
-        return khuyenMaiKhachHangRepository.save(theKhuyenMaiKhachHang);
+    public KhuyenMaiKhachHang findById(Integer id) {
+        return khuyenMaiKhachHangRepository.findById(id).orElse(null);
     }
 
     @Override
-    public void deleteById(Integer theId) {
-        khuyenMaiKhachHangRepository.deleteById(theId);
+    public KhuyenMaiKhachHang findActiveById(Integer id) {
+        return khuyenMaiKhachHangRepository.findActiveById(id).orElse(null);
     }
 
     @Override
-    public KhuyenMaiKhachHang update(KhuyenMaiKhachHang khuyenMaiKhachHang) {
-        Optional<KhuyenMaiKhachHang> existingKhuyenMaiKhachHang = khuyenMaiKhachHangRepository.findById(khuyenMaiKhachHang.getMaKMKH());
-
-        if (!existingKhuyenMaiKhachHang.isPresent()) {
-            throw new RuntimeException("Không tìm thấy khuyến mãi khách hàng với ID - " + khuyenMaiKhachHang.getMaKMKH());
-        }
-
+    public KhuyenMaiKhachHang save(KhuyenMaiKhachHang khuyenMaiKhachHang) {
         return khuyenMaiKhachHangRepository.save(khuyenMaiKhachHang);
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        khuyenMaiKhachHangRepository.deleteById(id);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        KhuyenMaiKhachHang khuyenMaiKhachHang = findById(id);
+        if (khuyenMaiKhachHang != null) {
+            khuyenMaiKhachHang.setIsDeleted(true);
+            khuyenMaiKhachHangRepository.save(khuyenMaiKhachHang);
+        }
     }
 } 

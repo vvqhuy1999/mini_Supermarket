@@ -48,4 +48,25 @@ public class KhoServiceImpl implements KhoService {
             throw new RuntimeException("Không tìm thấy kho có id: " + kho.getMaKho());
         }
     }
+
+    @Override
+    public List<Kho> findAllActive() {
+        return khoRepository.findAllActive();
+    }
+
+    @Override
+    public Kho findActiveById(Integer id) {
+        Optional<Kho> result = khoRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        Optional<Kho> khoOpt = khoRepository.findActiveById(id);
+        if (khoOpt.isPresent()) {
+            Kho kho = khoOpt.get();
+            kho.setIsDeleted(true);
+            khoRepository.save(kho);
+        }
+    }
 } 

@@ -8,12 +8,10 @@ import java.util.List;
 @Service
 public interface TonKhoChiTietService {
     List<TonKhoChiTiet> findAll();
-
+    List<TonKhoChiTiet> findAllActive();
     TonKhoChiTiet findById(Integer id);
-
+    TonKhoChiTiet findActiveById(Integer id);
     TonKhoChiTiet save(TonKhoChiTiet tonKhoChiTiet);
-
     void deleteById(Integer id);
-
-    TonKhoChiTiet update(TonKhoChiTiet tonKhoChiTiet);
+    void softDeleteById(Integer id);
 } 

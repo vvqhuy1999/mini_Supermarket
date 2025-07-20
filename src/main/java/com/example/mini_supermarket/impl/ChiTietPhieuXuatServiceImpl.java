@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChiTietPhieuXuatServiceImpl implements ChiTietPhieuXuatService {
@@ -21,13 +20,18 @@ public class ChiTietPhieuXuatServiceImpl implements ChiTietPhieuXuatService {
     }
 
     @Override
+    public List<ChiTietPhieuXuat> findAllActive() {
+        return chiTietPhieuXuatRepository.findAllActive();
+    }
+
+    @Override
     public ChiTietPhieuXuat findById(Integer id) {
-        Optional<ChiTietPhieuXuat> chiTietPhieuXuat = chiTietPhieuXuatRepository.findById(id);
-        if (chiTietPhieuXuat.isPresent()) {
-            return chiTietPhieuXuat.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy chi tiết phiếu xuất có id: " + id);
-        }
+        return chiTietPhieuXuatRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public ChiTietPhieuXuat findActiveById(Integer id) {
+        return chiTietPhieuXuatRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class ChiTietPhieuXuatServiceImpl implements ChiTietPhieuXuatService {
     }
 
     @Override
-    public ChiTietPhieuXuat update(ChiTietPhieuXuat chiTietPhieuXuat) {
-        if (chiTietPhieuXuatRepository.existsById(chiTietPhieuXuat.getMaCTPXK())) {
-            return chiTietPhieuXuatRepository.save(chiTietPhieuXuat);
-        } else {
-            throw new RuntimeException("Không tìm thấy chi tiết phiếu xuất có id: " + chiTietPhieuXuat.getMaCTPXK());
+    public void softDeleteById(Integer id) {
+        ChiTietPhieuXuat chiTietPhieuXuat = findById(id);
+        if (chiTietPhieuXuat != null) {
+            chiTietPhieuXuat.setIsDeleted(true);
+            chiTietPhieuXuatRepository.save(chiTietPhieuXuat);
         }
     }
 } 

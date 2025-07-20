@@ -7,16 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ThongKeBaoCaoServiceImpl implements ThongKeBaoCaoService {
-    private ThongKeBaoCaoRepository thongKeBaoCaoRepository;
 
     @Autowired
-    public ThongKeBaoCaoServiceImpl(ThongKeBaoCaoRepository thongKeBaoCaoRepository) {
-        this.thongKeBaoCaoRepository = thongKeBaoCaoRepository;
-    }
+    private ThongKeBaoCaoRepository thongKeBaoCaoRepository;
 
     @Override
     public List<ThongKeBaoCao> findAll() {
@@ -24,36 +20,36 @@ public class ThongKeBaoCaoServiceImpl implements ThongKeBaoCaoService {
     }
 
     @Override
-    public ThongKeBaoCao findById(Integer theId) {
-        Optional<ThongKeBaoCao> result = thongKeBaoCaoRepository.findById(theId);
-        ThongKeBaoCao theThongKeBaoCao = null;
-
-        if (result.isPresent()) {
-            theThongKeBaoCao = result.get();
-        } else {
-            throw new RuntimeException("Did not find ThongKeBaoCao id - " + theId);
-        }
-        return theThongKeBaoCao;
+    public List<ThongKeBaoCao> findAllActive() {
+        return thongKeBaoCaoRepository.findAllActive();
     }
 
     @Override
-    public ThongKeBaoCao save(ThongKeBaoCao theThongKeBaoCao) {
-        return thongKeBaoCaoRepository.save(theThongKeBaoCao);
+    public ThongKeBaoCao findById(Integer id) {
+        return thongKeBaoCaoRepository.findById(id).orElse(null);
     }
 
     @Override
-    public void deleteById(Integer theId) {
-        thongKeBaoCaoRepository.deleteById(theId);
+    public ThongKeBaoCao findActiveById(Integer id) {
+        return thongKeBaoCaoRepository.findActiveById(id).orElse(null);
     }
 
     @Override
-    public ThongKeBaoCao update(ThongKeBaoCao thongKeBaoCao) {
-        Optional<ThongKeBaoCao> existingThongKeBaoCao = thongKeBaoCaoRepository.findById(thongKeBaoCao.getMaBaoCao());
-
-        if (!existingThongKeBaoCao.isPresent()) {
-            throw new RuntimeException("Không tìm thấy thống kê báo cáo với ID - " + thongKeBaoCao.getMaBaoCao());
-        }
-
+    public ThongKeBaoCao save(ThongKeBaoCao thongKeBaoCao) {
         return thongKeBaoCaoRepository.save(thongKeBaoCao);
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        thongKeBaoCaoRepository.deleteById(id);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        ThongKeBaoCao thongKeBaoCao = findById(id);
+        if (thongKeBaoCao != null) {
+            thongKeBaoCao.setIsDeleted(true);
+            thongKeBaoCaoRepository.save(thongKeBaoCao);
+        }
     }
 } 

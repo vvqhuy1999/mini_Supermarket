@@ -8,12 +8,10 @@ import java.util.List;
 @Service
 public interface KhuyenMaiSanPhamService {
     List<KhuyenMaiSanPham> findAll();
-
+    List<KhuyenMaiSanPham> findAllActive();
     KhuyenMaiSanPham findById(Integer id);
-
+    KhuyenMaiSanPham findActiveById(Integer id);
     KhuyenMaiSanPham save(KhuyenMaiSanPham khuyenMaiSanPham);
-
     void deleteById(Integer id);
-
-    KhuyenMaiSanPham update(KhuyenMaiSanPham khuyenMaiSanPham);
+    void softDeleteById(Integer id);
 } 

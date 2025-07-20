@@ -56,4 +56,25 @@ public class HoaDonServiceImpl implements HoaDonService {
 
         return hoaDonRepository.save(hoaDon);
     }
+
+    @Override
+    public List<HoaDon> findAllActive() {
+        return hoaDonRepository.findAllActive();
+    }
+
+    @Override
+    public HoaDon findActiveById(Integer id) {
+        Optional<HoaDon> result = hoaDonRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        Optional<HoaDon> hoaDonOpt = hoaDonRepository.findActiveById(id);
+        if (hoaDonOpt.isPresent()) {
+            HoaDon hoaDon = hoaDonOpt.get();
+            hoaDon.setIsDeleted(true);
+            hoaDonRepository.save(hoaDon);
+        }
+    }
 } 

@@ -7,16 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChiTietGioHangServiceImpl implements ChiTietGioHangService {
-    private ChiTietGioHangRepository chiTietGioHangRepository;
 
     @Autowired
-    public ChiTietGioHangServiceImpl(ChiTietGioHangRepository chiTietGioHangRepository) {
-        this.chiTietGioHangRepository = chiTietGioHangRepository;
-    }
+    private ChiTietGioHangRepository chiTietGioHangRepository;
 
     @Override
     public List<ChiTietGioHang> findAll() {
@@ -24,36 +20,36 @@ public class ChiTietGioHangServiceImpl implements ChiTietGioHangService {
     }
 
     @Override
-    public ChiTietGioHang findById(Integer theId) {
-        Optional<ChiTietGioHang> result = chiTietGioHangRepository.findById(theId);
-        ChiTietGioHang theChiTietGioHang = null;
-
-        if (result.isPresent()) {
-            theChiTietGioHang = result.get();
-        } else {
-            throw new RuntimeException("Did not find ChiTietGioHang id - " + theId);
-        }
-        return theChiTietGioHang;
+    public List<ChiTietGioHang> findAllActive() {
+        return chiTietGioHangRepository.findAllActive();
     }
 
     @Override
-    public ChiTietGioHang save(ChiTietGioHang theChiTietGioHang) {
-        return chiTietGioHangRepository.save(theChiTietGioHang);
+    public ChiTietGioHang findById(Integer id) {
+        return chiTietGioHangRepository.findById(id).orElse(null);
     }
 
     @Override
-    public void deleteById(Integer theId) {
-        chiTietGioHangRepository.deleteById(theId);
+    public ChiTietGioHang findActiveById(Integer id) {
+        return chiTietGioHangRepository.findActiveById(id).orElse(null);
     }
 
     @Override
-    public ChiTietGioHang update(ChiTietGioHang chiTietGioHang) {
-        Optional<ChiTietGioHang> existingChiTietGioHang = chiTietGioHangRepository.findById(chiTietGioHang.getMaCTGH());
-
-        if (!existingChiTietGioHang.isPresent()) {
-            throw new RuntimeException("Không tìm thấy chi tiết giỏ hàng với ID - " + chiTietGioHang.getMaCTGH());
-        }
-
+    public ChiTietGioHang save(ChiTietGioHang chiTietGioHang) {
         return chiTietGioHangRepository.save(chiTietGioHang);
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        chiTietGioHangRepository.deleteById(id);
+    }
+
+    @Override
+    public void softDeleteById(Integer id) {
+        ChiTietGioHang chiTietGioHang = findById(id);
+        if (chiTietGioHang != null) {
+            chiTietGioHang.setIsDeleted(true);
+            chiTietGioHangRepository.save(chiTietGioHang);
+        }
     }
 } 

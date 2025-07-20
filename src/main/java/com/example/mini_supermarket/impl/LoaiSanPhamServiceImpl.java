@@ -48,4 +48,25 @@ public class LoaiSanPhamServiceImpl implements LoaiSanPhamService {
             throw new RuntimeException("Không tìm thấy loại sản phẩm có id: " + loaiSanPham.getMaLoaiSP());
         }
     }
+
+    @Override
+    public List<LoaiSanPham> findAllActive() {
+        return loaiSanPhamRepository.findAllActive();
+    }
+
+    @Override
+    public LoaiSanPham findActiveById(String id) {
+        Optional<LoaiSanPham> result = loaiSanPhamRepository.findActiveById(id);
+        return result.orElse(null);
+    }
+
+    @Override
+    public void softDeleteById(String id) {
+        Optional<LoaiSanPham> loaiSanPhamOpt = loaiSanPhamRepository.findActiveById(id);
+        if (loaiSanPhamOpt.isPresent()) {
+            LoaiSanPham loaiSanPham = loaiSanPhamOpt.get();
+            loaiSanPham.setIsDeleted(true);
+            loaiSanPhamRepository.save(loaiSanPham);
+        }
+    }
 } 

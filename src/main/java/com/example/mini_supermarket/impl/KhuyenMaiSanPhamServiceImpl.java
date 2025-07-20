@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class KhuyenMaiSanPhamServiceImpl implements KhuyenMaiSanPhamService {
@@ -21,13 +20,18 @@ public class KhuyenMaiSanPhamServiceImpl implements KhuyenMaiSanPhamService {
     }
 
     @Override
+    public List<KhuyenMaiSanPham> findAllActive() {
+        return khuyenMaiSanPhamRepository.findAllActive();
+    }
+
+    @Override
     public KhuyenMaiSanPham findById(Integer id) {
-        Optional<KhuyenMaiSanPham> khuyenMaiSanPham = khuyenMaiSanPhamRepository.findById(id);
-        if (khuyenMaiSanPham.isPresent()) {
-            return khuyenMaiSanPham.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy khuyến mãi sản phẩm có id: " + id);
-        }
+        return khuyenMaiSanPhamRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public KhuyenMaiSanPham findActiveById(Integer id) {
+        return khuyenMaiSanPhamRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class KhuyenMaiSanPhamServiceImpl implements KhuyenMaiSanPhamService {
     }
 
     @Override
-    public KhuyenMaiSanPham update(KhuyenMaiSanPham khuyenMaiSanPham) {
-        if (khuyenMaiSanPhamRepository.existsById(khuyenMaiSanPham.getMaKMSP())) {
-            return khuyenMaiSanPhamRepository.save(khuyenMaiSanPham);
-        } else {
-            throw new RuntimeException("Không tìm thấy khuyến mãi sản phẩm có id: " + khuyenMaiSanPham.getMaKMSP());
+    public void softDeleteById(Integer id) {
+        KhuyenMaiSanPham khuyenMaiSanPham = findById(id);
+        if (khuyenMaiSanPham != null) {
+            khuyenMaiSanPham.setIsDeleted(true);
+            khuyenMaiSanPhamRepository.save(khuyenMaiSanPham);
         }
     }
 } 

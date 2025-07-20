@@ -8,12 +8,10 @@ import java.util.List;
 @Service
 public interface CaLamViecService {
     List<CaLamViec> findAll();
-
+    List<CaLamViec> findAllActive();
     CaLamViec findById(Integer id);
-
+    CaLamViec findActiveById(Integer id);
     CaLamViec save(CaLamViec caLamViec);
-
     void deleteById(Integer id);
-
-    CaLamViec update(CaLamViec caLamViec);
+    void softDeleteById(Integer id);
 } 

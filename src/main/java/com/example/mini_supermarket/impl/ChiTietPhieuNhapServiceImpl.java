@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChiTietPhieuNhapServiceImpl implements ChiTietPhieuNhapService {
@@ -21,13 +20,18 @@ public class ChiTietPhieuNhapServiceImpl implements ChiTietPhieuNhapService {
     }
 
     @Override
+    public List<ChiTietPhieuNhap> findAllActive() {
+        return chiTietPhieuNhapRepository.findAllActive();
+    }
+
+    @Override
     public ChiTietPhieuNhap findById(Integer id) {
-        Optional<ChiTietPhieuNhap> chiTietPhieuNhap = chiTietPhieuNhapRepository.findById(id);
-        if (chiTietPhieuNhap.isPresent()) {
-            return chiTietPhieuNhap.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy chi tiết phiếu nhập có id: " + id);
-        }
+        return chiTietPhieuNhapRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public ChiTietPhieuNhap findActiveById(Integer id) {
+        return chiTietPhieuNhapRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class ChiTietPhieuNhapServiceImpl implements ChiTietPhieuNhapService {
     }
 
     @Override
-    public ChiTietPhieuNhap update(ChiTietPhieuNhap chiTietPhieuNhap) {
-        if (chiTietPhieuNhapRepository.existsById(chiTietPhieuNhap.getMaCTPN())) {
-            return chiTietPhieuNhapRepository.save(chiTietPhieuNhap);
-        } else {
-            throw new RuntimeException("Không tìm thấy chi tiết phiếu nhập có id: " + chiTietPhieuNhap.getMaCTPN());
+    public void softDeleteById(Integer id) {
+        ChiTietPhieuNhap chiTietPhieuNhap = findById(id);
+        if (chiTietPhieuNhap != null) {
+            chiTietPhieuNhap.setIsDeleted(true);
+            chiTietPhieuNhapRepository.save(chiTietPhieuNhap);
         }
     }
 } 

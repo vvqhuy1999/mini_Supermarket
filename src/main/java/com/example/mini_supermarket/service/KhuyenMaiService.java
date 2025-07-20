@@ -9,11 +9,17 @@ import java.util.List;
 public interface KhuyenMaiService {
     List<KhuyenMai> findAll();
 
+    List<KhuyenMai> findAllActive(); // Chỉ lấy các record chưa bị xóa
+
     KhuyenMai findById(String id);
+
+    KhuyenMai findActiveById(String id); // Chỉ lấy record chưa bị xóa
 
     KhuyenMai save(KhuyenMai khuyenMai);
 
-    void deleteById(String id);
+    void deleteById(String id); // Hard delete (giữ lại cho tương thích)
+
+    void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     KhuyenMai update(KhuyenMai khuyenMai);
 } 

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CaLamViecServiceImpl implements CaLamViecService {
@@ -21,13 +20,18 @@ public class CaLamViecServiceImpl implements CaLamViecService {
     }
 
     @Override
+    public List<CaLamViec> findAllActive() {
+        return caLamViecRepository.findAllActive();
+    }
+
+    @Override
     public CaLamViec findById(Integer id) {
-        Optional<CaLamViec> caLamViec = caLamViecRepository.findById(id);
-        if (caLamViec.isPresent()) {
-            return caLamViec.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy ca làm việc có id: " + id);
-        }
+        return caLamViecRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public CaLamViec findActiveById(Integer id) {
+        return caLamViecRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class CaLamViecServiceImpl implements CaLamViecService {
     }
 
     @Override
-    public CaLamViec update(CaLamViec caLamViec) {
-        if (caLamViecRepository.existsById(caLamViec.getMaCa())) {
-            return caLamViecRepository.save(caLamViec);
-        } else {
-            throw new RuntimeException("Không tìm thấy ca làm việc có id: " + caLamViec.getMaCa());
+    public void softDeleteById(Integer id) {
+        CaLamViec caLamViec = findById(id);
+        if (caLamViec != null) {
+            caLamViec.setIsDeleted(true);
+            caLamViecRepository.save(caLamViec);
         }
     }
 } 

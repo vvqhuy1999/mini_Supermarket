@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PhieuXuatKhoServiceImpl implements PhieuXuatKhoService {
@@ -21,13 +20,18 @@ public class PhieuXuatKhoServiceImpl implements PhieuXuatKhoService {
     }
 
     @Override
+    public List<PhieuXuatKho> findAllActive() {
+        return phieuXuatKhoRepository.findAllActive();
+    }
+
+    @Override
     public PhieuXuatKho findById(Integer id) {
-        Optional<PhieuXuatKho> phieuXuatKho = phieuXuatKhoRepository.findById(id);
-        if (phieuXuatKho.isPresent()) {
-            return phieuXuatKho.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy phiếu xuất kho có id: " + id);
-        }
+        return phieuXuatKhoRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public PhieuXuatKho findActiveById(Integer id) {
+        return phieuXuatKhoRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class PhieuXuatKhoServiceImpl implements PhieuXuatKhoService {
     }
 
     @Override
-    public PhieuXuatKho update(PhieuXuatKho phieuXuatKho) {
-        if (phieuXuatKhoRepository.existsById(phieuXuatKho.getMaPXK())) {
-            return phieuXuatKhoRepository.save(phieuXuatKho);
-        } else {
-            throw new RuntimeException("Không tìm thấy phiếu xuất kho có id: " + phieuXuatKho.getMaPXK());
+    public void softDeleteById(Integer id) {
+        PhieuXuatKho phieuXuatKho = findById(id);
+        if (phieuXuatKho != null) {
+            phieuXuatKho.setIsDeleted(true);
+            phieuXuatKhoRepository.save(phieuXuatKho);
         }
     }
 } 

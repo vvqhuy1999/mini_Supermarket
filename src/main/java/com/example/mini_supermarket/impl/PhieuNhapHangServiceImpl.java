@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PhieuNhapHangServiceImpl implements PhieuNhapHangService {
@@ -21,13 +20,18 @@ public class PhieuNhapHangServiceImpl implements PhieuNhapHangService {
     }
 
     @Override
+    public List<PhieuNhapHang> findAllActive() {
+        return phieuNhapHangRepository.findAllActive();
+    }
+
+    @Override
     public PhieuNhapHang findById(Integer id) {
-        Optional<PhieuNhapHang> phieuNhapHang = phieuNhapHangRepository.findById(id);
-        if (phieuNhapHang.isPresent()) {
-            return phieuNhapHang.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy phiếu nhập hàng có id: " + id);
-        }
+        return phieuNhapHangRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public PhieuNhapHang findActiveById(Integer id) {
+        return phieuNhapHangRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -41,11 +45,11 @@ public class PhieuNhapHangServiceImpl implements PhieuNhapHangService {
     }
 
     @Override
-    public PhieuNhapHang update(PhieuNhapHang phieuNhapHang) {
-        if (phieuNhapHangRepository.existsById(phieuNhapHang.getMaPN())) {
-            return phieuNhapHangRepository.save(phieuNhapHang);
-        } else {
-            throw new RuntimeException("Không tìm thấy phiếu nhập hàng có id: " + phieuNhapHang.getMaPN());
+    public void softDeleteById(Integer id) {
+        PhieuNhapHang phieuNhapHang = findById(id);
+        if (phieuNhapHang != null) {
+            phieuNhapHang.setIsDeleted(true);
+            phieuNhapHangRepository.save(phieuNhapHang);
         }
     }
 } 

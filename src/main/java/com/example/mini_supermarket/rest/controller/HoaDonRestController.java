@@ -17,13 +17,13 @@ public class HoaDonRestController {
 
     @GetMapping
     public ResponseEntity<List<HoaDon>> getAllHoaDon() {
-        List<HoaDon> hoaDons = hoaDonService.findAll();
+        List<HoaDon> hoaDons = hoaDonService.findAllActive();
         return ResponseEntity.ok(hoaDons);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<HoaDon> getHoaDonById(@PathVariable Integer id) {
-        HoaDon hoaDon = hoaDonService.findById(id);
+        HoaDon hoaDon = hoaDonService.findActiveById(id);
         if (hoaDon != null) {
             return ResponseEntity.ok(hoaDon);
         }
@@ -32,15 +32,17 @@ public class HoaDonRestController {
 
     @PostMapping
     public ResponseEntity<HoaDon> createHoaDon(@RequestBody HoaDon hoaDon) {
+        hoaDon.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
         HoaDon savedHoaDon = hoaDonService.save(hoaDon);
         return ResponseEntity.ok(savedHoaDon);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<HoaDon> updateHoaDon(@PathVariable Integer id, @RequestBody HoaDon hoaDon) {
-        HoaDon existingHoaDon = hoaDonService.findById(id);
+        HoaDon existingHoaDon = hoaDonService.findActiveById(id);
         if (existingHoaDon != null) {
             hoaDon.setMaHD(id);
+            hoaDon.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
             HoaDon updatedHoaDon = hoaDonService.save(hoaDon);
             return ResponseEntity.ok(updatedHoaDon);
         }
@@ -49,9 +51,9 @@ public class HoaDonRestController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteHoaDon(@PathVariable Integer id) {
-        HoaDon hoaDon = hoaDonService.findById(id);
+        HoaDon hoaDon = hoaDonService.findActiveById(id);
         if (hoaDon != null) {
-            hoaDonService.deleteById(id);
+            hoaDonService.softDeleteById(id);
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
