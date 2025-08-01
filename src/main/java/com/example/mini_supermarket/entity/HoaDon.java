@@ -14,7 +14,9 @@ import java.util.List;
 @Entity
 @Table(name = "HoaDon", indexes = {
     @Index(name = "idx_hoadon_ngaylap", columnList = "NgayLap"),
-    @Index(name = "idx_hoadon_trangthai", columnList = "TrangThai")
+    @Index(name = "idx_hoadon_trangthai", columnList = "TrangThai"),
+    @Index(name = "idx_hoadon_khachhang", columnList = "MaKH"),
+    @Index(name = "idx_hoadon_nhanvien", columnList = "MaNVLap")
 })
 @Data
 @NoArgsConstructor
@@ -30,15 +32,21 @@ public class HoaDon implements Serializable {
     private KhachHang khachHang;
 
     @ManyToOne
-    @JoinColumn(name = "MaNVLap")
+    @JoinColumn(name = "MaNVLap", nullable = false)
     private NhanVien nhanVienLap;
 
     @ManyToOne
     @JoinColumn(name = "MaKM")
     private KhuyenMai khuyenMai;
 
-    @Column(name = "NgayLap")
+    @Column(name = "NgayLap", nullable = false)
     private LocalDateTime ngayLap;
+
+    @Column(name = "TongTienHang", precision = 15, scale = 2)
+    private BigDecimal tongTienHang = BigDecimal.ZERO;
+
+    @Column(name = "TienGiamGia", precision = 15, scale = 2)
+    private BigDecimal tienGiamGia = BigDecimal.ZERO;
 
     @Column(name = "TongTien", precision = 15, scale = 2)
     private BigDecimal tongTien;
@@ -48,19 +56,27 @@ public class HoaDon implements Serializable {
     private PhuongThucThanhToan phuongThucThanhToan;
 
     @Column(name = "TrangThai")
-    private Integer trangThai = 0; // 0=Chờ xử lý, 1=Đã thanh toán, 2=Đang xử lý, 3=Hủy
+    private Integer trangThai = 0; // 0=Chờ xử lý, 1=Đã thanh toán, 2=Đang xử lý, 3=Hủy, 4=Hoàn trả
+
+    @Column(name = "DiemTichLuy")
+    private Integer diemTichLuy = 0; // Điểm tích lũy từ hóa đơn này
+
+    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    private String ghiChu;
 
     @Column(name = "NgayTao")
     private LocalDateTime ngayTao = LocalDateTime.now();
 
-    @Column(name = "NguoiTao", length = 10)
-    private String nguoiTao;
+    @ManyToOne
+    @JoinColumn(name = "NguoiTao")
+    private NhanVien nguoiTao;
 
     @Column(name = "NgaySua")
     private LocalDateTime ngaySua;
 
-    @Column(name = "NguoiSua", length = 10)
-    private String nguoiSua;
+    @ManyToOne
+    @JoinColumn(name = "NguoiSua")
+    private NhanVien nguoiSua;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

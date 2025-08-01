@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "PhieuNhapHang")
+@Table(name = "PhieuNhapHang", indexes = {
+    @Index(name = "idx_phieunhap_ngay", columnList = "NgayNhap"),
+    @Index(name = "idx_phieunhap_trangthai", columnList = "TrangThai"),
+    @Index(name = "idx_phieunhap_nhacungcap", columnList = "MaNCC")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,22 +27,31 @@ public class PhieuNhapHang implements Serializable {
     private Integer maPN;
 
     @ManyToOne
-    @JoinColumn(name = "MaNCC")
+    @JoinColumn(name = "MaNCC", nullable = false)
     private NhaCungCap nhaCungCap;
 
     @ManyToOne
-    @JoinColumn(name = "MaKho")
+    @JoinColumn(name = "MaKho", nullable = false)
     private Kho kho;
 
     @ManyToOne
-    @JoinColumn(name = "MaNVLap")
+    @JoinColumn(name = "MaNVLap", nullable = false)
     private NhanVien nhanVienLap;
 
-    @Column(name = "NgayNhap")
+    @Column(name = "NgayNhap", nullable = false)
     private LocalDateTime ngayNhap;
 
     @Column(name = "TongTienNhap", precision = 15, scale = 2)
-    private BigDecimal tongTienNhap;
+    private BigDecimal tongTienNhap = BigDecimal.ZERO;
+
+    @Column(name = "TrangThai")
+    private Integer trangThai = 0; // 0=Chờ xử lý, 1=Đã nhập kho, 2=Từ chối, 3=Hủy
+
+    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    private String ghiChu;
+
+    @Column(name = "NgayTao")
+    private LocalDateTime ngayTao = LocalDateTime.now();
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

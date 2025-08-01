@@ -11,7 +11,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "GioHang")
+@Table(name = "GioHang", indexes = {
+    @Index(name = "idx_giohang_khachhang", columnList = "MaKH"),
+    @Index(name = "idx_giohang_trangthai", columnList = "TrangThai")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,10 +33,16 @@ public class GioHang implements Serializable {
     private NhanVien nhanVien;
 
     @Column(name = "NgayTao")
-    private LocalDateTime ngayTao;
+    private LocalDateTime ngayTao = LocalDateTime.now();
+
+    @Column(name = "NgayCapNhat")
+    private LocalDateTime ngayCapNhat;
 
     @Column(name = "TrangThai")
     private Integer trangThai = 0; // 0=Đang chọn hàng, 1=Đã đặt hàng, 2=Đã thanh toán, 3=Hủy
+
+    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    private String ghiChu;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

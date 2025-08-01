@@ -8,9 +8,13 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
-@Table(name = "LichLamViec")
+@Table(name = "LichLamViec", indexes = {
+    @Index(name = "idx_lichlamviec_ngay", columnList = "NgayLam"),
+    @Index(name = "idx_lichlamviec_trangthai", columnList = "TrangThai")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,14 +25,14 @@ public class LichLamViec implements Serializable {
     private Integer maLich;
 
     @ManyToOne
-    @JoinColumn(name = "MaNV")
+    @JoinColumn(name = "MaNV", nullable = false)
     private NhanVien nhanVien;
 
     @ManyToOne
-    @JoinColumn(name = "MaCa")
+    @JoinColumn(name = "MaCa", nullable = false)
     private CaLamViec caLamViec;
 
-    @Column(name = "NgayLam")
+    @Column(name = "NgayLam", nullable = false)
     private LocalDate ngayLam;
 
     @ManyToOne
@@ -36,13 +40,19 @@ public class LichLamViec implements Serializable {
     private NhanVien nhanVienQuanLy;
 
     @Column(name = "TrangThai")
-    private Integer trangThai; // 0=Chờ duyệt, 1=Đã duyệt, 2=Từ chối, 3=Hủy
+    private Integer trangThai = 0; // 0=Chờ duyệt, 1=Đã duyệt, 2=Từ chối, 3=Hủy, 4=Đã hoàn thành
 
     @Column(name = "NgayDuyet")
     private LocalDateTime ngayDuyet;
 
     @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
     private String ghiChu;
+
+    @Column(name = "GioVao")
+    private LocalTime gioVao; // Giờ thực tế vào làm
+
+    @Column(name = "GioRa")
+    private LocalTime gioRa; // Giờ thực tế ra về
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

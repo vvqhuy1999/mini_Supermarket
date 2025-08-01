@@ -23,7 +23,7 @@ public class OpenApiConfig {
                         .contact(new Contact()
                                 .name("Mini Supermarket Team")
                                 .email("vvqhuy1999@gmail.com")
-                                .url("https://github.com/minisupermarket"))
+                                .url("https://github.com/vvqhuy1999/mini_Supermarket"))
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))
