@@ -19,14 +19,14 @@ public class NguoiDung implements Serializable {
     @Column(name = "MaNguoiDung", length = 10)
     private String maNguoiDung;
 
-    @Column(name = "TenDangNhap", length = 50)
-    private String tenDangNhap;
+    @Column(name = "Email", length = 50)
+    private String email;
 
     @Column(name = "MatKhau", length = 255)
     private String matKhau;
 
     @Column(name = "VaiTro", nullable = false)
-    private Integer vaiTro; // 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    private Integer vaiTro= 3; // 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

@@ -2,7 +2,7 @@
 
 ## API Endpoints Overview
 
-Tổng cộng **27 REST Controllers** đã được tạo với đầy đủ CRUD operations:
+Tổng cộng **28 REST Controllers** đã được tạo với đầy đủ CRUD operations:
 
 ### 1. **Quản lý Người dùng & Nhân viên**
 - **POST** `/api/nguoidung` - Tạo người dùng mới
@@ -172,7 +172,14 @@ Tổng cộng **27 REST Controllers** đã được tạo với đầy đủ CRU
 - **PUT** `/api/lichlamviec/{id}` - Cập nhật lịch làm việc
 - **DELETE** `/api/lichlamviec/{id}` - Xóa lịch làm việc
 
-### 13. **Quản lý Thống kê & Báo cáo**
+### 13. **Quản lý Bảng lương**
+- **POST** `/api/bangluong` - Tạo bảng lương mới
+- **GET** `/api/bangluong` - Lấy tất cả bảng lương
+- **GET** `/api/bangluong/{id}` - Lấy bảng lương theo ID
+- **PUT** `/api/bangluong/{id}` - Cập nhật bảng lương
+- **DELETE** `/api/bangluong/{id}` - Xóa bảng lương
+
+### 14. **Quản lý Thống kê & Báo cáo**
 - **POST** `/api/thongkebaocao` - Tạo báo cáo mới
 - **GET** `/api/thongkebaocao` - Lấy tất cả báo cáo
 - **GET** `/api/thongkebaocao/{id}` - Lấy báo cáo theo ID
@@ -239,4 +246,46 @@ Content-Type: application/json
 DELETE http://localhost:8080/api/sanpham/SP00001
 ```
 
-**Tổng cộng: 27 REST Controllers với 135+ API endpoints!** 🚀 
+### **Ví dụ BangLuong API**:
+
+```bash
+# Lấy tất cả bảng lương
+GET http://localhost:8080/api/bangluong
+
+# Lấy bảng lương theo ID
+GET http://localhost:8080/api/bangluong/1
+
+# Tạo bảng lương mới
+POST http://localhost:8080/api/bangluong
+Content-Type: application/json
+
+{
+  "nhanVien": {
+    "maNV": "NV001"
+  },
+  "thangLuong": 7,
+  "namLuong": 2024,
+  "luongCoBan": 15000000,
+  "phuCap": 2000000,
+  "thuong": 1000000,
+  "khauTru": 500000,
+  "soNgayLam": 22,
+  "soGioLam": 176.0,
+  "ghiChu": "Lương tháng 7/2024"
+}
+
+# Cập nhật bảng lương
+PUT http://localhost:8080/api/bangluong/1
+Content-Type: application/json
+
+{
+  "luongCoBan": 16000000,
+  "thuong": 1500000,
+  "ghiChu": "Đã cập nhật lương tháng 7/2024"
+}
+
+# Xóa bảng lương
+DELETE http://localhost:8080/api/bangluong/1
+```
+
+**Tổng cộng: 28 REST Controllers với 140+ API endpoints!** 🚀 

@@ -10,7 +10,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "ChiTietPhieuNhap")
+@Table(name = "ChiTietPhieuNhap", indexes = {
+    @Index(name = "idx_chitietphieunhap_phieu", columnList = "MaPN"),
+    @Index(name = "idx_chitietphieunhap_sanpham", columnList = "MaSP")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,21 +24,30 @@ public class ChiTietPhieuNhap implements Serializable {
     private Integer maCTPN;
 
     @ManyToOne
-    @JoinColumn(name = "MaPN")
+    @JoinColumn(name = "MaPN", nullable = false)
     private PhieuNhapHang phieuNhapHang;
 
     @ManyToOne
-    @JoinColumn(name = "MaSP")
+    @JoinColumn(name = "MaSP", nullable = false)
     private SanPham sanPham;
 
-    @Column(name = "SoLuongNhap")
+    @Column(name = "SoLuongNhap", nullable = false)
     private Integer soLuongNhap;
 
-    @Column(name = "DonGiaNhap", precision = 15, scale = 2)
+    @Column(name = "DonGiaNhap", precision = 15, scale = 2, nullable = false)
     private BigDecimal donGiaNhap;
 
+    @Column(name = "ThanhTien", precision = 15, scale = 2)
+    private BigDecimal thanhTien; // SoLuongNhap * DonGiaNhap (computed)
+
     @Column(name = "NgayHetHan")
-    private LocalDate ngayHetHan;
+    private LocalDate ngayHetHan; // Hạn sử dụng của sản phẩm
+
+    @Column(name = "SoLo", length = 50)
+    private String soLo; // Số lô sản xuất
+
+    @Column(name = "NgaySanXuat")
+    private LocalDate ngaySanXuat;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

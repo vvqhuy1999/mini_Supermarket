@@ -7,11 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
 
 @Entity
-@Table(name = "CaLamViec")
+@Table(name = "CaLamViec", indexes = {
+    @Index(name = "idx_calamviec_trangthai", columnList = "TrangThai")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,14 +24,20 @@ public class CaLamViec implements Serializable {
     @Column(name = "MaCa")
     private Integer maCa;
 
-    @Column(name = "TenCa", length = 100)
+    @Column(name = "TenCa", length = 100, nullable = false)
     private String tenCa;
 
-    @Column(name = "GioBatDau")
+    @Column(name = "GioBatDau", nullable = false)
     private LocalTime gioBatDau;
 
-    @Column(name = "GioKetThuc")
+    @Column(name = "GioKetThuc", nullable = false)
     private LocalTime gioKetThuc;
+
+    @Column(name = "SoGioLam", precision = 4, scale = 2)
+    private BigDecimal soGioLam; // Số giờ làm việc trong ca (computed)
+
+    @Column(name = "TrangThai")
+    private Integer trangThai = 1; // 0=Ngừng sử dụng, 1=Đang sử dụng
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

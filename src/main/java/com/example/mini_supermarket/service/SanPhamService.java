@@ -22,4 +22,9 @@ public interface SanPhamService {
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     SanPham update(SanPham sanPham);
+
+    // Kiểm tra xem mã sản phẩm đã tồn tại chưa
+    boolean existsByMaSP(String maSP);
+
+
 } 

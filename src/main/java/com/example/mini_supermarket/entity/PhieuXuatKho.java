@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "PhieuXuatKho")
+@Table(name = "PhieuXuatKho", indexes = {
+    @Index(name = "idx_phieuxuat_ngay", columnList = "NgayXuat"),
+    @Index(name = "idx_phieuxuat_trangthai", columnList = "TrangThai"),
+    @Index(name = "idx_phieuxuat_kho", columnList = "MaKho")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,24 +27,33 @@ public class PhieuXuatKho implements Serializable {
     private Integer maPXK;
 
     @ManyToOne
-    @JoinColumn(name = "MaKho")
+    @JoinColumn(name = "MaKho", nullable = false)
     private Kho kho;
 
     @ManyToOne
-    @JoinColumn(name = "MaNVLap")
+    @JoinColumn(name = "MaNVLap", nullable = false)
     private NhanVien nhanVienLap;
 
-    @Column(name = "NgayXuat")
+    @Column(name = "NgayXuat", nullable = false)
     private LocalDateTime ngayXuat;
 
-    @Column(name = "TongSoLuong", precision = 15, scale = 2)
-    private BigDecimal tongSoLuong;
+    @Column(name = "TongSoLuong")
+    private Integer tongSoLuong = 0;
+
+    @Column(name = "TongGiaTri", precision = 15, scale = 2)
+    private BigDecimal tongGiaTri = BigDecimal.ZERO;
 
     @Column(name = "LyDoXuat", length = 255)
     private String lyDoXuat;
 
     @Column(name = "TrangThai")
-    private Integer trangThai; // 0=Chờ xử lý, 1=Đã xuất, 2=Từ chối, 3=Hủy
+    private Integer trangThai = 0; // 0=Chờ xử lý, 1=Đã xuất, 2=Từ chối, 3=Hủy
+
+    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    private String ghiChu;
+
+    @Column(name = "NgayTao")
+    private LocalDateTime ngayTao = LocalDateTime.now();
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

@@ -7,12 +7,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "KhachHang", indexes = {
     @Index(name = "idx_khachhang_sdt", columnList = "SDT"),
-    @Index(name = "idx_khachhang_email", columnList = "Email")
+    @Index(name = "idx_khachhang_email", columnList = "Email"),
+    @Index(name = "idx_khachhang_loai", columnList = "LoaiKhachHang")
 })
 @Data
 @NoArgsConstructor
@@ -26,7 +29,7 @@ public class KhachHang implements Serializable {
     @JoinColumn(name = "MaNguoiDung")
     private NguoiDung nguoiDung;
 
-    @Column(name = "HoTen", length = 255)
+    @Column(name = "HoTen", length = 255, nullable = false)
     private String hoTen;
 
     @Column(name = "SDT", length = 15)
@@ -38,8 +41,17 @@ public class KhachHang implements Serializable {
     @Column(name = "DiaChi", length = 255)
     private String diaChi;
 
+    @Column(name = "NgaySinh")
+    private LocalDate ngaySinh;
+
     @Column(name = "DiemTichLuy")
-    private Integer diemTichLuy;
+    private Integer diemTichLuy = 0;
+
+    @Column(name = "LoaiKhachHang", length = 50)
+    private String loaiKhachHang = "Thường"; // Thường, VIP, Bạc, Vàng, Kim cương
+
+    @Column(name = "NgayDangKy")
+    private LocalDateTime ngayDangKy = LocalDateTime.now();
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

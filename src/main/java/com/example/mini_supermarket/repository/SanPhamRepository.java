@@ -21,4 +21,7 @@ public interface SanPhamRepository extends JpaRepository<SanPham, String> {
     // Tìm sản phẩm theo ID (bao gồm cả đã xóa)
     @Query("SELECT s FROM SanPham s WHERE s.maSP = :id")
     Optional<SanPham> findByIdIncludeDeleted(@Param("id") String id);
+    // Kiểm tra xem mã sản phẩm đã tồn tại chưa
+    boolean existsByMaSP(String maSP);
+
 } 

@@ -6,6 +6,7 @@ import com.example.mini_supermarket.service.NhanVienService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ public class NhanVienServiceImpl implements NhanVienService {
         this.nhanVienRepository = nhanVienRepository;
     }
 
+
     @Override
     public List<NhanVien> findAll() {
         return nhanVienRepository.findAll();
@@ -26,14 +28,11 @@ public class NhanVienServiceImpl implements NhanVienService {
     @Override
     public NhanVien findById(String theId) {
         Optional<NhanVien> result = nhanVienRepository.findById(theId);
-        NhanVien theNhanVien = null;
-
         if (result.isPresent()) {
-            theNhanVien = result.get();
+            return result.get();
         } else {
             throw new RuntimeException("Did not find NhanVien id - " + theId);
         }
-        return theNhanVien;
     }
 
     @Override
@@ -49,11 +48,9 @@ public class NhanVienServiceImpl implements NhanVienService {
     @Override
     public NhanVien update(NhanVien nhanVien) {
         Optional<NhanVien> existingNhanVien = nhanVienRepository.findById(nhanVien.getMaNV());
-
         if (!existingNhanVien.isPresent()) {
             throw new RuntimeException("Không tìm thấy nhân viên với ID - " + nhanVien.getMaNV());
         }
-
         return nhanVienRepository.save(nhanVien);
     }
 
@@ -77,4 +74,11 @@ public class NhanVienServiceImpl implements NhanVienService {
             nhanVienRepository.save(nhanVien);
         }
     }
-} 
+
+    @Override
+    public boolean existsByMaNVAndNgaySinh(String maNV, LocalDate ngaySinh) {
+        return nhanVienRepository.existsByMaNVAndNgaySinh(maNV, ngaySinh);
+    }
+
+
+}

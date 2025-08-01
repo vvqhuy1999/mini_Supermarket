@@ -302,5 +302,5 @@ Dự án này được phát triển cho mục đích học tập và nghiên c�
 ---
 
 **Phiên bản:** 1.0.0  
-**Ngày cập nhật:** 2024  
+**Ngày cập nhật:** 2025  
 **Tác giả:** Mini Supermarket Team 

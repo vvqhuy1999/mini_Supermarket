@@ -87,4 +87,11 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         return sanPhamRepository.save(sanPham);
     }
+
+    // Kiểm tra mã sản phẩm trùng
+    @Override
+    public boolean existsByMaSP(String maSP) {
+        return sanPhamRepository.existsByMaSP(maSP);
+    }
+
 } 

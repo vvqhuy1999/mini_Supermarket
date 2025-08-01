@@ -3,7 +3,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/QuanLySieuThi?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: admin
+    password: 261104
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: true
@@ -38,4 +38,3 @@ springdoc:
         - "/rest/**"
       packages-to-scan:
         - "com.example.mini_supermarket.rest.controller"
-

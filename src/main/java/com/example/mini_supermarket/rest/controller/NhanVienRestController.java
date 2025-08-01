@@ -13,7 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.security.SecureRandom;
+import java.security.SecureRandom;
 import java.util.List;
 
 @RestController
@@ -27,8 +28,8 @@ public class NhanVienRestController {
 
     @Operation(summary = "Lấy tất cả nhân viên", description = "Trả về danh sách tất cả nhân viên chưa bị xóa")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Thành công", 
-                    content = @Content(mediaType = "application/json", 
+            @ApiResponse(responseCode = "200", description = "Thành công",
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = NhanVien.class))),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
@@ -45,8 +46,8 @@ public class NhanVienRestController {
 
     @Operation(summary = "Lấy nhân viên theo ID", description = "Trả về thông tin nhân viên theo ID (chỉ lấy nhân viên chưa bị xóa)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tìm thấy nhân viên", 
-                    content = @Content(mediaType = "application/json", 
+            @ApiResponse(responseCode = "200", description = "Tìm thấy nhân viên",
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = NhanVien.class))),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy nhân viên"),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
@@ -69,34 +70,67 @@ public class NhanVienRestController {
 
     @Operation(summary = "Thêm nhân viên mới", description = "Tạo một nhân viên mới trong hệ thống")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Tạo nhân viên thành công", 
-                    content = @Content(mediaType = "application/json", 
+            @ApiResponse(responseCode = "201", description = "Tạo nhân viên thành công",
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = NhanVien.class))),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
+
+
     @PostMapping
     public ResponseEntity<NhanVien> createNhanVien(@RequestBody NhanVien nhanVien) {
         try {
-            nhanVien.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
+            // ✅ Tự động sinh mã nhân viên
+            nhanVien.setMaNV(generateMaNV());
+
+            // ✅ Kiểm tra trùng mã NV và ngày sinh
+            boolean exists = nhanVienService.existsByMaNVAndNgaySinh(
+                    nhanVien.getMaNV(),
+                    nhanVien.getNgaySinh()
+            );
+            if (exists) {
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST); // Đã tồn tại
+            }
+
+            nhanVien.setIsDeleted(false); // Mặc định không bị xóa
             NhanVien savedNhanVien = nhanVienService.save(nhanVien);
             return new ResponseEntity<>(savedNhanVien, HttpStatus.CREATED);
+
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    // =====================
+// Hàm sinh mã NV ngẫu nhiên
+// =====================
+    private String generateMaNV() {
+        String prefix = "NV"; // 2 ký tự đầu
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+
+        StringBuilder sb = new StringBuilder(prefix);
+        for (int i = 0; i < 8; i++) {
+            int index = random.nextInt(characters.length());
+            sb.append(characters.charAt(index));
+        }
+        return sb.toString();
+    }
+
+
+
     @Operation(summary = "Cập nhật nhân viên", description = "Cập nhật thông tin nhân viên theo ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công", 
-                    content = @Content(mediaType = "application/json", 
+            @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = NhanVien.class))),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy nhân viên"),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
     @PutMapping("/{id}")
     public ResponseEntity<NhanVien> updateNhanVien(
-            @Parameter(description = "ID của nhân viên", required = true) @PathVariable String id, 
+            @Parameter(description = "ID của nhân viên", required = true) @PathVariable String id,
             @RequestBody NhanVien nhanVien) {
         try {
             NhanVien existingNhanVien = nhanVienService.findActiveById(id);
