@@ -16,6 +16,25 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+  security:
+    # Bật lại Spring Security
+    enabled: true
+    user:
+      # Tắt user mặc định của Spring Security
+      name: 
+      password: 
+      roles: 
+    # Cấu hình cho BCrypt password encoder
+    password:
+      encoder:
+        strength: 12  # Độ mạnh của BCrypt (từ 4-31, mặc định là 10)
+  # Cho phép circular references tạm thời
+  main:
+    allow-circular-references: true
+  # Tắt auto-configuration cho UserDetailsService
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
 # Swagger/OpenAPI Configuration
 springdoc:
@@ -38,4 +57,9 @@ springdoc:
         - "/rest/**"
       packages-to-scan:
         - "com.example.mini_supermarket.rest.controller"
+
+# JWT Configuration
+jwt:
+  secret: "lj4rZPDvdCsTGInKfrNgFbKPq6xSg5svMzrKfDsTSpATgFuOM268cvRCRzWw2WLc"
+  expiration: 86400  # 24 hours in seconds
 

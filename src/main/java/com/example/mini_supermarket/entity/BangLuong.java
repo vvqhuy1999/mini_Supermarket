@@ -73,4 +73,14 @@ public class BangLuong implements Serializable {
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
+    
+    // Manual setter for isDeleted
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+    
+    // Manual getter for isDeleted
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
 } 

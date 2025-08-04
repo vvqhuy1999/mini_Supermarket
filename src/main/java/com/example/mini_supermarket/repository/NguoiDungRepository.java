@@ -21,4 +21,24 @@ public interface NguoiDungRepository extends JpaRepository<NguoiDung, String> {
     // Tìm người dùng theo ID (bao gồm cả đã xóa)
     @Query("SELECT n FROM NguoiDung n WHERE n.maNguoiDung = :id")
     Optional<NguoiDung> findByIdIncludeDeleted(@Param("id") String id);
+    
+    // Kiểm tra email đã tồn tại chưa (chưa bị xóa)
+    @Query("SELECT COUNT(n) > 0 FROM NguoiDung n WHERE n.email = :email AND n.isDeleted = false")
+    boolean existsByEmail(@Param("email") String email);
+    
+    // Tìm người dùng theo email (chưa bị xóa)
+    @Query("SELECT n FROM NguoiDung n WHERE n.email = :email AND n.isDeleted = false")
+    Optional<NguoiDung> findByEmail(@Param("email") String email);
+    
+    // Tìm người dùng theo email (bao gồm cả đã xóa)
+    @Query("SELECT n FROM NguoiDung n WHERE n.email = :email")
+    Optional<NguoiDung> findByEmailIncludeDeleted(@Param("email") String email);
+    
+    // Kiểm tra mã người dùng đã tồn tại chưa (chưa bị xóa)
+    @Query("SELECT COUNT(n) > 0 FROM NguoiDung n WHERE n.maNguoiDung = :maNguoiDung AND n.isDeleted = false")
+    boolean existsByMaNguoiDung(@Param("maNguoiDung") String maNguoiDung);
+    
+    // Kiểm tra mã người dùng đã tồn tại chưa (bao gồm cả đã xóa)
+    @Query("SELECT COUNT(n) > 0 FROM NguoiDung n WHERE n.maNguoiDung = :maNguoiDung")
+    boolean existsByMaNguoiDungIncludeDeleted(@Param("maNguoiDung") String maNguoiDung);
 } 

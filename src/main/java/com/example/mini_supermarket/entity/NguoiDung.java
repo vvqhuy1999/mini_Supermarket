@@ -1,6 +1,7 @@
 package com.example.mini_supermarket.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,6 +24,7 @@ public class NguoiDung implements Serializable {
     private String email;
 
     @Column(name = "MatKhau", length = 255)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Cho phép ghi từ JSON request, không trả về trong response
     private String matKhau;
 
     @Column(name = "VaiTro", nullable = false)

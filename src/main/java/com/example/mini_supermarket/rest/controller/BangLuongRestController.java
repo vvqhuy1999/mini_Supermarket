@@ -101,7 +101,6 @@ public class BangLuongRestController {
         try {
             BangLuong existingBangLuong = bangLuongService.findActiveById(id);
             if (existingBangLuong != null) {
-                bangLuong.setMaLuong(id); // Đảm bảo ID không bị thay đổi
                 bangLuong.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
                 BangLuong updatedBangLuong = bangLuongService.save(bangLuong);
                 return new ResponseEntity<>(updatedBangLuong, HttpStatus.OK);
