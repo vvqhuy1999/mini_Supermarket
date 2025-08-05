@@ -96,6 +96,13 @@
             <version>9.30.1</version>
         </dependency>
 
+<!--        Thu vien mang xa hoi-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
+
     </dependencies>
 
     <build>

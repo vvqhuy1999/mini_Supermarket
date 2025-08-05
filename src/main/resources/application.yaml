@@ -28,6 +28,37 @@ spring:
     password:
       encoder:
         strength: 12  # Độ mạnh của BCrypt (từ 4-31, mặc định là 10)
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "1096787831677-f9nhpe4jc0be40sc5s910qihfv22etrl.apps.googleusercontent.com"
+            client-secret: "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"
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            authorization-grant-type: authorization_code
+          facebook:
+            client-id: "1793399401565005"
+            client-secret: "84077d6e021681c9928090bf300b366e"
+            scope:
+              - email
+              - public_profile
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            authorization-grant-type: authorization_code
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://www.googleapis.com/oauth2/v3/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+          facebook:
+            authorization-uri: https://www.facebook.com/v3.0/dialog/oauth
+            token-uri: https://graph.facebook.com/v3.0/oauth/access_token
+            user-info-uri: https://graph.facebook.com/v3.0/me?fields=id,first_name,middle_name,last_name,name,email,verified,user_friends,user_birthday
+            user-name-attribute: id
+
   # Cho phép circular references tạm thời
   main:
     allow-circular-references: true
@@ -63,3 +94,11 @@ jwt:
   secret: "lj4rZPDvdCsTGInKfrNgFbKPq6xSg5svMzrKfDsTSpATgFuOM268cvRCRzWw2WLc"
   expiration: 86400  # 24 hours in seconds
 
+
+#Google
+#spring.security.oauth2.client.registration.google.client-id= 12
+#spring.security.oauth2.client.registration.google.client-secret= 12
+
+#Facebook
+#spring.security.oauth2.client.registration.facebook.client-id=4130
+#spring.security.oauth2.client.registration.facebook.client-secret=23
