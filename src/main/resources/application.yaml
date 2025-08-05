@@ -32,16 +32,16 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:test}
-            client-secret: ${GOOGLE_CLIENT_SECRET:test}
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             scope:
               - email
               - profile
             redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
             authorization-grant-type: authorization_code
           facebook:
-            client-id: ${FACEBOOK_CLIENT_ID:test}
-            client-secret: ${FACEBOOK_CLIENT_SECRET:test}
+            client-id: ${FACEBOOK_CLIENT_ID}
+            client-secret: ${FACEBOOK_CLIENT_SECRET}
             scope:
               - email
               - public_profile
@@ -91,7 +91,7 @@ springdoc:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:fd}
+  secret: ${JWT_SECRET:your-secret-key-here-make-it-long-enough-for-hs256}
   expiration: ${JWT_EXPIRATION:86400}  # 24 hours in seconds
 
 
