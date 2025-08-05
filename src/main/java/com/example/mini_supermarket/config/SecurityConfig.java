@@ -19,6 +19,18 @@ import java.util.Arrays;
 @ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true", matchIfMissing = true)
 public class SecurityConfig {
     
+    // Các endpoint công khai không cần authentication
+    private final String[] PUBLIC_ENDPOINTS = {
+        "/swagger-ui/**", 
+        "/swagger-ui.html", 
+        "/api-docs/**", 
+        "/v3/api-docs/**",
+        "/api/nguoidung/**",
+        "/api/auth/**",
+        "/api/sanpham/**",      // Xem sản phẩm, tìm kiếm sản phẩm
+        "/api/loaisanpham/**"   // Xem danh mục sản phẩm
+    };
+    
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12); // Độ mạnh 12
@@ -42,12 +54,9 @@ public class SecurityConfig {
             // Cấu hình CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // Cấu hình authorization - cho phép tất cả API endpoints
+            // Cấu hình authorization - sử dụng PUBLIC_ENDPOINTS
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/nguoidung/**").permitAll() // Bao gồm đăng ký tài khoản
-                .requestMatchers("/api/auth/**").permitAll() // Bao gồm đăng nhập
-                .requestMatchers("/api/test/**").permitAll()
+                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .anyRequest().permitAll()
             );
         
