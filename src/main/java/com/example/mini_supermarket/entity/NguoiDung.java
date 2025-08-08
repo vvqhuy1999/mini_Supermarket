@@ -27,6 +27,9 @@ public class NguoiDung implements Serializable {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Cho phép ghi từ JSON request, không trả về trong response
     private String matKhau;
 
+    @Column(name = "Sub", length = 50)
+    private String sub;
+
     @Column(name = "VaiTro", nullable = false)
     private Integer vaiTro= 3; // 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
 

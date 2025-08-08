@@ -32,20 +32,20 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: test
+            client-secret: test
             scope:
               - email
               - profile
-            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
           facebook:
-            client-id: ${FACEBOOK_CLIENT_ID}
-            client-secret: ${FACEBOOK_CLIENT_SECRET}
+            client-id: test
+            client-secret: test
             scope:
               - email
               - public_profile
-            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
         provider:
           google:
@@ -54,9 +54,9 @@ spring:
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
           facebook:
-            authorization-uri: https://www.facebook.com/v3.0/dialog/oauth
-            token-uri: https://graph.facebook.com/v3.0/oauth/access_token
-            user-info-uri: https://graph.facebook.com/v3.0/me?fields=id,first_name,middle_name,last_name,name,email,verified,user_friends,user_birthday
+            authorization-uri: https://www.facebook.com/dialog/oauth
+            token-uri: https://graph.facebook.com/oauth/access_token
+            user-info-uri: https://graph.facebook.com/me?fields=id,first_name,middle_name,last_name,name,email,verified
             user-name-attribute: id
 
   # Cho phép circular references tạm thời
@@ -93,6 +93,13 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:your-secret-key-here-make-it-long-enough-for-hs256}
   expiration: ${JWT_EXPIRATION:86400}  # 24 hours in seconds
+
+# OAuth2 Frontend Integration - Redirect to Swagger after OAuth2
+oauth2:
+  frontend:
+    base-url: ${FRONTEND_URL:http://localhost:8080}
+    success-path: ${OAUTH2_SUCCESS_PATH:/swagger-ui/index.html}
+    failure-path: ${OAUTH2_FAILURE_PATH:/swagger-ui/index.html}
 
 
 #Google
