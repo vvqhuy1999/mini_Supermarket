@@ -9,6 +9,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,6 +28,9 @@ public class SecurityConfig {
     
     @Autowired
     private OAuth2SuccessHandler oAuth2SuccessHandler;
+    
+    @Autowired
+    private ClientRegistrationRepository clientRegistrationRepository;
     
     @Value("${oauth2.frontend.base-url:http://localhost:3000}")
     private String frontendBaseUrl;
@@ -55,6 +63,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(12); // Độ mạnh 12
     }
     
+
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -73,7 +83,7 @@ public class SecurityConfig {
             // Cấu hình CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // Cấu hình OAuth2 - redirect về frontend với custom handler
+            // Cấu hình OAuth2 - Simple Google login
             .oauth2Login(oauth2 -> oauth2
                 .successHandler(oAuth2SuccessHandler)
                 .failureUrl(frontendBaseUrl + frontendFailurePath)

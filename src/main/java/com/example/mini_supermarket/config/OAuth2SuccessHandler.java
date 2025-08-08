@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private OAuth2Service oAuth2Service;
     
+    @Autowired
+    private OAuth2AuthorizedClientService authorizedClientService;
+    
     @Value("${oauth2.frontend.base-url:http://localhost:3000}")
     private String frontendBaseUrl;
     
@@ -37,6 +43,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
         
         try {
+            // Log OAuth2 details để debug
+            logOAuth2Details(authentication, oauth2User);
+            
             // Xác định provider và xử lý login
             AuthenticationResponse authResponse = processOAuth2Login(oauth2User);
             
@@ -62,6 +71,40 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 URLEncoder.encode("Internal server error during OAuth2 processing", StandardCharsets.UTF_8);
             response.sendRedirect(errorUrl);
         }
+    }
+    
+    private void logOAuth2Details(Authentication authentication, OAuth2User oauth2User) {
+        System.out.println("🔍 === OAuth2 DEBUG INFO ===");
+        System.out.println("🔍 Authentication Type: " + authentication.getClass().getSimpleName());
+        System.out.println("🔍 OAuth2User Name: " + oauth2User.getName());
+        System.out.println("🔍 OAuth2User Attributes: " + oauth2User.getAttributes());
+        
+        // Lấy access token nếu có
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken oauth2Auth = (OAuth2AuthenticationToken) authentication;
+            String clientRegistrationId = oauth2Auth.getAuthorizedClientRegistrationId();
+            
+            System.out.println("🔍 Client Registration ID: " + clientRegistrationId);
+            
+            OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(
+                clientRegistrationId, 
+                oauth2Auth.getName()
+            );
+            
+            if (authorizedClient != null) {
+                System.out.println("🔍 Access Token: " + authorizedClient.getAccessToken().getTokenValue());
+                System.out.println("🔍 Token Type: " + authorizedClient.getAccessToken().getTokenType().getValue());
+                System.out.println("🔍 Expires At: " + authorizedClient.getAccessToken().getExpiresAt());
+                
+                if (authorizedClient.getRefreshToken() != null) {
+                    System.out.println("🔍 Refresh Token: " + authorizedClient.getRefreshToken().getTokenValue());
+                }
+            } else {
+                System.out.println("🔍 No authorized client found");
+            }
+        }
+        
+        System.out.println("🔍 === END OAuth2 DEBUG INFO ===");
     }
     
     private AuthenticationResponse processOAuth2Login(OAuth2User oauth2User) {
