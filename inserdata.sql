@@ -60,17 +60,17 @@ INSERT INTO NhanVien (MaNV, MaNguoiDung, HoTen, SDT, DiaChi, NgaySinh, NgayVaoLa
 ('NV013', 'ND013', N'Ngô Thị M', '0911234567', N'333 Cách Mạng Tháng 8', '1996-01-13', '2021-01-01', N'Nhân viên bán hàng', 'NV009', 'CH002', 1),
 ('NV014', 'ND014', N'Đỗ Văn N', '0922345678', N'444 Pasteur', '1997-02-14', '2021-02-01', N'Nhân viên kho', 'NV009', 'CH002', 1);
 
-INSERT INTO KhachHang (MaKH, MaNguoiDung, HoTen, SDT, Email, DiaChi, NgaySinh, DiemTichLuy, LoaiKhachHang, NgayDangKy) VALUES
-('KH001', 'ND015', N'Nguyễn Văn KH1', '0988111222', 'khach1@gmail.com', N'123 Q1', '1985-01-01', 100, N'Thường', '2020-01-01'),
-('KH002', 'ND016', N'Trần Thị KH2', '0977223344', 'khach2@gmail.com', N'456 Q3', '1986-02-02', 200, N'VIP', '2020-02-01'),
-('KH003', 'ND017', N'Lê Văn KH3', '0966334455', 'khach3@gmail.com', N'789 Gò Vấp', '1987-03-03', 150, N'Thường', '2020-03-01'),
-('KH004', 'ND018', N'Phạm Thị KH4', '0955445566', 'khach4@gmail.com', N'111 Thủ Đức', '1988-04-04', 50, N'Thường', '2020-04-01'),
-('KH005', 'ND019', N'Đỗ Văn KH5', '0944556677', 'khach5@gmail.com', N'222 Tân Bình', '1989-05-05', 300, N'Vàng', '2020-05-01'),
-('KH006', 'ND020', N'Võ Minh KH6', '0933667788', 'khach6@gmail.com', N'15 Bình Thạnh', '1990-06-06', 120, N'Thường', '2020-06-01'),
-('KH007', 'ND021', N'Huỳnh Lan KH7', '0922778899', 'khach7@gmail.com', N'89 Quận 10', '1991-07-07', 180, N'Bạc', '2020-07-01'),
-('KH008', 'ND022', N'Phan Văn KH8', '0911889900', 'khach8@gmail.com', N'12 Quận 7', '1992-08-08', 220, N'Vàng', '2020-08-01'),
-('KH009', 'ND023', N'Trương Mỹ KH9', '0909000111', 'khach9@gmail.com', N'35 Quận 5', '1993-09-09', 80, N'Thường', '2020-09-01'),
-('KH010', 'ND024', N'Lâm Quốc KH10', '0988776655', 'khach10@gmail.com', N'77 Quận 8', '1994-10-10', 260, N'Kim cương', '2020-10-01');
+INSERT INTO KhachHang (MaKH, MaNguoiDung, HoTen, SDT, DiaChi, NgaySinh, DiemTichLuy, LoaiKhachHang, NgayDangKy) VALUES
+('KH001', 'ND015', N'Nguyễn Văn KH1', '0988111222', N'123 Q1', '1985-01-01', 100, N'Thường', '2020-01-01'),
+('KH002', 'ND016', N'Trần Thị KH2', '0977223344', N'456 Q3', '1986-02-02', 200, N'VIP', '2020-02-01'),
+('KH003', 'ND017', N'Lê Văn KH3', '0966334455', N'789 Gò Vấp', '1987-03-03', 150, N'Thường', '2020-03-01'),
+('KH004', 'ND018', N'Phạm Thị KH4', '0955445566', N'111 Thủ Đức', '1988-04-04', 50, N'Thường', '2020-04-01'),
+('KH005', 'ND019', N'Đỗ Văn KH5', '0944556677', N'222 Tân Bình', '1989-05-05', 300, N'Vàng', '2020-05-01'),
+('KH006', 'ND020', N'Võ Minh KH6', '0933667788', N'15 Bình Thạnh', '1990-06-06', 120, N'Thường', '2020-06-01'),
+('KH007', 'ND021', N'Huỳnh Lan KH7', '0922778899', N'89 Quận 10', '1991-07-07', 180, N'Bạc', '2020-07-01'),
+('KH008', 'ND022', N'Phan Văn KH8', '0911889900', N'12 Quận 7', '1992-08-08', 220, N'Vàng', '2020-08-01'),
+('KH009', 'ND023', N'Trương Mỹ KH9', '0909000111', N'35 Quận 5', '1993-09-09', 80, N'Thường', '2020-09-01'),
+('KH010', 'ND024', N'Lâm Quốc KH10', '0988776655', N'77 Quận 8', '1994-10-10', 260, N'Kim cương', '2020-10-01');
 
 -- Thêm dữ liệu bảng lương
 INSERT INTO BangLuong (MaNV, ThangLuong, NamLuong, LuongCoBan, PhuCap, Thuong, KhauTru, SoNgayLam, SoGioLam, GhiChu, TrangThai) VALUES

@@ -22,4 +22,15 @@ public interface KhachHangService {
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     KhachHang update(KhachHang khachHang);
+    
+    /**
+     * Đăng ký tài khoản khách hàng mới (bao gồm tạo NguoiDung và KhachHang)
+     * @param email Email đăng ký
+     * @param matKhau Mật khẩu 
+     * @param hoTen Họ tên khách hàng
+     * @param sdt Số điện thoại
+     * @param diaChi Địa chỉ (optional)
+     * @return KhachHang đã được tạo
+     */
+    KhachHang registerCustomerAccount(String email, String matKhau, String hoTen, String sdt, String diaChi);
 } 

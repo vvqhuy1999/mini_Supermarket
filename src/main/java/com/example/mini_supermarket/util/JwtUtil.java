@@ -43,15 +43,7 @@ public class JwtUtil {
     public String generateToken(String username, String role) {
         try {
             // Đảm bảo secret key có độ dài đủ cho HS512 (ít nhất 512 bits = 64 bytes)
-            byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
-            String actualSecret = secret;
-            
-            if (secretBytes.length < 64) {
-                logger.warn("Secret key quá ngắn cho HS512. Độ dài hiện tại: {} bytes", secretBytes.length);
-                // Tạo secret key mới với độ dài đủ
-                actualSecret = secret + "additional-padding-to-make-it-long-enough-for-hs512-algorithm";
-                secretBytes = actualSecret.getBytes(StandardCharsets.UTF_8);
-            }
+            byte[] secretBytes = getSecretBytes();
             
             // Tạo JWT claims
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
@@ -68,7 +60,7 @@ public class JwtUtil {
             // Tạo signed JWT
             SignedJWT signedJWT = new SignedJWT(header, claimsSet);
 
-            // Ký JWT với secret key
+            // Ký JWT với secret key 
             JWSSigner signer = new MACSigner(secretBytes);
             signedJWT.sign(signer);
 
@@ -113,11 +105,7 @@ public class JwtUtil {
             SignedJWT signedJWT = SignedJWT.parse(token);
             
             // Đảm bảo secret key có độ dài đúng
-            byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
-            if (secretBytes.length < 64) {
-                String newSecret = secret + "additional-padding-to-make-it-long-enough-for-hs512-algorithm";
-                secretBytes = newSecret.getBytes(StandardCharsets.UTF_8);
-            }
+            byte[] secretBytes = getSecretBytes();
             
             JWSVerifier verifier = new MACVerifier(secretBytes);
             boolean isValid = signedJWT.verify(verifier);
@@ -232,4 +220,20 @@ public class JwtUtil {
         }
     }
     
+    /**
+     * Lấy secret key với độ dài đúng để đảm bảo tính nhất quán
+     */
+    private String getActualSecret() {
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 64) {
+            return secret + "additional-padding-to-make-it-long-enough-for-hs512-algorithm";
+        }
+        return secret;
+    }
+    
+    /**
+     * Lấy secret bytes với độ dài đúng cho HS512
+     */
+    private byte[] getSecretBytes() {
+        return getActualSecret().getBytes(StandardCharsets.UTF_8);
+    }
 } 

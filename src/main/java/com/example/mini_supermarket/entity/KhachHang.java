@@ -14,7 +14,6 @@ import java.util.List;
 @Entity
 @Table(name = "KhachHang", indexes = {
     @Index(name = "idx_khachhang_sdt", columnList = "SDT"),
-    @Index(name = "idx_khachhang_email", columnList = "Email"),
     @Index(name = "idx_khachhang_loai", columnList = "LoaiKhachHang")
 })
 @Data
@@ -34,9 +33,6 @@ public class KhachHang implements Serializable {
 
     @Column(name = "SDT", length = 15)
     private String sdt;
-
-    @Column(name = "Email", length = 100)
-    private String email;
 
     @Column(name = "DiaChi", length = 255)
     private String diaChi;
