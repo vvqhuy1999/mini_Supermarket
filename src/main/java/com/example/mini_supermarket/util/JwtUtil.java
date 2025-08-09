@@ -90,12 +90,26 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            // Kiểm tra token có trong blacklist không
-            if (tokenBlacklistService.isTokenBlacklisted(token)) {
-                logger.warn("Token đã bị blacklist: {}", token);
+            // Kiểm tra token null hoặc rỗng
+            if (token == null || token.trim().isEmpty()) {
+                logger.debug("Token is null or empty");
                 return false;
             }
             
+            // Kiểm tra format cơ bản của JWT (phải có ít nhất 2 dấu chấm)
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                logger.warn("Token không đúng định dạng JWT. Cần 3 phần, nhưng có: {}", parts.length);
+                return false;
+            }
+            
+            // Kiểm tra token có trong blacklist không
+            if (tokenBlacklistService.isTokenBlacklisted(token)) {
+                logger.warn("Token đã bị blacklist");
+                return false;
+            }
+            
+            // Parse JWT token
             SignedJWT signedJWT = SignedJWT.parse(token);
             
             // Đảm bảo secret key có độ dài đúng
@@ -112,8 +126,11 @@ public class JwtUtil {
             logger.debug("Token validation - Valid signature: {}, Not expired: {}", isValid, isNotExpired);
             
             return isValid && isNotExpired;
+        } catch (ParseException e) {
+            logger.warn("Token không thể parse: {}", e.getMessage());
+            return false;
         } catch (Exception e) {
-            logger.error("Lỗi validate token: {}", e.getMessage(), e);
+            logger.error("Lỗi validate token: {}", e.getMessage());
             return false;
         }
     }

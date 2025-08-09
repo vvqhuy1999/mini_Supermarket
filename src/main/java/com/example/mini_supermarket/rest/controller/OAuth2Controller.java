@@ -4,10 +4,9 @@ import com.example.mini_supermarket.dto.ApiResponse;
 import com.example.mini_supermarket.dto.AuthenticationResponse;
 import com.example.mini_supermarket.entity.NguoiDung;
 import com.example.mini_supermarket.service.OAuth2Service;
+import com.example.mini_supermarket.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
@@ -36,125 +35,22 @@ public class OAuth2Controller {
     
     private final OAuth2Service oAuth2Service;
     private final NguoiDungRepository nguoiDungRepository;
+    private final JwtUtil jwtUtil;
     
     @Autowired
-    public OAuth2Controller(OAuth2Service oAuth2Service, NguoiDungRepository nguoiDungRepository) {
+    public OAuth2Controller(OAuth2Service oAuth2Service, NguoiDungRepository nguoiDungRepository, JwtUtil jwtUtil) {
         this.oAuth2Service = oAuth2Service;
         this.nguoiDungRepository = nguoiDungRepository;
+        this.jwtUtil = jwtUtil;
     }
     
     // Constructor mặc định để tránh lỗi dependency
     public OAuth2Controller() {
         this.oAuth2Service = null;
         this.nguoiDungRepository = null;
+        this.jwtUtil = null;
     }
     
-    /**
-     * Callback cho Google OAuth2
-     */
-    @Operation(summary = "Google OAuth2 Callback", description = "Xử lý callback từ Google OAuth2")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng nhập thành công"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Lỗi xác thực"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Lỗi server")
-    })
-    @GetMapping("/callback/google")
-    public ResponseEntity<ApiResponse<AuthenticationResponse>> googleCallback(
-            @Parameter(description = "OAuth2 User từ Google")
-            @AuthenticationPrincipal OAuth2User oauth2User) {
-        
-        try {
-            if (oauth2User == null) {
-                return ResponseEntity.badRequest().body(
-                    ApiResponse.<AuthenticationResponse>builder()
-                        .success(false)
-                        .message("Không thể xác thực với Google!")
-                        .error("OAuth2 user is null")
-                        .build()
-                );
-            }
-            
-            AuthenticationResponse authResponse = oAuth2Service.processGoogleLogin(oauth2User);
-            
-            ApiResponse<AuthenticationResponse> response = ApiResponse.<AuthenticationResponse>builder()
-                    .result(authResponse)
-                    .success(authResponse.isAuthenticated())
-                    .message(authResponse.getMessage())
-                    .build();
-            
-            if (authResponse.isAuthenticated()) {
-                return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-        } catch (Exception e) {
-            ApiResponse<AuthenticationResponse> errorResponse = ApiResponse.<AuthenticationResponse>builder()
-                    .success(false)
-                    .message("Lỗi xác thực Google: " + e.getMessage())
-                    .error(e.getMessage())
-                    .build();
-            
-            return ResponseEntity.internalServerError().body(errorResponse);
-        }
-    }
-    
-    /**
-     * Callback cho Facebook OAuth2
-     */
-    @Operation(summary = "Facebook OAuth2 Callback", description = "Xử lý callback từ Facebook OAuth2")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng nhập thành công"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Lỗi xác thực"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Lỗi server")
-    })
-    @GetMapping("/callback/facebook")
-    public ResponseEntity<ApiResponse<AuthenticationResponse>> facebookCallback(
-            @Parameter(description = "OAuth2 User từ Facebook")
-            @AuthenticationPrincipal OAuth2User oauth2User) {
-        
-        try {
-            if (oauth2User == null) {
-                return ResponseEntity.badRequest().body(
-                    ApiResponse.<AuthenticationResponse>builder()
-                        .success(false)
-                        .message("Không thể xác thực với Facebook!")
-                        .error("OAuth2 user is null")
-                        .build()
-                );
-            }
-            
-            // Debug: Log thông tin OAuth2 user
-            System.out.println("Facebook OAuth2 User: " + oauth2User.getName());
-            System.out.println("Facebook OAuth2 Attributes: " + oauth2User.getAttributes());
-            
-            AuthenticationResponse authResponse = oAuth2Service.processFacebookLogin(oauth2User);
-            
-            ApiResponse<AuthenticationResponse> response = ApiResponse.<AuthenticationResponse>builder()
-                    .result(authResponse)
-                    .success(authResponse.isAuthenticated())
-                    .message(authResponse.getMessage())
-                    .build();
-            
-            if (authResponse.isAuthenticated()) {
-                return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-        } catch (Exception e) {
-            System.err.println("Facebook OAuth2 Controller Error: " + e.getMessage());
-            e.printStackTrace();
-            
-            ApiResponse<AuthenticationResponse> errorResponse = ApiResponse.<AuthenticationResponse>builder()
-                    .success(false)
-                    .message("Lỗi xác thực Facebook: " + e.getMessage())
-                    .error(e.getMessage())
-                    .build();
-            
-            return ResponseEntity.internalServerError().body(errorResponse);
-        }
-    }
     
 
     
@@ -367,151 +263,7 @@ public class OAuth2Controller {
         return ResponseEntity.ok(response);
     }
     
-    /**
-     * Endpoint để phân tích chi tiết thông tin OAuth2
-     */
-    @Operation(summary = "Analyze OAuth2 User Data", description = "Phân tích chi tiết thông tin user từ OAuth2")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Thành công"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập")
-    })
-    @GetMapping("/analyze")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> analyzeOAuth2User(
-            @Parameter(description = "OAuth2 User")
-            @AuthenticationPrincipal OAuth2User oauth2User) {
-        
-        if (oauth2User == null) {
-            return ResponseEntity.status(401).body(
-                ApiResponse.<Map<String, Object>>builder()
-                    .success(false)
-                    .message("Chưa đăng nhập OAuth2!")
-                    .error("Not authenticated")
-                    .build()
-            );
-        }
-        
-        Map<String, Object> attributes = oauth2User.getAttributes();
-        Map<String, Object> analysis = new HashMap<>();
-        
-        // Xác định provider dựa trên attributes
-        String provider = "Unknown";
-        if (attributes.containsKey("sub") && attributes.containsKey("email_verified")) {
-            provider = "Google OAuth2";
-        } else if (attributes.containsKey("id") && !attributes.containsKey("email_verified")) {
-            provider = "Facebook OAuth2";
-        }
-        
-        // Thông tin cơ bản
-        analysis.put("provider", provider);
-        analysis.put("total_attributes", attributes.size());
-        analysis.put("all_attribute_names", attributes.keySet());
-        
-        // Phân tích từng trường
-        analysis.put("email", attributes.get("email"));
-        analysis.put("name", attributes.get("name"));
-        analysis.put("id", attributes.get("id"));
-        analysis.put("sub", attributes.get("sub"));
-        
-        if (provider.equals("Google OAuth2")) {
-            analysis.put("email_verified", attributes.get("email_verified"));
-            analysis.put("given_name", attributes.get("given_name"));
-            analysis.put("family_name", attributes.get("family_name"));
-            analysis.put("picture_url", attributes.get("picture"));
-            analysis.put("google_user_id", attributes.get("sub"));
-            analysis.put("locale", attributes.get("locale"));
-            analysis.put("hosted_domain", attributes.get("hd"));
-            
-            // Thông tin JWT token
-            analysis.put("token_issued_at", attributes.get("iat"));
-            analysis.put("token_expires_at", attributes.get("exp"));
-            analysis.put("authorized_party", attributes.get("azp"));
-            analysis.put("audience", attributes.get("aud"));
-            analysis.put("issuer", attributes.get("iss"));
-        } else if (provider.equals("Facebook OAuth2")) {
-            analysis.put("first_name", attributes.get("first_name"));
-            analysis.put("last_name", attributes.get("last_name"));
-            analysis.put("middle_name", attributes.get("middle_name"));
-            analysis.put("verified", attributes.get("verified"));
-            analysis.put("facebook_user_id", attributes.get("id"));
-        }
-        
-        // Raw data để phân tích
-        analysis.put("raw_oauth2_data", attributes);
-        
-        ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
-                .result(analysis)
-                .success(true)
-                .message("Phân tích chi tiết thông tin " + provider)
-                .build();
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    /**
-     * Endpoint debug đặc biệt cho Facebook OAuth2
-     */
-    @Operation(summary = "Debug Facebook OAuth2", description = "Debug thông tin Facebook OAuth2")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Thành công"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập")
-    })
-    @GetMapping("/debug/facebook")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> debugFacebookOAuth2(
-            @Parameter(description = "OAuth2 User từ Facebook")
-            @AuthenticationPrincipal OAuth2User oauth2User) {
-        
-        Map<String, Object> debugInfo = new HashMap<>();
-        
-        if (oauth2User == null) {
-            debugInfo.put("status", "No OAuth2 user found");
-            debugInfo.put("message", "Chưa đăng nhập Facebook OAuth2");
-            debugInfo.put("error", "OAuth2 user is null");
-            
-            ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
-                    .result(debugInfo)
-                    .success(false)
-                    .message("Chưa đăng nhập Facebook OAuth2!")
-                    .build();
-            
-            return ResponseEntity.status(401).body(response);
-        }
-        
-        Map<String, Object> attributes = oauth2User.getAttributes();
-        
-        debugInfo.put("status", "Facebook OAuth2 user found");
-        debugInfo.put("user_name", oauth2User.getName());
-        debugInfo.put("authorities", oauth2User.getAuthorities());
-        debugInfo.put("total_attributes", attributes.size());
-        debugInfo.put("all_attributes", attributes);
-        
-        // Phân tích từng trường Facebook
-        debugInfo.put("facebook_id", attributes.get("id"));
-        debugInfo.put("email", attributes.get("email"));
-        debugInfo.put("name", attributes.get("name"));
-        debugInfo.put("first_name", attributes.get("first_name"));
-        debugInfo.put("last_name", attributes.get("last_name"));
-        debugInfo.put("middle_name", attributes.get("middle_name"));
-        debugInfo.put("verified", attributes.get("verified"));
-        
-        // Thử xử lý đăng nhập
-        try {
-            AuthenticationResponse authResponse = oAuth2Service.processFacebookLogin(oauth2User);
-            debugInfo.put("auth_response", authResponse);
-            debugInfo.put("auth_success", authResponse.isAuthenticated());
-            debugInfo.put("auth_message", authResponse.getMessage());
-        } catch (Exception e) {
-            debugInfo.put("auth_error", e.getMessage());
-            debugInfo.put("auth_stack_trace", e.getStackTrace());
-        }
-        
-        ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
-                .result(debugInfo)
-                .success(true)
-                .message("Debug thông tin Facebook OAuth2")
-                .build();
-        
-        return ResponseEntity.ok(response);
-    }
+
     
     /**
      * Endpoint để kiểm tra email trùng lặp
@@ -633,256 +385,235 @@ public class OAuth2Controller {
             }
         }
     
+
+    
     /**
-     * Endpoint để lấy JWT token sau khi đăng nhập OAuth2
+     * ⚠️ DEPRECATED: Sử dụng /api/auth/log-out thay thế
+     * 
+     * Endpoint này đã được chuyển sang AuthenticationController
+     * để tối ưu hóa và tránh trùng lặp code.
+     * 
+     * ➡️ Vui lòng sử dụng: POST /api/auth/log-out
      */
-    @Operation(summary = "Get JWT Token", description = "Lấy JWT token sau khi đăng nhập OAuth2 thành công")
+    @Operation(
+        summary = "⚠️ DEPRECATED - OAuth2 Logout", 
+        description = """
+            **🚨 ENDPOINT NÀY ĐÃ BỊ DEPRECATED**
+            
+            **Lý do:** Tối ưu hóa và tránh trùng lặp code
+            
+            **✅ Thay thế bằng:**
+            ```
+            POST /api/auth/log-out
+            Authorization: Bearer {JWT_TOKEN}
+            ```
+            
+            **Chức năng tương tự:**
+            - 🚫 Blacklist JWT token
+            - 👤 Hỗ trợ tài khoản thường
+            - 🌐 Hỗ trợ Google OAuth2  
+            - 📘 Hỗ trợ Facebook OAuth2
+            - 🔄 Giữ nguyên OAuth2 session trong browser
+            
+            **⏰ Endpoint này sẽ bị xóa trong phiên bản tương lai**
+            """
+    )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Thành công"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa đăng nhập")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "301", description = "Chuyển hướng đến endpoint mới")
     })
-    @GetMapping("/get-token")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getToken(
-            @Parameter(description = "OAuth2 User")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deprecatedLogout() {
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("deprecated", true);
+        result.put("status", "MOVED_PERMANENTLY");
+        result.put("new_endpoint", "/api/auth/log-out");
+        result.put("method", "POST");
+        result.put("message", "Endpoint này đã được chuyển sang /api/auth/log-out");
+        result.put("recommendation", "Vui lòng cập nhật code để sử dụng endpoint mới");
+        
+        ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
+                .success(false)
+                .message("⚠️ DEPRECATED: Sử dụng /api/auth/log-out thay thế")
+                .result(result)
+                .build();
+        
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).body(response);
+    }
+    
+    /**
+     * 🎯 Get JWT Token - Lấy JWT token từ Google OAuth2 login
+     */
+    @Operation(
+        summary = "🎯 Get JWT Token từ Google OAuth2", 
+        description = """
+            **Chức năng chính:** Lấy JWT token sau khi đăng nhập Google thành công
+            
+            **Flow hoạt động:**
+            1. User đăng nhập Google OAuth2 thành công
+            2. Gọi endpoint này để lấy JWT token
+            3. JWT token có format: header.payload.signature (3 phần)
+            4. Sử dụng JWT token này cho authentication và logout
+            
+            **JWT Token đặc điểm:**
+            - ✅ Format: 3 phần cách nhau bởi dấu chấm
+            - ✅ Tạo bởi JwtUtil.generateToken()
+            - ✅ Chứa email, role, expiration
+            - ✅ Có thể blacklist khi logout
+            - ✅ Hoạt động với tất cả API endpoints
+            
+            **⚠️ Lưu ý:** Khác với OAuth2 Access Token (chỉ dùng để gọi Google API)
+            """
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "✅ Lấy JWT token thành công"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "❌ Chưa đăng nhập OAuth2")
+    })
+    @GetMapping("/get-jwt-token")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getJwtToken(
+            @Parameter(description = "OAuth2 User từ Google login")
             @AuthenticationPrincipal OAuth2User oauth2User) {
         
         Map<String, Object> result = new HashMap<>();
         
         if (oauth2User == null) {
-            result.put("error", "Chưa đăng nhập OAuth2");
-            result.put("token", null);
+            result.put("error", "Chưa đăng nhập Google OAuth2");
+            result.put("message", "Vui lòng đăng nhập Google trước khi lấy JWT token");
+            result.put("login_url", "/oauth2/authorization/google");
             
             return ResponseEntity.status(401).body(
                 ApiResponse.<Map<String, Object>>builder()
                     .success(false)
-                    .message("Chưa đăng nhập OAuth2!")
+                    .message("❌ Chưa đăng nhập Google OAuth2!")
                     .result(result)
                     .build()
             );
         }
         
         try {
-            // Xác định provider
+            // Xác định provider từ OAuth2 attributes
             Map<String, Object> attributes = oauth2User.getAttributes();
-            String provider = "Unknown";
             String email = (String) attributes.get("email");
+            String name = (String) attributes.get("name");
+            String sub = (String) attributes.get("sub");
             
-            if (attributes.containsKey("sub") && attributes.containsKey("email_verified")) {
-                provider = "Google";
-            } else if (attributes.containsKey("id") && !attributes.containsKey("email_verified")) {
-                provider = "Facebook";
-            }
-            
-            // Xử lý và lấy token
-            AuthenticationResponse authResponse;
-            if (provider.equals("Google")) {
-                authResponse = oAuth2Service.processGoogleLogin(oauth2User);
-            } else if (provider.equals("Facebook")) {
-                authResponse = oAuth2Service.processFacebookLogin(oauth2User);
-            } else {
-                authResponse = oAuth2Service.processGoogleLogin(oauth2User); // Fallback
-            }
-            
-            if (authResponse.isAuthenticated()) {
-                result.put("jwt_token", authResponse.getToken());
-                result.put("user_email", email);
-                result.put("user_role", authResponse.getRole());
-                result.put("provider", provider);
-                result.put("user_info", authResponse.getUser());
-                result.put("authenticated", true);
-                result.put("token_type", "Bearer");
-                
-                return ResponseEntity.ok(
-                    ApiResponse.<Map<String, Object>>builder()
-                        .success(true)
-                        .message("Lấy JWT token thành công")
-                        .result(result)
-                        .build()
-                );
-            } else {
-                result.put("error", authResponse.getMessage());
-                result.put("token", null);
+            // Kiểm tra đây có phải Google OAuth2 không
+            if (!attributes.containsKey("sub") || !attributes.containsKey("email_verified")) {
+                result.put("error", "Không phải Google OAuth2");
+                result.put("message", "Endpoint này chỉ hỗ trợ Google OAuth2 login");
                 
                 return ResponseEntity.badRequest().body(
                     ApiResponse.<Map<String, Object>>builder()
                         .success(false)
-                        .message("Không thể lấy token: " + authResponse.getMessage())
+                        .message("❌ Chỉ hỗ trợ Google OAuth2!")
                         .result(result)
                         .build()
                 );
             }
             
+            System.out.println("🔐 === GETTING JWT TOKEN FROM GOOGLE OAUTH2 ===");
+            System.out.println("🔐 Google Email: " + email);
+            System.out.println("🔐 Google Name: " + name);
+            System.out.println("🔐 Google Sub: " + sub);
+            
+            // Tạo JWT token qua OAuth2Service → JwtUtil
+            AuthenticationResponse authResponse = oAuth2Service.processGoogleLogin(oauth2User);
+            
+            if (!authResponse.isAuthenticated()) {
+                result.put("error", "Google login failed");
+                result.put("message", authResponse.getMessage());
+                
+                return ResponseEntity.badRequest().body(
+                    ApiResponse.<Map<String, Object>>builder()
+                        .success(false)
+                        .message("❌ Google login thất bại!")
+                        .result(result)
+                        .build()
+                );
+            }
+            
+            String jwtToken = authResponse.getToken();
+            
+            // Phân tích JWT token chi tiết
+            String[] tokenParts = jwtToken.split("\\.");
+            boolean isValidJWT = tokenParts.length == 3;
+            
+            System.out.println("🎫 JWT Token created: " + jwtToken);
+            System.out.println("🎫 JWT Parts: " + tokenParts.length);
+            System.out.println("🎫 Is valid JWT format: " + isValidJWT);
+            
+            // Build response
+            result.put("provider", "Google");
+            result.put("oauth2_user", Map.of(
+                "email", email,
+                "name", name,
+                "sub", sub,
+                "email_verified", attributes.get("email_verified")
+            ));
+            
+            // JWT Token info
+            result.put("jwt_token", jwtToken);
+            result.put("jwt_format", Map.of(
+                "parts", tokenParts.length,
+                "header", tokenParts.length > 0 ? tokenParts[0] : null,
+                "payload", tokenParts.length > 1 ? tokenParts[1] : null,
+                "signature", tokenParts.length > 2 ? tokenParts[2] : null,
+                "is_valid_format", isValidJWT
+            ));
+            
+            // Auth info
+            result.put("auth_info", Map.of(
+                "user", authResponse.getUser(),
+                "role", authResponse.getRole(),
+                "authenticated", authResponse.isAuthenticated(),
+                "message", authResponse.getMessage()
+            ));
+            
+            // Instructions
+            result.put("instructions", Map.of(
+                "how_to_use", "Sử dụng jwt_token cho Authorization header",
+                "format", "Authorization: Bearer " + jwtToken.substring(0, 20) + "...",
+                "logout_endpoint", "POST /api/auth/log-out",
+                "valid_format", isValidJWT ? "✅ JWT có 3 phần - có thể blacklist" : "❌ Không đúng JWT format"
+            ));
+            
+            if (isValidJWT) {
+                result.put("status", "✅ SUCCESS");
+                result.put("message", "JWT token được tạo thành công từ Google OAuth2");
+            } else {
+                result.put("status", "❌ ERROR");
+                result.put("message", "JWT token KHÔNG đúng format!");
+            }
+            
+            System.out.println("🔐 === END GETTING JWT TOKEN ===");
+            
+            return ResponseEntity.ok(
+                ApiResponse.<Map<String, Object>>builder()
+                    .success(true)
+                    .message("🎯 Lấy JWT token từ Google OAuth2 thành công")
+                    .result(result)
+                    .build()
+            );
+            
         } catch (Exception e) {
+            System.err.println("❌ Error getting JWT token: " + e.getMessage());
+            e.printStackTrace();
+            
             result.put("error", e.getMessage());
-            result.put("token", null);
+            result.put("status", "❌ EXCEPTION");
+            result.put("stack_trace", e.getStackTrace());
             
             return ResponseEntity.internalServerError().body(
                 ApiResponse.<Map<String, Object>>builder()
                     .success(false)
-                    .message("Lỗi lấy token: " + e.getMessage())
+                    .message("❌ Lỗi lấy JWT token: " + e.getMessage())
                     .result(result)
                     .build()
             );
         }
     }
     
-    /**
-     * 🔒 Local Logout - Đăng xuất khỏi app (giữ Google session)
-     */
-    @Operation(
-        summary = "🔒 Local Logout", 
-        description = """
-            **Mục đích:** Đăng xuất local khỏi app
-            
-            **Chức năng:**
-            - 🚫 Blacklist JWT token hiện tại
-            - 🗑️ Xóa session app (không ảnh hưởng Google)
-            - 🔄 Giữ nguyên Google login trong browser
-            
-            **Kết quả:**
-            - ✅ User logout khỏi app
-            - 🌐 Google account vẫn đăng nhập trong browser
-            - ⚡ Lần login sau không cần nhập password Google
-            
-            **Headers:** Authorization: Bearer {JWT_TOKEN}
-            """
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng xuất thành công")
-    })
-    @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> localLogout(
-            @Parameter(description = "JWT Token để blacklist")
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        Map<String, Object> result = new HashMap<>();
-        
-        try {
-            // Extract token từ Authorization header
-            String token = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
-            }
-            
-            if (token != null) {
-                // TODO: Add token to blacklist (nếu có TokenBlacklistService)
-                // tokenBlacklistService.blacklistToken(token);
-                result.put("token_blacklisted", true);
-                result.put("message", "Token đã được blacklist");
-            } else {
-                result.put("token_blacklisted", false);
-                result.put("message", "Không có token để blacklist");
-            }
-            
-            result.put("logout_type", "local");
-            result.put("success", true);
-            
-            return ResponseEntity.ok(
-                ApiResponse.<Map<String, Object>>builder()
-                    .success(true)
-                    .message("Đăng xuất local thành công")
-                    .result(result)
-                    .build()
-            );
-            
-        } catch (Exception e) {
-            result.put("error", e.getMessage());
-            result.put("success", false);
-            
-            return ResponseEntity.internalServerError().body(
-                ApiResponse.<Map<String, Object>>builder()
-                    .success(false)
-                    .message("Lỗi đăng xuất: " + e.getMessage())
-                    .result(result)
-                    .build()
-            );
-        }
-    }
-    
-    /**
-     * 🌐 Website Logout - Đăng xuất hoàn toàn khỏi website
-     */
-    @Operation(
-        summary = "🌐 Website Logout", 
-        description = """
-            **Mục đích:** Đăng xuất hoàn toàn khỏi website
-            
-            **Chức năng:**
-            - 🚫 Blacklist JWT token
-            - 🗑️ Invalidate Spring Security session
-            - 🔄 Clear tất cả session data
-            
-            **Kết quả:**
-            - ✅ User logout hoàn toàn khỏi website
-            - 🌐 Google account vẫn login trong browser
-            - ⚡ Lần login sau vẫn dễ dàng (no password)
-            
-            **Headers:** Authorization: Bearer {JWT_TOKEN}
-            
-            **💡 Tip:** Đây là logout thông thường nhất
-            """
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Đăng xuất website thành công")
-    })
-    @PostMapping("/logout/website")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> websiteLogout(
-            @Parameter(description = "JWT Token")
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        
-        Map<String, Object> result = new HashMap<>();
-        
-        try {
-            // Extract token từ Authorization header
-            String token = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
-            }
-            
-            if (token != null) {
-                // TODO: Add token to blacklist
-                // tokenBlacklistService.blacklistToken(token);
-                result.put("token_blacklisted", true);
-            }
-            
-            // Clear Spring Security session (chỉ session website)
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
-                result.put("session_cleared", true);
-            } else {
-                result.put("session_cleared", false);
-                result.put("session_note", "Không có session để clear");
-            }
-            
-            result.put("logout_type", "website");
-            result.put("success", true);
-            result.put("message", "Đăng xuất khỏi website thành công - Google account vẫn đăng nhập trong browser");
-            result.put("note", "Chỉ logout khỏi website này, không ảnh hưởng Google account của bạn");
-            
-            return ResponseEntity.ok(
-                ApiResponse.<Map<String, Object>>builder()
-                    .success(true)
-                    .message("Đăng xuất website thành công")
-                    .result(result)
-                    .build()
-            );
-            
-        } catch (Exception e) {
-            result.put("error", e.getMessage());
-            result.put("success", false);
-            
-            return ResponseEntity.internalServerError().body(
-                ApiResponse.<Map<String, Object>>builder()
-                    .success(false)
-                    .message("Lỗi đăng xuất website: " + e.getMessage())
-                    .result(result)
-                    .build()
-            );
-        }
-    }
+
     
     /**
      * Xác định loại tài khoản dựa trên mã người dùng
