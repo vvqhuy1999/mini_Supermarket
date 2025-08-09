@@ -17,6 +17,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,20 +128,41 @@ public class AuthenticationController {
     })
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<String>> checkAuthStatus(
-            @Parameter(description = "JWT token để kiểm tra", required = false)
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @Parameter(description = "JWT token từ Authorization header", required = false)
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Parameter(description = "HTTP Request để đọc cookies", required = false)
+            HttpServletRequest request) {
         
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = null;
+        String tokenSource = null;
+        
+        // 1. Ưu tiên lấy từ Authorization header
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7); // Loại bỏ "Bearer "
+            tokenSource = "header";
+        }
+        // 2. Nếu không có header, thử lấy từ cookie
+        else if (request != null && request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    tokenSource = "cookie:" + cookie.getName();
+                    break;
+                }
+            }
+        }
+        
+        if (token == null) {
             return ResponseEntity.status(401).body(
                 ApiResponse.<String>builder()
                     .success(false)
-                    .message("Token không hợp lệ hoặc thiếu!")
-                    .error("Missing or invalid token")
+                    .message("Token không hợp lệ hoặc thiếu trong cả header và cookie!")
+                    .error("Missing token in both header and cookie")
                     .build()
             );
         }
         
-        String token = authHeader.substring(7); // Loại bỏ "Bearer "
+        System.out.println("🍪 Status check - Token found from: " + tokenSource);
         
         if (!jwtUtil.validateToken(token)) {
             return ResponseEntity.status(401).body(
@@ -157,7 +180,7 @@ public class AuthenticationController {
         ApiResponse<String> response = ApiResponse.<String>builder()
                 .result("Authenticated")
                 .success(true)
-                .message("Người dùng đã đăng nhập: " + username + " - " + role)
+                .message("Người dùng đã đăng nhập: " + username + " - " + role + " (Token từ: " + tokenSource + ")")
                 .build();
         
         return ResponseEntity.ok(response);
@@ -173,10 +196,36 @@ public class AuthenticationController {
     })
     @PostMapping("/validate-token")
     public ResponseEntity<ApiResponse<Map<String, Object>>> validateToken(
-            @Parameter(description = "JWT token cần validate", required = true)
-            @RequestBody Map<String, String> request) {
+            @Parameter(description = "JWT token cần validate", required = false)
+            @RequestBody(required = false) Map<String, String> request,
+            @Parameter(description = "JWT token từ Authorization header", required = false)
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Parameter(description = "HTTP Request để đọc cookies", required = false)
+            HttpServletRequest httpRequest) {
         
-        String token = request.get("token");
+        String token = null;
+        String tokenSource = null;
+        
+        // 1. Ưu tiên lấy từ request body
+        if (request != null && request.get("token") != null) {
+            token = request.get("token");
+            tokenSource = "request_body";
+        }
+        // 2. Thử lấy từ Authorization header
+        else if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7); // Loại bỏ "Bearer "
+            tokenSource = "header";
+        }
+        // 3. Thử lấy từ cookie
+        else if (httpRequest != null && httpRequest.getCookies() != null) {
+            for (Cookie cookie : httpRequest.getCookies()) {
+                if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    tokenSource = "cookie:" + cookie.getName();
+                    break;
+                }
+            }
+        }
         
         if (token == null || token.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(
@@ -207,6 +256,9 @@ public class AuthenticationController {
         tokenInfo.put("role", role);
         tokenInfo.put("expiration", expiration);
         tokenInfo.put("valid", true);
+        tokenInfo.put("token_source", tokenSource);
+        
+        System.out.println("🍪 Token validation - Token found from: " + tokenSource);
         
         ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
                 .result(tokenInfo)
@@ -250,17 +302,39 @@ public class AuthenticationController {
     })
     @PostMapping("/log-out")
     public ResponseEntity<ApiResponse<Map<String, Object>>> logout(
-            @Parameter(description = "JWT token cần logout", required = false)
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @Parameter(description = "JWT token từ Authorization header", required = false)
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Parameter(description = "HTTP Request để đọc cookies", required = false)
+            HttpServletRequest request) {
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // Kiểm tra Authorization header
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            String token = null;
+            String tokenSource = null;
+            
+            // 1. Ưu tiên lấy từ Authorization header
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7); // Loại bỏ "Bearer "
+                tokenSource = "header";
+            }
+            // 2. Nếu không có header, thử lấy từ cookie
+            else if (request != null && request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        tokenSource = "cookie:" + cookie.getName();
+                        break;
+                    }
+                }
+            }
+            
+            // 3. Nếu không có token nào
+            if (token == null) {
                 result.put("token_provided", false);
                 result.put("logout_type", "no_token");
-                result.put("message", "Không có token - đăng xuất cơ bản");
+                result.put("token_source", "none");
+                result.put("message", "Không có token trong header hay cookie - đăng xuất cơ bản");
                 
                 return ResponseEntity.ok().body(
                     ApiResponse.<Map<String, Object>>builder()
@@ -271,8 +345,10 @@ public class AuthenticationController {
                 );
             }
             
-            String token = authHeader.substring(7); // Loại bỏ "Bearer "
             result.put("token_provided", true);
+            result.put("token_source", tokenSource);
+            
+            System.out.println("🍪 Token found from: " + tokenSource);
             
             // Kiểm tra format token cơ bản trước khi validate
             if (token == null || token.trim().isEmpty()) {
@@ -492,5 +568,32 @@ public class AuthenticationController {
         }
     }
     
+    /**
+     * 🍪 Test endpoint để kiểm tra cookie JWT
+     */
+    @Operation(summary = "Test Cookie JWT", description = "Kiểm tra JWT token từ cookie")
+    @GetMapping("/test-cookie")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> testCookieAuth(HttpServletRequest request) {
+        
+        Map<String, Object> tokenValidation = jwtUtil.validateTokenFromRequest(request);
+        
+        if ((Boolean) tokenValidation.get("valid")) {
+            return ResponseEntity.ok().body(
+                ApiResponse.<Map<String, Object>>builder()
+                    .success(true)
+                    .message("🍪 Cookie JWT authentication thành công!")
+                    .result(tokenValidation)
+                    .build()
+            );
+        } else {
+            return ResponseEntity.status(401).body(
+                ApiResponse.<Map<String, Object>>builder()
+                    .success(false)
+                    .message("🍪 Cookie JWT authentication thất bại!")
+                    .result(tokenValidation)
+                    .build()
+            );
+        }
+    }
 
 } 

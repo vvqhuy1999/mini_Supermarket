@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
@@ -235,5 +237,80 @@ public class JwtUtil {
      */
     private byte[] getSecretBytes() {
         return getActualSecret().getBytes(StandardCharsets.UTF_8);
+    }
+    
+    /**
+     * Extract JWT token từ HttpServletRequest (header hoặc cookie)
+     * @param request HttpServletRequest
+     * @return Map chứa token và source, hoặc null nếu không tìm thấy
+     */
+    public Map<String, String> extractTokenFromRequest(HttpServletRequest request) {
+        String token = null;
+        String tokenSource = null;
+        
+        // 1. Thử lấy từ Authorization header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7); // Loại bỏ "Bearer "
+            tokenSource = "header";
+        }
+        // 2. Nếu không có header, thử lấy từ cookie
+        else if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    tokenSource = "cookie:" + cookie.getName();
+                    break;
+                }
+            }
+        }
+        
+        if (token != null) {
+            Map<String, String> result = new HashMap<>();
+            result.put("token", token);
+            result.put("source", tokenSource);
+            return result;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Kiểm tra JWT token và trả về thông tin chi tiết
+     * @param request HttpServletRequest
+     * @return Map chứa thông tin token hoặc error
+     */
+    public Map<String, Object> validateTokenFromRequest(HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        
+        Map<String, String> tokenInfo = extractTokenFromRequest(request);
+        if (tokenInfo == null) {
+            result.put("valid", false);
+            result.put("error", "No token found in header or cookie");
+            result.put("token_source", "none");
+            return result;
+        }
+        
+        String token = tokenInfo.get("token");
+        String tokenSource = tokenInfo.get("source");
+        
+        boolean isValid = validateToken(token);
+        result.put("valid", isValid);
+        result.put("token_source", tokenSource);
+        
+        if (isValid) {
+            try {
+                result.put("username", getUsernameFromToken(token));
+                result.put("role", getRoleFromToken(token));
+                result.put("expiration", getExpirationFromToken(token));
+            } catch (Exception e) {
+                result.put("valid", false);
+                result.put("error", "Error extracting token info: " + e.getMessage());
+            }
+        } else {
+            result.put("error", "Invalid or expired token");
+        }
+        
+        return result;
     }
 } 
