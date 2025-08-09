@@ -145,4 +145,45 @@ public class KhachHangServiceImpl implements KhachHangService {
         
         return maKH;
     }
+    
+    @Override
+    public KhachHang createCustomerFromOAuth2(NguoiDung nguoiDung, String hoTen) {
+        try {
+            // Kiểm tra xem khách hàng đã tồn tại chưa
+            List<KhachHang> existingCustomers = khachHangRepository.findAllActive();
+            for (KhachHang kh : existingCustomers) {
+                if (kh.getNguoiDung() != null && 
+                    kh.getNguoiDung().getMaNguoiDung().equals(nguoiDung.getMaNguoiDung())) {
+                    System.out.println("🔍 Khách hàng đã tồn tại cho NguoiDung: " + nguoiDung.getMaNguoiDung());
+                    return kh; // Trả về khách hàng đã tồn tại
+                }
+            }
+            
+            // Tạo mới khách hàng từ OAuth2
+            KhachHang khachHang = new KhachHang();
+            khachHang.setMaKH(generateMaKhachHang());
+            khachHang.setNguoiDung(nguoiDung);
+            khachHang.setHoTen(hoTen != null ? hoTen : "OAuth2 User"); // Sử dụng tên từ OAuth2
+            khachHang.setSdt(null); // OAuth2 thường không cung cấp SĐT
+            khachHang.setDiaChi(null); // OAuth2 thường không cung cấp địa chỉ
+            khachHang.setDiemTichLuy(0);
+            khachHang.setLoaiKhachHang("Thường");
+            khachHang.setNgayDangKy(LocalDateTime.now());
+            khachHang.setIsDeleted(false);
+            
+            KhachHang savedCustomer = khachHangRepository.save(khachHang);
+            
+            System.out.println("✅ Tạo khách hàng mới từ OAuth2:");
+            System.out.println("   - Mã KH: " + savedCustomer.getMaKH());
+            System.out.println("   - Họ tên: " + savedCustomer.getHoTen());
+            System.out.println("   - Email: " + nguoiDung.getEmail());
+            
+            return savedCustomer;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi tạo khách hàng từ OAuth2: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 } 

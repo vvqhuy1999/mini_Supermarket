@@ -158,6 +158,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         url.append("&email=").append(URLEncoder.encode(authResponse.getUser().getEmail(), StandardCharsets.UTF_8));
         url.append("&role=").append(URLEncoder.encode(authResponse.getRole(), StandardCharsets.UTF_8));
         url.append("&userId=").append(URLEncoder.encode(authResponse.getUser().getMaNguoiDung(), StandardCharsets.UTF_8));
+        url.append("&message=").append(URLEncoder.encode(authResponse.getMessage(), StandardCharsets.UTF_8)); // Thêm message có chứa tên
         
         System.out.println("🔗 Redirect URL: " + url.toString());
         

@@ -1,8 +1,10 @@
 package com.example.mini_supermarket.service.impl;
 
 import com.example.mini_supermarket.dto.AuthenticationResponse;
+import com.example.mini_supermarket.entity.KhachHang;
 import com.example.mini_supermarket.entity.NguoiDung;
 import com.example.mini_supermarket.repository.NguoiDungRepository;
+import com.example.mini_supermarket.service.KhachHangService;
 import com.example.mini_supermarket.service.OAuth2Service;
 import com.example.mini_supermarket.service.UserService;
 import com.example.mini_supermarket.util.JwtUtil;
@@ -23,6 +25,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private final NguoiDungRepository nguoiDungRepository;
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final KhachHangService khachHangService;
     
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
@@ -31,10 +34,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     private String facebookClientId;
     
     @Autowired
-    public OAuth2ServiceImpl(NguoiDungRepository nguoiDungRepository, UserService userService, JwtUtil jwtUtil) {
+    public OAuth2ServiceImpl(NguoiDungRepository nguoiDungRepository, UserService userService, 
+                           JwtUtil jwtUtil, KhachHangService khachHangService) {
         this.nguoiDungRepository = nguoiDungRepository;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.khachHangService = khachHangService;
     }
     
     @Override
@@ -115,13 +120,16 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 System.out.println("✅ TỰ ĐỘNG ĐĂNG KÝ tài khoản mới cho Google OAuth2: " + email + " với sub: " + sub + " và maNguoiDung: " + nguoiDung.getMaNguoiDung());
             }
             
+            // ✅ TẠO KHÁCH HÀNG với tên từ Google
+            KhachHang khachHang = khachHangService.createCustomerFromOAuth2(nguoiDung, name);
+            
             // VẤN ĐỀ 3: Sử dụng JwtUtil để tạo token thật
             String role = getRoleName(nguoiDung.getVaiTro());
             String token = jwtUtil.generateToken(email, role);
             
             String message = isNewUser ? 
-                    "Đăng nhập Google thành công! Tài khoản mới đã được tạo." : 
-                    "Đăng nhập Google thành công!";
+                    "Đăng nhập Google thành công! Tài khoản mới đã được tạo với tên: " + name : 
+                    "Đăng nhập Google thành công! Chào mừng " + (khachHang != null ? khachHang.getHoTen() : name);
             
             AuthenticationResponse response = new AuthenticationResponse();
             response.setAuthenticated(true);
@@ -129,6 +137,13 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             response.setUser(nguoiDung);
             response.setRole(role);
             response.setToken(token);
+            
+            // Thêm thông tin Google vào response
+            if (name != null) {
+                System.out.println("🎯 Google Name: " + name);
+                response.setMessage(response.getMessage() + " (Google: " + name + ")");
+            }
+            
             return response;
                     
         } catch (Exception e) {
@@ -248,13 +263,16 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 System.out.println("✅ TỰ ĐỘNG ĐĂNG KÝ tài khoản mới cho Facebook OAuth2: " + email + " với sub: " + id + " và maNguoiDung: " + nguoiDung.getMaNguoiDung());
             }
             
+            // ✅ TẠO KHÁCH HÀNG với tên từ Facebook
+            KhachHang khachHang = khachHangService.createCustomerFromOAuth2(nguoiDung, name);
+            
             // VẤN ĐỀ 3: Sử dụng JwtUtil để tạo token thật
             String role = getRoleName(nguoiDung.getVaiTro());
             String token = jwtUtil.generateToken(email, role);
             
             String message = isNewUser ? 
-                    "Đăng nhập Facebook thành công! Tài khoản mới đã được tạo." : 
-                    "Đăng nhập Facebook thành công!";
+                    "Đăng nhập Facebook thành công! Tài khoản mới đã được tạo với tên: " + name : 
+                    "Đăng nhập Facebook thành công! Chào mừng " + (khachHang != null ? khachHang.getHoTen() : name);
             
             AuthenticationResponse response = new AuthenticationResponse();
             response.setAuthenticated(true);
@@ -262,6 +280,13 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             response.setUser(nguoiDung);
             response.setRole(role);
             response.setToken(token);
+            
+            // Thêm thông tin Facebook vào response
+            if (name != null) {
+                System.out.println("🎯 Facebook Name: " + name);
+                response.setMessage(response.getMessage() + " (Facebook: " + name + ")");
+            }
+            
             return response;
                     
         } catch (Exception e) {
