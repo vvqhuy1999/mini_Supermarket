@@ -37,7 +37,7 @@ public class ChiTietGioHang implements Serializable {
     @Column(name = "DonGiaHienTai", precision = 15, scale = 2, nullable = false)
     private BigDecimal donGiaHienTai; // Giá sản phẩm tại thời điểm thêm vào giỏ
 
-    @Column(name = "ThanhTien", precision = 15, scale = 2)
+    @Column(name = "ThanhTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal thanhTien; // SoLuong * DonGiaHienTai (computed)
 
     @Column(name = "NgayThem")
