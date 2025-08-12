@@ -46,7 +46,7 @@ public class BangLuong implements Serializable {
     @Column(name = "KhauTru", precision = 15, scale = 2)
     private BigDecimal khauTru = BigDecimal.ZERO;
 
-    @Column(name = "TongLuong", precision = 15, scale = 2)
+    @Column(name = "TongLuong", precision = 15, scale = 2, updatable = false)
     private BigDecimal tongLuong;
 
     @Column(name = "SoNgayLam")
