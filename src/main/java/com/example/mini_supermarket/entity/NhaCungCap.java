@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class NhaCungCap implements Serializable {
     @Id
-    @Column(name = "MaNCC", length = 10)
+    @Column(name = "MaNCC", length = 50)
     private String maNCC;
 
     @Column(name = "TenNCC", length = 255, nullable = false)
@@ -34,7 +34,7 @@ public class NhaCungCap implements Serializable {
     @Column(name = "Email", length = 100)
     private String email;
 
-    @Column(name = "ThongTinHopDong", columnDefinition = "LONGTEXT")
+    @Column(name = "ThongTinHopDong", columnDefinition = "TEXT")
     private String thongTinHopDong;
 
     @Column(name = "NgayHopTac")

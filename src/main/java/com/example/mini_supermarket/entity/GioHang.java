@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Entity
@@ -33,15 +33,17 @@ public class GioHang implements Serializable {
     private NhanVien nhanVien;
 
     @Column(name = "NgayTao")
-    private LocalDateTime ngayTao = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayTao;
 
     @Column(name = "NgayCapNhat")
-    private LocalDateTime ngayCapNhat;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayCapNhat;
 
     @Column(name = "TrangThai")
     private Integer trangThai = 0; // 0=Đang chọn hàng, 1=Đã đặt hàng, 2=Đã thanh toán, 3=Hủy
 
-    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    @Column(name = "GhiChu", columnDefinition = "TEXT")
     private String ghiChu;
 
     @Column(name = "IsDeleted")

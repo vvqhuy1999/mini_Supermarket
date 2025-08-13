@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CuaHang implements Serializable {
     @Id
-    @Column(name = "MaCH", length = 10)
+    @Column(name = "MaCH", length = 50)
     private String maCH;
 
     @Column(name = "TenCH", length = 255, nullable = false)

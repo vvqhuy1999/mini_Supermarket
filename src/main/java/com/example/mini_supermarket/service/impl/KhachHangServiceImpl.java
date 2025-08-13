@@ -8,7 +8,7 @@ import com.example.mini_supermarket.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -114,7 +114,7 @@ public class KhachHangServiceImpl implements KhachHangService {
             khachHang.setDiaChi(diaChi);
             khachHang.setDiemTichLuy(0); // Mặc định 0 điểm
             khachHang.setLoaiKhachHang("Thường"); // Mặc định loại thường
-            khachHang.setNgayDangKy(LocalDateTime.now());
+            khachHang.setNgayDangKy(new Timestamp(System.currentTimeMillis()));
             khachHang.setIsDeleted(false);
             
             // 3. Lưu thông tin khách hàng
@@ -168,7 +168,7 @@ public class KhachHangServiceImpl implements KhachHangService {
             khachHang.setDiaChi(null); // OAuth2 thường không cung cấp địa chỉ
             khachHang.setDiemTichLuy(0);
             khachHang.setLoaiKhachHang("Thường");
-            khachHang.setNgayDangKy(LocalDateTime.now());
+            khachHang.setNgayDangKy(new Timestamp(System.currentTimeMillis()));
             khachHang.setIsDeleted(false);
             
             KhachHang savedCustomer = khachHangRepository.save(khachHang);

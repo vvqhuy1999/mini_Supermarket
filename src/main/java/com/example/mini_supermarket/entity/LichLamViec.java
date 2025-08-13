@@ -1,13 +1,15 @@
 package com.example.mini_supermarket.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import java.time.LocalTime;
 
 @Entity
@@ -43,9 +45,10 @@ public class LichLamViec implements Serializable {
     private Integer trangThai = 0; // 0=Chờ duyệt, 1=Đã duyệt, 2=Từ chối, 3=Hủy, 4=Đã hoàn thành
 
     @Column(name = "NgayDuyet")
-    private LocalDateTime ngayDuyet;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayDuyet;
 
-    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    @Column(name = "GhiChu", columnDefinition = "TEXT")
     private String ghiChu;
 
     @Column(name = "GioVao")

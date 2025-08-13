@@ -1,10 +1,10 @@
 # Default configuration for local development
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/QuanLySieuThi?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:admin}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:test}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
     show-sql: true
     hibernate:
@@ -14,7 +14,7 @@ spring:
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
         format_sql: true
   security:
     # Bật lại Spring Security

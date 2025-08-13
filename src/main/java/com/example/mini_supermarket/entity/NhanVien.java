@@ -20,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class NhanVien implements Serializable {
     @Id
-    @Column(name = "MaNV", length = 10)
+    @Column(name = "MaNV", length = 50)
     private String maNV;
 
     @ManyToOne

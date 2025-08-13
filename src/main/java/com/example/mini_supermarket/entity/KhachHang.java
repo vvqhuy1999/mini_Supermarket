@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -21,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class KhachHang implements Serializable {
     @Id
-    @Column(name = "MaKH", length = 10)
+    @Column(name = "MaKH", length = 50)
     private String maKH;
 
     @ManyToOne
@@ -47,7 +46,8 @@ public class KhachHang implements Serializable {
     private String loaiKhachHang = "Thường"; // Thường, VIP, Bạc, Vàng, Kim cương
 
     @Column(name = "NgayDangKy")
-    private LocalDateTime ngayDangKy = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayDangKy;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

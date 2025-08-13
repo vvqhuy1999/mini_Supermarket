@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Entity
@@ -22,7 +22,7 @@ import java.util.List;
 @AllArgsConstructor
 public class SanPham implements Serializable {
     @Id
-    @Column(name = "MaSP", length = 10)
+    @Column(name = "MaSP", length = 50)
     private String maSP;
 
     @ManyToOne
@@ -32,7 +32,7 @@ public class SanPham implements Serializable {
     @Column(name = "TenSP", length = 255, nullable = false)
     private String tenSP;
 
-    @Column(name = "MoTa", columnDefinition = "LONGTEXT")
+    @Column(name = "MoTa", columnDefinition = "TEXT")
     private String moTa;
 
     @Column(name = "GiaBan", precision = 15, scale = 2, nullable = false)
@@ -54,7 +54,8 @@ public class SanPham implements Serializable {
     private Integer trangThai = 1; // 0=Ngừng kinh doanh, 1=Đang kinh doanh
 
     @Column(name = "NgayTao")
-    private LocalDateTime ngayTao = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayTao;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
