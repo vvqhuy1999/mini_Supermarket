@@ -21,4 +21,8 @@ public interface HinhAnhRepository extends JpaRepository<HinhAnh, Integer> {
     // Tìm hình ảnh theo ID (bao gồm cả đã xóa)
     @Query("SELECT h FROM HinhAnh h WHERE h.maHinh = :id")
     Optional<HinhAnh> findByIdIncludeDeleted(@Param("id") Integer id);
+    
+    // Tìm hình ảnh theo sản phẩm và chưa bị xóa
+    @Query("SELECT h FROM HinhAnh h WHERE h.sanPham = :sanPham AND h.isDeleted = false ORDER BY h.thuTuHienThi ASC, h.maHinh ASC")
+    List<HinhAnh> findBySanPhamAndIsDeletedFalse(@Param("sanPham") com.example.mini_supermarket.entity.SanPham sanPham);
 } 

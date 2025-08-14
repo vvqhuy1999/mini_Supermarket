@@ -95,6 +95,9 @@ public class SecurityConfig {
         
         // Media & Images
         "/api/hinhanh/**",              // Quản lý hình ảnh
+        "/api/upload/**",               // API upload ảnh sản phẩm
+        "/images/**",                   // Truy cập ảnh từ uploads/images
+        "/uploads/**",                  // Truy cập trực tiếp từ thư mục uploads
         
         // Reports & Statistics
         "/api/thongkebaocao/**"         // Quản lý thống kê báo cáo

@@ -69,4 +69,9 @@ public class HinhAnhServiceImpl implements HinhAnhService {
             hinhAnhRepository.save(hinhAnh);
         }
     }
+    
+    @Override
+    public List<HinhAnh> findBySanPhamAndNotDeleted(com.example.mini_supermarket.entity.SanPham sanPham) {
+        return hinhAnhRepository.findBySanPhamAndIsDeletedFalse(sanPham);
+    }
 } 

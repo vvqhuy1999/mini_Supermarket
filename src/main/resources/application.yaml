@@ -68,6 +68,21 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+  
+  # Static Resources Configuration - Serve ảnh từ thư mục uploads
+  web:
+    resources:
+      static-locations: 
+        - classpath:/static/
+        - file:./uploads/
+        - file:./static/
 
 # Swagger/OpenAPI Configuration
 springdoc:
@@ -98,6 +113,14 @@ jwt:
 
 # OAuth2 Frontend Integration - Redirect to Frontend after OAuth2
 oauth2:
+
+# File Upload Configuration
+app:
+  images:
+    upload-dir: ./uploads/images
+    static-dir: ./static/images
+    allowed-extensions: jpg,jpeg,png,gif,webp,jfif
+    max-size: 10485760  # 10MB in bytes
   frontend:
     base-url: ${FRONTEND_URL:http://localhost:3000}
     success-path: ${OAUTH2_SUCCESS_PATH:/oauth2/success}
