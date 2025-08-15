@@ -5,6 +5,7 @@ import com.example.mini_supermarket.entity.HoaDon;
 import com.example.mini_supermarket.service.HoaDonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,11 +20,13 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HoaDon> findAll() {
         return hoaDonRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HoaDon findById(Integer theId) {
         Optional<HoaDon> result = hoaDonRepository.findById(theId);
         HoaDon theHoaDon = null;
@@ -37,16 +40,19 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     @Override
+    @Transactional
     public HoaDon save(HoaDon theHoaDon) {
         return hoaDonRepository.save(theHoaDon);
     }
 
     @Override
+    @Transactional
     public void deleteById(Integer theId) {
         hoaDonRepository.deleteById(theId);
     }
 
     @Override
+    @Transactional
     public HoaDon update(HoaDon hoaDon) {
         Optional<HoaDon> existingHoaDon = hoaDonRepository.findById(hoaDon.getMaHD());
 
@@ -58,17 +64,20 @@ public class HoaDonServiceImpl implements HoaDonService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HoaDon> findAllActive() {
         return hoaDonRepository.findAllActive();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HoaDon findActiveById(Integer id) {
         Optional<HoaDon> result = hoaDonRepository.findActiveById(id);
         return result.orElse(null);
     }
 
     @Override
+    @Transactional
     public void softDeleteById(Integer id) {
         Optional<HoaDon> hoaDonOpt = hoaDonRepository.findActiveById(id);
         if (hoaDonOpt.isPresent()) {

@@ -38,4 +38,8 @@ public class ChiTietDonHang implements Serializable {
 
     @Column(name = "giamgia", precision = 5, scale = 2)
     private BigDecimal giamGia = BigDecimal.ZERO;
+    
+    // Field để đánh dấu soft delete
+    @Column(name = "isdeleted", nullable = false)
+    private Boolean isdeleted = false;
 }

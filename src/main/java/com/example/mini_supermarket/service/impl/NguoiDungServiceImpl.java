@@ -5,6 +5,7 @@ import com.example.mini_supermarket.entity.NguoiDung;
 import com.example.mini_supermarket.service.NguoiDungService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,36 +20,33 @@ public class NguoiDungServiceImpl implements NguoiDungService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<NguoiDung> findAll() {
-        return nguoiDungRepository.findAll();
+        return nguoiDungRepository.findAllActive();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public NguoiDung findById(String theId) {
-        Optional<NguoiDung> result = nguoiDungRepository.findById(theId);
-        NguoiDung theNguoiDung = null;
-
-        if (result.isPresent()) {
-            theNguoiDung = result.get();
-        } else {
-            throw new RuntimeException("Did not find NguoiDung id - " + theId);
-        }
-        return theNguoiDung;
+        return nguoiDungRepository.findActiveById(theId).orElse(null);
     }
 
     @Override
+    @Transactional
     public NguoiDung save(NguoiDung theNguoiDung) {
         return nguoiDungRepository.save(theNguoiDung);
     }
 
     @Override
+    @Transactional
     public void deleteById(String theId) {
         nguoiDungRepository.deleteById(theId);
     }
 
     @Override
+    @Transactional
     public NguoiDung update(NguoiDung nguoiDung) {
-        Optional<NguoiDung> existingNguoiDung = nguoiDungRepository.findById(nguoiDung.getMaNguoiDung());
+        Optional<NguoiDung> existingNguoiDung = nguoiDungRepository.findActiveById(nguoiDung.getMaNguoiDung());
 
         if (!existingNguoiDung.isPresent()) {
             throw new RuntimeException("Không tìm thấy người dùng với ID - " + nguoiDung.getMaNguoiDung());
@@ -58,17 +56,20 @@ public class NguoiDungServiceImpl implements NguoiDungService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<NguoiDung> findAllActive() {
         return nguoiDungRepository.findAllActive();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public NguoiDung findActiveById(String id) {
         Optional<NguoiDung> result = nguoiDungRepository.findActiveById(id);
         return result.orElse(null);
     }
 
     @Override
+    @Transactional
     public void softDeleteById(String id) {
         Optional<NguoiDung> nguoiDungOpt = nguoiDungRepository.findActiveById(id);
         if (nguoiDungOpt.isPresent()) {

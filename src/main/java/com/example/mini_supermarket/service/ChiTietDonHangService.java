@@ -45,4 +45,7 @@ public interface ChiTietDonHangService {
     
     // Tìm chi tiết đơn hàng có giảm giá
     List<ChiTietDonHang> findChiTietDonHangCoGiamGia();
+    
+    // Soft delete chi tiết đơn hàng (đánh dấu xóa thay vì xóa thật)
+    void softDeleteById(Integer maCTHD);
 }

@@ -5,6 +5,28 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:test}
     driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+    # Connection Pool Configuration - HikariCP (default)
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+      validation-timeout: 5000
+      # Prepared Statement Cache
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+        useLocalSessionState: true
+        rewriteBatchedStatements: true
+        cacheResultSetMetadata: true
+        cacheServerConfiguration: true
+        elideSetAutoCommits: true
+        maintainTimeStats: false
   jpa:
     show-sql: true
     hibernate:
@@ -16,6 +38,26 @@ spring:
       hibernate:
         dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
         format_sql: true
+        # Prepared Statement Management
+        jdbc:
+          batch_size: 20
+          batch_versioned_data: true
+          batch_builder: legacy
+        # Connection Management
+        connection:
+          provider_disables_autocommit: true
+        # Statement Management
+        statement:
+          batch_size: 20
+          batch_versioned_data: true
+        # Cache Management
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        # Performance Optimization
+        order_inserts: true
+        order_updates: true
+        batch_fetch_style: LEGACY
   security:
     # Bật lại Spring Security
     enabled: true

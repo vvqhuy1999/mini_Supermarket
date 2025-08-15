@@ -7,6 +7,7 @@ import com.example.mini_supermarket.service.KhachHangService;
 import com.example.mini_supermarket.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -24,16 +25,19 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<KhachHang> findAll() {
         return khachHangRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<KhachHang> findAllActive() {
         return khachHangRepository.findAllActive();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public KhachHang findById(String theId) {
         Optional<KhachHang> result = khachHangRepository.findById(theId);
         KhachHang theKhachHang = null;
@@ -47,6 +51,7 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public KhachHang findActiveById(String theId) {
         Optional<KhachHang> result = khachHangRepository.findActiveById(theId);
         KhachHang theKhachHang = null;
@@ -60,16 +65,19 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    @Transactional
     public KhachHang save(KhachHang theKhachHang) {
         return khachHangRepository.save(theKhachHang);
     }
 
     @Override
+    @Transactional
     public void deleteById(String theId) {
         khachHangRepository.deleteById(theId);
     }
 
     @Override
+    @Transactional
     public void softDeleteById(String theId) {
         Optional<KhachHang> result = khachHangRepository.findByIdIncludeDeleted(theId);
         
@@ -83,6 +91,7 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    @Transactional
     public KhachHang update(KhachHang khachHang) {
         Optional<KhachHang> existingKhachHang = khachHangRepository.findById(khachHang.getMaKH());
 
@@ -94,6 +103,7 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
 
     @Override
+    @Transactional
     public KhachHang registerCustomerAccount(String email, String matKhau, String hoTen, String sdt, String diaChi) {
         try {
             // 1. Tạo tài khoản NguoiDung trước
@@ -147,6 +157,7 @@ public class KhachHangServiceImpl implements KhachHangService {
     }
     
     @Override
+    @Transactional
     public KhachHang createCustomerFromOAuth2(NguoiDung nguoiDung, String hoTen) {
         try {
             // Kiểm tra xem khách hàng đã tồn tại chưa

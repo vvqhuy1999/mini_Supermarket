@@ -327,7 +327,8 @@ CREATE TABLE donhang (
     ngaydathang TIMESTAMP NOT NULL,
     ngaygiaohang TIMESTAMP,
     diachigiaohang VARCHAR(255) NOT NULL,
-    trangthai VARCHAR(50) NOT NULL -- e.g., Pending, Shipping, Completed, Canceled
+    trangthai VARCHAR(50) NOT NULL, -- e.g., Pending, Shipping, Completed, Canceled
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Order Details Table
@@ -337,7 +338,8 @@ CREATE TABLE chitietdonhang (
     masp VARCHAR(50) NOT NULL,
     soluong INT NOT NULL,
     dongia DECIMAL(15,2) NOT NULL,
-    giamgia DECIMAL(5,2) DEFAULT 0
+    giamgia DECIMAL(5,2) DEFAULT 0,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for sales invoices

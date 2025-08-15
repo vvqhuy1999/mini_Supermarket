@@ -46,4 +46,7 @@ public interface DonHangService {
     
     // Tìm đơn hàng theo khách hàng và khoảng thời gian
     List<DonHang> findDonHangByKhachHangAndThoiGian(String maKH, Timestamp tuNgay, Timestamp denNgay);
+    
+    // Soft delete đơn hàng (đánh dấu xóa thay vì xóa thật)
+    void softDeleteById(String maDH);
 }

@@ -49,4 +49,8 @@ public class DonHang implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "donHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ChiTietDonHang> chiTietDonHangs;
+    
+    // Field để đánh dấu soft delete
+    @Column(name = "isdeleted", nullable = false)
+    private Boolean isdeleted = false;
 }
