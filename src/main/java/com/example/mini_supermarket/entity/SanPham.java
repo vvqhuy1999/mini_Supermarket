@@ -13,9 +13,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "SanPham", indexes = {
-    @Index(name = "idx_sanpham_loai", columnList = "MaLoaiSP"),
-    @Index(name = "idx_sanpham_gia", columnList = "GiaBan"),
-    @Index(name = "idx_sanpham_trangthai", columnList = "TrangThai")
+        @Index(name = "idx_sanpham_loai", columnList = "MaLoaiSP"),
+        @Index(name = "idx_sanpham_gia", columnList = "GiaBan"),
+        @Index(name = "idx_sanpham_trangthai", columnList = "TrangThai")
 })
 @Data
 @NoArgsConstructor
