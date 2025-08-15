@@ -21,5 +21,7 @@ public interface CuaHangService {
 
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
+    String generateMaCuaHang(); // Generate mã cửa hàng tự động
+
     CuaHang update(CuaHang cuaHang);
 } 

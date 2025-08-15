@@ -31,27 +31,13 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Override
     public KhachHang findById(String theId) {
         Optional<KhachHang> result = khachHangRepository.findById(theId);
-        KhachHang theKhachHang = null;
-
-        if (result.isPresent()) {
-            theKhachHang = result.get();
-        } else {
-            throw new RuntimeException("Did not find KhachHang id - " + theId);
-        }
-        return theKhachHang;
+        return result.orElse(null); // Trả về null thay vì throw exception
     }
 
     @Override
     public KhachHang findActiveById(String theId) {
         Optional<KhachHang> result = khachHangRepository.findActiveById(theId);
-        KhachHang theKhachHang = null;
-
-        if (result.isPresent()) {
-            theKhachHang = result.get();
-        } else {
-            throw new RuntimeException("Did not find active KhachHang id - " + theId);
-        }
-        return theKhachHang;
+        return result.orElse(null); // Trả về null thay vì throw exception
     }
 
     @Override
@@ -73,7 +59,7 @@ public class KhachHangServiceImpl implements KhachHangService {
             khachHang.setIsDeleted(true);
             khachHangRepository.save(khachHang);
         } else {
-            throw new RuntimeException("Did not find KhachHang id - " + theId);
+            throw new RuntimeException("Không tìm thấy khách hàng với ID - " + theId);
         }
     }
 
@@ -87,4 +73,4 @@ public class KhachHangServiceImpl implements KhachHangService {
 
         return khachHangRepository.save(khachHang);
     }
-} 
+}

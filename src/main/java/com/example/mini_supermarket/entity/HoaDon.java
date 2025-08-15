@@ -1,15 +1,27 @@
 package com.example.mini_supermarket.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "HoaDon", indexes = {
@@ -42,13 +54,13 @@ public class HoaDon implements Serializable {
     @Column(name = "NgayLap", nullable = false)
     private LocalDateTime ngayLap;
 
-    @Column(name = "TongTienHang", precision = 15, scale = 2)
+    @Column(name = "TongTienHang", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal tongTienHang = BigDecimal.ZERO;
 
     @Column(name = "TienGiamGia", precision = 15, scale = 2)
     private BigDecimal tienGiamGia = BigDecimal.ZERO;
 
-    @Column(name = "TongTien", precision = 15, scale = 2)
+    @Column(name = "TongTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal tongTien;
 
     @ManyToOne

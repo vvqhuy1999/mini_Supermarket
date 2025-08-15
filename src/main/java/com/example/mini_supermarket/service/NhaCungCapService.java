@@ -21,5 +21,7 @@ public interface NhaCungCapService {
 
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
+    String generateMaNhaCungCap(); // Generate mã nhà cung cấp tự động
+
     NhaCungCap update(NhaCungCap nhaCungCap);
 } 

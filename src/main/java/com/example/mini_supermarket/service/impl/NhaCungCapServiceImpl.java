@@ -69,6 +69,37 @@ public class NhaCungCapServiceImpl implements NhaCungCapService {
     }
 
     @Override
+    public String generateMaNhaCungCap() {
+        // Sử dụng random alphanumeric cho 7 ký tự
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        
+        // Tạo loop để đảm bảo mã không trùng
+        String newCode;
+        int maxAttempts = 100; // Giới hạn số lần thử
+        int attempts = 0;
+        
+        do {
+            StringBuilder randomPart = new StringBuilder();
+            for (int i = 0; i < 7; i++) {
+                int index = (int) (Math.random() * characters.length());
+                randomPart.append(characters.charAt(index));
+            }
+            newCode = "NCC" + randomPart.toString();
+            attempts++;
+        } while (nhaCungCapRepository.findById(newCode).isPresent() && attempts < maxAttempts);
+        
+        if (attempts >= maxAttempts) {
+            // Fallback: sử dụng timestamp nếu không tìm được mã unique
+            long timestamp = System.currentTimeMillis();
+            String timestampStr = String.valueOf(timestamp);
+            String suffix = timestampStr.substring(Math.max(0, timestampStr.length() - 7));
+            newCode = "NCC" + suffix;
+        }
+        
+        return newCode;
+    }
+
+    @Override
     public void softDeleteById(String id) {
         Optional<NhaCungCap> nhaCungCapOpt = nhaCungCapRepository.findActiveById(id);
         if (nhaCungCapOpt.isPresent()) {

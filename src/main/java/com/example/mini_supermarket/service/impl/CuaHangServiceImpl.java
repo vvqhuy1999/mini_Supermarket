@@ -26,14 +26,7 @@ public class CuaHangServiceImpl implements CuaHangService {
     @Override
     public CuaHang findById(String theId) {
         Optional<CuaHang> result = cuaHangRepository.findById(theId);
-        CuaHang theCuaHang = null;
-
-        if (result.isPresent()) {
-            theCuaHang = result.get();
-        } else {
-            throw new RuntimeException("Did not find CuaHang id - " + theId);
-        }
-        return theCuaHang;
+        return result.orElse(null); // Trả về null thay vì throw exception
     }
 
     @Override
@@ -44,6 +37,38 @@ public class CuaHangServiceImpl implements CuaHangService {
     @Override
     public void deleteById(String theId) {
         cuaHangRepository.deleteById(theId);
+    }
+
+    @Override
+    public String generateMaCuaHang() {
+        // Sử dụng UUID hoặc random alphanumeric cho 8 ký tự
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder result = new StringBuilder("CH");
+        
+        // Tạo loop để đảm bảo mã không trùng
+        String newCode;
+        int maxAttempts = 100; // Giới hạn số lần thử
+        int attempts = 0;
+        
+        do {
+            StringBuilder randomPart = new StringBuilder();
+            for (int i = 0; i < 8; i++) {
+                int index = (int) (Math.random() * characters.length());
+                randomPart.append(characters.charAt(index));
+            }
+            newCode = "CH" + randomPart.toString();
+            attempts++;
+        } while (cuaHangRepository.findById(newCode).isPresent() && attempts < maxAttempts);
+        
+        if (attempts >= maxAttempts) {
+            // Fallback: sử dụng timestamp nếu không tìm được mã unique
+            long timestamp = System.currentTimeMillis();
+            String timestampStr = String.valueOf(timestamp);
+            String suffix = timestampStr.substring(timestampStr.length() - 8);
+            newCode = "CH" + suffix;
+        }
+        
+        return newCode;
     }
 
     @Override
@@ -77,4 +102,4 @@ public class CuaHangServiceImpl implements CuaHangService {
             cuaHangRepository.save(cuaHang);
         }
     }
-} 
+}

@@ -1,60 +1,24 @@
 package com.example.mini_supermarket.service.impl;
 
-import com.example.mini_supermarket.repository.GioHangRepository;
 import com.example.mini_supermarket.entity.GioHang;
+import com.example.mini_supermarket.repository.GioHangRepository;
 import com.example.mini_supermarket.service.GioHangService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class GioHangServiceImpl implements GioHangService {
-    private GioHangRepository gioHangRepository;
 
     @Autowired
-    public GioHangServiceImpl(GioHangRepository gioHangRepository) {
-        this.gioHangRepository = gioHangRepository;
-    }
+    private GioHangRepository gioHangRepository;
 
     @Override
     public List<GioHang> findAll() {
         return gioHangRepository.findAll();
-    }
-
-    @Override
-    public GioHang findById(Integer theId) {
-        Optional<GioHang> result = gioHangRepository.findById(theId);
-        GioHang theGioHang = null;
-
-        if (result.isPresent()) {
-            theGioHang = result.get();
-        } else {
-            throw new RuntimeException("Did not find GioHang id - " + theId);
-        }
-        return theGioHang;
-    }
-
-    @Override
-    public GioHang save(GioHang theGioHang) {
-        return gioHangRepository.save(theGioHang);
-    }
-
-    @Override
-    public void deleteById(Integer theId) {
-        gioHangRepository.deleteById(theId);
-    }
-
-    @Override
-    public GioHang update(GioHang gioHang) {
-        Optional<GioHang> existingGioHang = gioHangRepository.findById(gioHang.getMaGH());
-
-        if (!existingGioHang.isPresent()) {
-            throw new RuntimeException("Không tìm thấy giỏ hàng với ID - " + gioHang.getMaGH());
-        }
-
-        return gioHangRepository.save(gioHang);
     }
 
     @Override
@@ -63,18 +27,62 @@ public class GioHangServiceImpl implements GioHangService {
     }
 
     @Override
+    public GioHang findById(Integer id) {
+        Optional<GioHang> gioHang = gioHangRepository.findByIdIncludeDeleted(id);
+        return gioHang.orElse(null);
+    }
+
+    @Override
     public GioHang findActiveById(Integer id) {
-        Optional<GioHang> result = gioHangRepository.findActiveById(id);
-        return result.orElse(null);
+        Optional<GioHang> gioHang = gioHangRepository.findActiveById(id);
+        return gioHang.orElse(null);
+    }
+
+    @Override
+    public GioHang save(GioHang gioHang) {
+        if (gioHang.getNgayTao() == null) {
+            gioHang.setNgayTao(LocalDateTime.now());
+        }
+        if (gioHang.getTrangThai() == null) {
+            gioHang.setTrangThai(0);
+        }
+        if (gioHang.getIsDeleted() == null) {
+            gioHang.setIsDeleted(false);
+        }
+        return gioHangRepository.save(gioHang);
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        gioHangRepository.deleteById(id);
     }
 
     @Override
     public void softDeleteById(Integer id) {
-        Optional<GioHang> gioHangOpt = gioHangRepository.findActiveById(id);
+        Optional<GioHang> gioHangOpt = gioHangRepository.findById(id);
         if (gioHangOpt.isPresent()) {
             GioHang gioHang = gioHangOpt.get();
             gioHang.setIsDeleted(true);
+            gioHang.setNgayCapNhat(LocalDateTime.now());
             gioHangRepository.save(gioHang);
         }
     }
-} 
+
+    @Override
+    public GioHang update(GioHang gioHang) {
+        if (gioHang.getMaGH() != null) {
+            Optional<GioHang> existingGioHang = gioHangRepository.findById(gioHang.getMaGH());
+            if (existingGioHang.isPresent()) {
+                gioHang.setNgayCapNhat(LocalDateTime.now());
+                if (gioHang.getNgayTao() == null) {
+                    gioHang.setNgayTao(existingGioHang.get().getNgayTao());
+                }
+                if (gioHang.getIsDeleted() == null) {
+                    gioHang.setIsDeleted(false);
+                }
+                return gioHangRepository.save(gioHang);
+            }
+        }
+        return null;
+    }
+}

@@ -51,4 +51,22 @@ public class GioHang implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "gioHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ChiTietGioHang> chiTietGioHangs;
-} 
+
+    @PrePersist
+    protected void onCreate() {
+        if (ngayTao == null) {
+            ngayTao = LocalDateTime.now();
+        }
+        if (trangThai == null) {
+            trangThai = 0;
+        }
+        if (isDeleted == null) {
+            isDeleted = false;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        ngayCapNhat = LocalDateTime.now();
+    }
+}

@@ -21,5 +21,7 @@ public interface LoaiSanPhamService {
 
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
+    String generateMaLoaiSanPham(); // Generate mã loại sản phẩm tự động
+
     LoaiSanPham update(LoaiSanPham loaiSanPham);
 } 

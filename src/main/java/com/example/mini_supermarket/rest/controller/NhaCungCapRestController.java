@@ -14,7 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/nhacungcap")
@@ -24,6 +27,27 @@ public class NhaCungCapRestController {
 
     @Autowired
     private NhaCungCapService nhaCungCapService;
+
+    @Operation(summary = "Lấy mã nhà cung cấp mới", description = "Tạo và trả về mã nhà cung cấp mới theo format NCC + 7 ký tự chữ và số ngẫu nhiên")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/generate-code")
+    public ResponseEntity<Map<String, String>> generateMaNhaCungCap() {
+        try {
+            String newCode = nhaCungCapService.generateMaNhaCungCap();
+            Map<String, String> response = new HashMap<>();
+            response.put("maNCC", newCode);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi khi tạo mã nhà cung cấp: " + e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @Operation(summary = "Lấy tất cả nhà cung cấp", description = "Trả về danh sách tất cả nhà cung cấp chưa bị xóa")
     @ApiResponses(value = {
@@ -77,7 +101,19 @@ public class NhaCungCapRestController {
     @PostMapping
     public ResponseEntity<NhaCungCap> createNhaCungCap(@RequestBody NhaCungCap nhaCungCap) {
         try {
+            // Tự động generate mã nhà cung cấp
+            String generatedMaNCC = nhaCungCapService.generateMaNhaCungCap();
+            nhaCungCap.setMaNCC(generatedMaNCC);
+            
+            // Thiết lập giá trị mặc định
+            if (nhaCungCap.getNgayHopTac() == null) {
+                nhaCungCap.setNgayHopTac(LocalDate.now());
+            }
+            if (nhaCungCap.getTrangThai() == null) {
+                nhaCungCap.setTrangThai(1);
+            }
             nhaCungCap.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
+            
             NhaCungCap savedNhaCungCap = nhaCungCapService.save(nhaCungCap);
             return new ResponseEntity<>(savedNhaCungCap, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -103,6 +139,12 @@ public class NhaCungCapRestController {
             if (existingNhaCungCap != null) {
                 nhaCungCap.setMaNCC(id);
                 nhaCungCap.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
+                
+                // Giữ nguyên ngày hợp tác nếu không được cung cấp
+                if (nhaCungCap.getNgayHopTac() == null) {
+                    nhaCungCap.setNgayHopTac(existingNhaCungCap.getNgayHopTac());
+                }
+                
                 NhaCungCap updatedNhaCungCap = nhaCungCapService.save(nhaCungCap);
                 return new ResponseEntity<>(updatedNhaCungCap, HttpStatus.OK);
             } else {
@@ -136,4 +178,4 @@ public class NhaCungCapRestController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-} 
+}

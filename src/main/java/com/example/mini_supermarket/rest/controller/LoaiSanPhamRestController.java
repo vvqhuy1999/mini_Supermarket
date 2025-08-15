@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/loaisanpham")
@@ -24,6 +26,27 @@ public class LoaiSanPhamRestController {
 
     @Autowired
     private LoaiSanPhamService loaiSanPhamService;
+
+    @Operation(summary = "Lấy mã loại sản phẩm mới", description = "Tạo và trả về mã loại sản phẩm mới theo format LSP + 7 ký tự chữ và số ngẫu nhiên")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/generate-code")
+    public ResponseEntity<Map<String, String>> generateMaLoaiSanPham() {
+        try {
+            String newCode = loaiSanPhamService.generateMaLoaiSanPham();
+            Map<String, String> response = new HashMap<>();
+            response.put("maLoaiSP", newCode);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi khi tạo mã loại sản phẩm: " + e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @Operation(summary = "Lấy tất cả loại sản phẩm", description = "Trả về danh sách tất cả loại sản phẩm chưa bị xóa")
     @ApiResponses(value = {
@@ -77,6 +100,10 @@ public class LoaiSanPhamRestController {
     @PostMapping
     public ResponseEntity<LoaiSanPham> createLoaiSanPham(@RequestBody LoaiSanPham loaiSanPham) {
         try {
+            // Tự động generate mã loại sản phẩm
+            String generatedMaLoaiSP = loaiSanPhamService.generateMaLoaiSanPham();
+            loaiSanPham.setMaLoaiSP(generatedMaLoaiSP);
+            
             loaiSanPham.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
             LoaiSanPham savedLoaiSanPham = loaiSanPhamService.save(loaiSanPham);
             return new ResponseEntity<>(savedLoaiSanPham, HttpStatus.CREATED);
@@ -136,4 +163,4 @@ public class LoaiSanPhamRestController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-} 
+}
