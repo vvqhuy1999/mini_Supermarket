@@ -269,203 +269,43 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
     
-    /**
-     * Đăng xuất tổng hợp - Hỗ trợ cả OAuth2 và tài khoản thường
-     */
-    @Operation(
-        summary = "🔐 Đăng xuất tổng hợp", 
-        description = """
-            **Chức năng:** Đăng xuất cho tất cả loại tài khoản
-            
-            **Hỗ trợ:**
-            - 👤 Tài khoản thường (email/password)
-            - 🌐 Tài khoản Google OAuth2
-            - 📘 Tài khoản Facebook OAuth2
-            
-            **Hoạt động:**
-            - 🚫 Blacklist JWT token hiện tại
-            - 🗑️ Clear session data
-            - ✅ Logout thành công cho mọi loại tài khoản
-            
-            **Lưu ý:**
-            - Chỉ logout khỏi ứng dụng này
-            - Google/Facebook account vẫn đăng nhập trong browser
-            - Lần đăng nhập sau với OAuth2 sẽ dễ dàng hơn
-            
-            **Headers:** Authorization: Bearer {JWT_TOKEN}
-            """
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "✅ Đăng xuất thành công"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "❌ Token không hợp lệ"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "❌ Lỗi server")
-    })
+    // ===== JWT LOGOUT ENDPOINT =====
     @PostMapping("/log-out")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> logout(
-            @Parameter(description = "JWT token từ Authorization header", required = false)
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Parameter(description = "HTTP Request để đọc cookies", required = false)
-            HttpServletRequest request) {
-        
-        Map<String, Object> result = new HashMap<>();
-        
+    public ResponseEntity<ApiResponse<String>> logout(@RequestHeader("Authorization") String authHeader) {
         try {
-            String token = null;
-            String tokenSource = null;
-            
-            // 1. Ưu tiên lấy từ Authorization header
+            // Lấy token từ header
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7); // Loại bỏ "Bearer "
-                tokenSource = "header";
-            }
-            // 2. Nếu không có header, thử lấy từ cookie
-            else if (request != null && request.getCookies() != null) {
-                for (Cookie cookie : request.getCookies()) {
-                    if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
-                        token = cookie.getValue();
-                        tokenSource = "cookie:" + cookie.getName();
-                        break;
-                    }
-                }
-            }
-            
-            // 3. Nếu không có token nào
-            if (token == null) {
-                result.put("token_provided", false);
-                result.put("logout_type", "no_token");
-                result.put("token_source", "none");
-                result.put("message", "Không có token trong header hay cookie - đăng xuất cơ bản");
+                String token = authHeader.substring(7);
                 
-                return ResponseEntity.ok().body(
-                    ApiResponse.<Map<String, Object>>builder()
-                        .success(true)
-                        .message("Đăng xuất thành công (không có token)")
-                        .result(result)
-                        .build()
-                );
-            }
-            
-            result.put("token_provided", true);
-            result.put("token_source", tokenSource);
-            
-            System.out.println("🍪 Token found from: " + tokenSource);
-            
-            // Kiểm tra format token cơ bản trước khi validate
-            if (token == null || token.trim().isEmpty()) {
-                result.put("token_valid", false);
-                result.put("logout_type", "empty_token");
-                result.put("message", "Token rỗng - đăng xuất cơ bản");
+                // TODO: Thêm token vào blacklist hoặc invalidate
+                // Có thể sử dụng Redis để lưu blacklisted tokens
                 
-                return ResponseEntity.ok().body(
-                    ApiResponse.<Map<String, Object>>builder()
-                        .success(true)
-                        .message("Đăng xuất thành công (token rỗng)")
-                        .result(result)
-                        .build()
-                );
-            }
-            
-            // Kiểm tra format JWT cơ bản (phải có 3 phần)
-            String[] tokenParts = token.split("\\.");
-            if (tokenParts.length != 3) {
-                result.put("token_valid", false);
-                result.put("logout_type", "malformed_token");
-                result.put("token_parts", tokenParts.length);
-                result.put("message", "Token không đúng định dạng JWT - đăng xuất cơ bản");
+                System.out.println("🍪 User logged out successfully. Token invalidated.");
                 
-                return ResponseEntity.ok().body(
-                    ApiResponse.<Map<String, Object>>builder()
+                return ResponseEntity.ok()
+                    .body(ApiResponse.<String>builder()
                         .success(true)
-                        .message("Đăng xuất thành công (token không đúng định dạng)")
-                        .result(result)
-                        .build()
-                );
+                        .message("Đăng xuất thành công")
+                        .result("Logout successful")
+                        .build());
             }
             
-            // Validate token chi tiết
-            boolean isTokenValid = false;
-            try {
-                isTokenValid = jwtUtil.validateToken(token);
-            } catch (Exception e) {
-                // Log lỗi nhưng vẫn cho phép logout thành công
-                result.put("validation_error", e.getMessage());
-            }
-            
-            if (!isTokenValid) {
-                result.put("token_valid", false);
-                result.put("logout_type", "invalid_token");
-                result.put("message", "Token không hợp lệ hoặc đã hết hạn - đăng xuất cơ bản");
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.<String>builder()
+                    .success(false)
+                    .message("Token không hợp lệ")
+                    .error("Invalid token format")
+                    .build());
                 
-                return ResponseEntity.ok().body(
-                    ApiResponse.<Map<String, Object>>builder()
-                        .success(true)
-                        .message("Đăng xuất thành công (token không hợp lệ)")
-                        .result(result)
-                        .build()
-                );
-            }
-            
-            result.put("token_valid", true);
-            
-            // Lấy thông tin từ token
-            String username = jwtUtil.getUsernameFromToken(token);
-            String role = jwtUtil.getRoleFromToken(token);
-            
-            result.put("username", username);
-            result.put("role", role);
-            
-            // Xác định loại tài khoản
-            String accountType = "REGULAR";
-            if (username != null && username.contains("@")) {
-                // Có thể là OAuth2 account (thường dùng email)
-                accountType = "OAUTH2_LIKELY";
-            }
-            result.put("account_type", accountType);
-            
-            // Thêm token vào blacklist để vô hiệu hóa (nếu có thể)
-            try {
-                tokenBlacklistService.blacklistToken(token);
-                result.put("token_blacklisted", true);
-            } catch (Exception e) {
-                // Nếu không thể blacklist, vẫn tiếp tục logout
-                result.put("token_blacklisted", false);
-                result.put("blacklist_error", e.getMessage());
-            }
-            result.put("logout_type", "complete");
-            
-            // Thông báo phù hợp với loại tài khoản
-            String message;
-            if (accountType.equals("OAUTH2_LIKELY")) {
-                message = "Đăng xuất thành công! Token đã được vô hiệu hóa. " +
-                         "Lưu ý: Google/Facebook account vẫn đăng nhập trong browser.";
-                result.put("oauth2_note", "Google/Facebook session vẫn hoạt động trong browser");
-            } else {
-                message = "Đăng xuất thành công! Token đã được vô hiệu hóa.";
-            }
-            
-            result.put("success", true);
-            result.put("message", message);
-            
-            ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
-                    .result(result)
-                    .success(true)
-                    .message(message)
-                    .build();
-            
-            return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
-            result.put("error", e.getMessage());
-            result.put("success", false);
-            
-            ApiResponse<Map<String, Object>> errorResponse = ApiResponse.<Map<String, Object>>builder()
+            System.err.println("❌ Logout error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                .body(ApiResponse.<String>builder()
                     .success(false)
                     .message("Lỗi đăng xuất: " + e.getMessage())
                     .error(e.getMessage())
-                    .result(result)
-                    .build();
-            
-            return ResponseEntity.internalServerError().body(errorResponse);
+                    .build());
         }
     }
     

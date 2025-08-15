@@ -41,7 +41,30 @@ public class SecurityConfig {
     @Value("${oauth2.frontend.failure-path:/login?error=oauth2_failed}")
     private String frontendFailurePath;
     
-    // Các endpoint công khai không cần authentication - TẤT CẢ API ĐỂ TEST
+    // ===== CẤU HÌNH BẢO MẬT CHO TESTING =====
+    // 
+    // ⚠️ LƯU Ý: Đây là cấu hình để TEST - TẤT CẢ API ĐỀU ĐƯỢC MỞ
+    // 
+    // 🔓 QUY TẮC PHÂN QUYỀN:
+    // 1. PUBLIC_ENDPOINTS: Tất cả API chính đều được mở (permitAll)
+    // 2. anyRequest(): Tất cả request khác cũng được mở (permitAll)
+    // 3. Không có kiểm tra role hay authentication
+    // 
+    // 📋 DANH SÁCH API ĐÃ MỞ:
+    // - Tất cả controller trong package rest.controller
+    // - Swagger & API Documentation
+    // - OAuth2 & Authentication
+    // - Core Business APIs (sản phẩm, khách hàng, nhân viên, v.v.)
+    // - Order Management (đơn hàng, chi tiết đơn hàng)
+    // - Inventory & Stock Management
+    // - Shopping Cart & Order Details
+    // - Promotions & Marketing
+    // - Work Management
+    // - Media & Images
+    // - Reports & Statistics
+    // - Health check & Monitoring
+    //
+    // ⚠️ CẢNH BÁO: Chỉ sử dụng cấu hình này để TEST, KHÔNG dùng cho PRODUCTION!
     private final String[] PUBLIC_ENDPOINTS = {
         // Swagger & API Documentation
         "/swagger-ui/**", 
@@ -70,6 +93,10 @@ public class SecurityConfig {
         "/api/hoadon/**",               // Quản lý hóa đơn
         "/api/thanhtoan/**",            // Quản lý thanh toán
         "/api/phuongthucthanhtoan/**",  // Quản lý phương thức thanh toán
+        
+        // Order Management APIs
+        "/api/donhang/**",              // Quản lý đơn hàng
+        "/api/chitietdonhang/**",       // Quản lý chi tiết đơn hàng
         
         // Inventory & Stock Management
         "/api/phieunhaphang/**",        // Quản lý phiếu nhập hàng
@@ -100,7 +127,12 @@ public class SecurityConfig {
         "/uploads/**",                  // Truy cập trực tiếp từ thư mục uploads
         
         // Reports & Statistics
-        "/api/thongkebaocao/**"         // Quản lý thống kê báo cáo
+        "/api/thongkebaocao/**",        // Quản lý thống kê báo cáo
+        
+        // Health check & Monitoring
+        "/actuator/**",                 // Spring Boot Actuator
+        "/health",                      // Health check endpoint
+        "/info"                         // Application info
     };
     
     @Bean
@@ -135,9 +167,12 @@ public class SecurityConfig {
             )
            
             
-            // Cấu hình authorization - sử dụng PUBLIC_ENDPOINTS
+            // Cấu hình authorization - MỞ TẤT CẢ API ĐỂ TEST
             .authorizeHttpRequests(authz -> authz
+                // Tất cả API đều được mở để test
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                
+                // Mở tất cả request khác để test
                 .anyRequest().permitAll()
             );
         

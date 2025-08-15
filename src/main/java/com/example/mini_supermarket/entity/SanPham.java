@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 
 import java.util.List;
 
+import com.example.mini_supermarket.entity.ChiTietDonHang;
+
 @Entity
 @Table(name = "SanPham", indexes = {
     @Index(name = "idx_sanpham_loai", columnList = "MaLoaiSP"),
@@ -92,4 +94,8 @@ public class SanPham implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<KhuyenMaiSanPham> khuyenMaiSanPhams;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ChiTietDonHang> chiTietDonHangs;
 } 
