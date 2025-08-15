@@ -2,20 +2,25 @@ package com.example.mini_supermarket.service.impl;
 
 import com.example.mini_supermarket.repository.KhachHangRepository;
 import com.example.mini_supermarket.entity.KhachHang;
+import com.example.mini_supermarket.entity.NguoiDung;
 import com.example.mini_supermarket.service.KhachHangService;
+import com.example.mini_supermarket.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class KhachHangServiceImpl implements KhachHangService {
-    private KhachHangRepository khachHangRepository;
+    private final KhachHangRepository khachHangRepository;
+    private final UserService userService;
 
-    @Autowired
-    public KhachHangServiceImpl(KhachHangRepository khachHangRepository) {
+    public KhachHangServiceImpl(KhachHangRepository khachHangRepository, UserService userService) {
         this.khachHangRepository = khachHangRepository;
+        this.userService = userService;
     }
 
     @Override
@@ -86,5 +91,99 @@ public class KhachHangServiceImpl implements KhachHangService {
         }
 
         return khachHangRepository.save(khachHang);
+    }
+
+    @Override
+    public KhachHang registerCustomerAccount(String email, String matKhau, String hoTen, String sdt, String diaChi) {
+        try {
+            // 1. Tạo tài khoản NguoiDung trước
+            NguoiDung nguoiDung = new NguoiDung();
+            nguoiDung.setEmail(email);
+            nguoiDung.setMatKhau(matKhau);
+            nguoiDung.setVaiTro(3); // Vai trò khách hàng
+            
+            // Đăng ký người dùng (UserService sẽ handle validation và mã hóa password)
+            NguoiDung registeredUser = userService.registerUser(nguoiDung);
+            
+            // 2. Tạo thông tin KhachHang
+            KhachHang khachHang = new KhachHang();
+            khachHang.setMaKH(generateMaKhachHang()); // Tạo mã khách hàng tự động
+            khachHang.setNguoiDung(registeredUser); // Liên kết với NguoiDung
+            khachHang.setHoTen(hoTen);
+            khachHang.setSdt(sdt);
+            khachHang.setDiaChi(diaChi);
+            khachHang.setDiemTichLuy(0); // Mặc định 0 điểm
+            khachHang.setLoaiKhachHang("Thường"); // Mặc định loại thường
+            khachHang.setNgayDangKy(new Timestamp(System.currentTimeMillis()));
+            khachHang.setIsDeleted(false);
+            
+            // 3. Lưu thông tin khách hàng
+            return khachHangRepository.save(khachHang);
+            
+        } catch (RuntimeException e) {
+            // Ném lại runtime exception từ UserService
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi tạo tài khoản khách hàng: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Tạo mã khách hàng tự động
+     * @return Mã khách hàng duy nhất
+     */
+    private String generateMaKhachHang() {
+        String prefix = "KH";
+        String uuid;
+        String maKH;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            maKH = prefix + uuid.toUpperCase();
+        } while (khachHangRepository.existsByMaKH(maKH));
+        
+        return maKH;
+    }
+    
+    @Override
+    public KhachHang createCustomerFromOAuth2(NguoiDung nguoiDung, String hoTen) {
+        try {
+            // Kiểm tra xem khách hàng đã tồn tại chưa
+            List<KhachHang> existingCustomers = khachHangRepository.findAllActive();
+            for (KhachHang kh : existingCustomers) {
+                if (kh.getNguoiDung() != null && 
+                    kh.getNguoiDung().getMaNguoiDung().equals(nguoiDung.getMaNguoiDung())) {
+                    System.out.println("🔍 Khách hàng đã tồn tại cho NguoiDung: " + nguoiDung.getMaNguoiDung());
+                    return kh; // Trả về khách hàng đã tồn tại
+                }
+            }
+            
+            // Tạo mới khách hàng từ OAuth2
+            KhachHang khachHang = new KhachHang();
+            khachHang.setMaKH(generateMaKhachHang());
+            khachHang.setNguoiDung(nguoiDung);
+            khachHang.setHoTen(hoTen != null ? hoTen : "OAuth2 User"); // Sử dụng tên từ OAuth2
+            khachHang.setSdt(null); // OAuth2 thường không cung cấp SĐT
+            khachHang.setDiaChi(null); // OAuth2 thường không cung cấp địa chỉ
+            khachHang.setDiemTichLuy(0);
+            khachHang.setLoaiKhachHang("Thường");
+            khachHang.setNgayDangKy(new Timestamp(System.currentTimeMillis()));
+            khachHang.setIsDeleted(false);
+            
+            KhachHang savedCustomer = khachHangRepository.save(khachHang);
+            
+            System.out.println("✅ Tạo khách hàng mới từ OAuth2:");
+            System.out.println("   - Mã KH: " + savedCustomer.getMaKH());
+            System.out.println("   - Họ tên: " + savedCustomer.getHoTen());
+            System.out.println("   - Email: " + nguoiDung.getEmail());
+            
+            return savedCustomer;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi tạo khách hàng từ OAuth2: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 } 

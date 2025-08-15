@@ -1,10 +1,10 @@
 # Default configuration for local development
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/QuanLySieuThi?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:admin}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:test}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
     show-sql: true
     hibernate:
@@ -14,7 +14,7 @@ spring:
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
         format_sql: true
   security:
     # Bật lại Spring Security
@@ -68,6 +68,21 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+  
+  # Static Resources Configuration - Serve ảnh từ thư mục uploads
+  web:
+    resources:
+      static-locations: 
+        - classpath:/static/
+        - file:./uploads/
+        - file:./static/
 
 # Swagger/OpenAPI Configuration
 springdoc:
@@ -93,11 +108,19 @@ springdoc:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-here-make-it-long-enough-for-hs256}
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-here-make-it-long-enough-for-hs512-algorithm-at-least-64-bytes}
   expiration: ${JWT_EXPIRATION:86400}  # 24 hours in seconds
 
 # OAuth2 Frontend Integration - Redirect to Frontend after OAuth2
 oauth2:
+
+# File Upload Configuration
+app:
+  images:
+    upload-dir: ./uploads/images
+    static-dir: ./static/images
+    allowed-extensions: jpg,jpeg,png,gif,webp,jfif
+    max-size: 10485760  # 10MB in bytes
   frontend:
     base-url: ${FRONTEND_URL:http://localhost:3000}
     success-path: ${OAUTH2_SUCCESS_PATH:/oauth2/success}

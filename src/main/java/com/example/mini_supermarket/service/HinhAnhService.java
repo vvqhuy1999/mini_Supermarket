@@ -22,4 +22,7 @@ public interface HinhAnhService {
     void softDeleteById(Integer id); // Soft delete - set isDeleted = true
 
     HinhAnh update(HinhAnh hinhAnh);
+    
+    // Tìm ảnh theo sản phẩm và chưa bị xóa
+    List<HinhAnh> findBySanPhamAndNotDeleted(com.example.mini_supermarket.entity.SanPham sanPham);
 } 

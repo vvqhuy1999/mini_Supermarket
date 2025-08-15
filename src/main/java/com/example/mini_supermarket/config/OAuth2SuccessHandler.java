@@ -92,13 +92,21 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             );
             
             if (authorizedClient != null) {
-                System.out.println("🔍 Access Token: " + authorizedClient.getAccessToken().getTokenValue());
-                System.out.println("🔍 Token Type: " + authorizedClient.getAccessToken().getTokenType().getValue());
-                System.out.println("🔍 Expires At: " + authorizedClient.getAccessToken().getExpiresAt());
+                String oauth2AccessToken = authorizedClient.getAccessToken().getTokenValue();
+                System.out.println("🔍 OAuth2 Access Token (Google/Facebook): " + oauth2AccessToken);
+                System.out.println("🔍 OAuth2 Token Type: " + authorizedClient.getAccessToken().getTokenType().getValue());
+                System.out.println("🔍 OAuth2 Expires At: " + authorizedClient.getAccessToken().getExpiresAt());
+                
+                // Phân tích format token
+                String[] tokenParts = oauth2AccessToken.split("\\.");
+                System.out.println("🔍 OAuth2 Token Parts: " + tokenParts.length + " (should NOT be 3 for OAuth2 access token)");
                 
                 if (authorizedClient.getRefreshToken() != null) {
-                    System.out.println("🔍 Refresh Token: " + authorizedClient.getRefreshToken().getTokenValue());
+                    System.out.println("🔍 OAuth2 Refresh Token: " + authorizedClient.getRefreshToken().getTokenValue());
                 }
+                
+                System.out.println("⚠️ IMPORTANT: OAuth2 Access Token above is for Google/Facebook API calls only!");
+                System.out.println("⚠️ Do NOT use it for our app authentication - use JWT token from redirect URL instead!");
             } else {
                 System.out.println("🔍 No authorized client found");
             }
@@ -127,12 +135,32 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         StringBuilder url = new StringBuilder();
         url.append(frontendBaseUrl).append(frontendSuccessPath);
         
+        String jwtToken = authResponse.getToken();
+        
+        // Log JWT token info để debug
+        System.out.println("🎫 === JWT TOKEN INFO ===");
+        System.out.println("🎫 JWT Token: " + jwtToken);
+        String[] jwtParts = jwtToken.split("\\.");
+        System.out.println("🎫 JWT Parts: " + jwtParts.length + " (should be 3 for valid JWT)");
+        if (jwtParts.length == 3) {
+            System.out.println("✅ CORRECT: This is a valid JWT token format");
+        } else {
+            System.out.println("❌ ERROR: This is NOT a valid JWT token format!");
+        }
+        System.out.println("🎫 Use this JWT token for app authentication and logout");
+        System.out.println("🎫 === END JWT TOKEN INFO ===");
+        
         // Thêm parameters
         url.append("?success=true");
-        url.append("&token=").append(URLEncoder.encode(authResponse.getToken(), StandardCharsets.UTF_8));
+        url.append("&token=").append(URLEncoder.encode(jwtToken, StandardCharsets.UTF_8));
+        url.append("&jwt_token=").append(URLEncoder.encode(jwtToken, StandardCharsets.UTF_8)); // Duplicate để rõ ràng
+        url.append("&token_type=JWT");
         url.append("&email=").append(URLEncoder.encode(authResponse.getUser().getEmail(), StandardCharsets.UTF_8));
         url.append("&role=").append(URLEncoder.encode(authResponse.getRole(), StandardCharsets.UTF_8));
         url.append("&userId=").append(URLEncoder.encode(authResponse.getUser().getMaNguoiDung(), StandardCharsets.UTF_8));
+        url.append("&message=").append(URLEncoder.encode(authResponse.getMessage(), StandardCharsets.UTF_8)); // Thêm message có chứa tên
+        
+        System.out.println("🔗 Redirect URL: " + url.toString());
         
         return url.toString();
     }

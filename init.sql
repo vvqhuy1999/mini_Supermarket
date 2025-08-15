@@ -13,6 +13,7 @@ CREATE TABLE NguoiDung (
                            MaNguoiDung NVARCHAR(50) PRIMARY KEY,
                            Email NVARCHAR(50) UNIQUE NOT NULL,
                            MatKhau NVARCHAR(255) NOT NULL,
+                           Sub NVARCHAR(255),
                            VaiTro INT NOT NULL COMMENT '0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng',
                            NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
                            IsDeleted BIT DEFAULT 0,
@@ -76,7 +77,6 @@ CREATE TABLE KhachHang (
                            MaNguoiDung NVARCHAR(50),
                            HoTen NVARCHAR(255) NOT NULL,
                            SDT NVARCHAR(15),
-                           Email NVARCHAR(100),
                            DiaChi NVARCHAR(255),
                            NgaySinh DATE,
                            DiemTichLuy INT DEFAULT 0 CHECK (DiemTichLuy >= 0) COMMENT 'Điểm tích lũy từ các giao dịch mua hàng',
@@ -85,7 +85,6 @@ CREATE TABLE KhachHang (
                            IsDeleted BIT DEFAULT 0,
 
                            INDEX idx_khachhang_sdt (SDT),
-                           INDEX idx_khachhang_email (Email),
                            INDEX idx_khachhang_loai (LoaiKhachHang)
 );
 

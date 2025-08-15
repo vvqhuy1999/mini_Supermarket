@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
@@ -43,15 +45,7 @@ public class JwtUtil {
     public String generateToken(String username, String role) {
         try {
             // Đảm bảo secret key có độ dài đủ cho HS512 (ít nhất 512 bits = 64 bytes)
-            byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
-            String actualSecret = secret;
-            
-            if (secretBytes.length < 64) {
-                logger.warn("Secret key quá ngắn cho HS512. Độ dài hiện tại: {} bytes", secretBytes.length);
-                // Tạo secret key mới với độ dài đủ
-                actualSecret = secret + "additional-padding-to-make-it-long-enough-for-hs512-algorithm";
-                secretBytes = actualSecret.getBytes(StandardCharsets.UTF_8);
-            }
+            byte[] secretBytes = getSecretBytes();
             
             // Tạo JWT claims
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
@@ -68,7 +62,7 @@ public class JwtUtil {
             // Tạo signed JWT
             SignedJWT signedJWT = new SignedJWT(header, claimsSet);
 
-            // Ký JWT với secret key
+            // Ký JWT với secret key 
             JWSSigner signer = new MACSigner(secretBytes);
             signedJWT.sign(signer);
 
@@ -90,20 +84,30 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            // Kiểm tra token có trong blacklist không
-            if (tokenBlacklistService.isTokenBlacklisted(token)) {
-                logger.warn("Token đã bị blacklist: {}", token);
+            // Kiểm tra token null hoặc rỗng
+            if (token == null || token.trim().isEmpty()) {
+                logger.debug("Token is null or empty");
                 return false;
             }
             
+            // Kiểm tra format cơ bản của JWT (phải có ít nhất 2 dấu chấm)
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                logger.warn("Token không đúng định dạng JWT. Cần 3 phần, nhưng có: {}", parts.length);
+                return false;
+            }
+            
+            // Kiểm tra token có trong blacklist không
+            if (tokenBlacklistService.isTokenBlacklisted(token)) {
+                logger.warn("Token đã bị blacklist");
+                return false;
+            }
+            
+            // Parse JWT token
             SignedJWT signedJWT = SignedJWT.parse(token);
             
             // Đảm bảo secret key có độ dài đúng
-            byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
-            if (secretBytes.length < 64) {
-                String newSecret = secret + "additional-padding-to-make-it-long-enough-for-hs512-algorithm";
-                secretBytes = newSecret.getBytes(StandardCharsets.UTF_8);
-            }
+            byte[] secretBytes = getSecretBytes();
             
             JWSVerifier verifier = new MACVerifier(secretBytes);
             boolean isValid = signedJWT.verify(verifier);
@@ -112,8 +116,11 @@ public class JwtUtil {
             logger.debug("Token validation - Valid signature: {}, Not expired: {}", isValid, isNotExpired);
             
             return isValid && isNotExpired;
+        } catch (ParseException e) {
+            logger.warn("Token không thể parse: {}", e.getMessage());
+            return false;
         } catch (Exception e) {
-            logger.error("Lỗi validate token: {}", e.getMessage(), e);
+            logger.error("Lỗi validate token: {}", e.getMessage());
             return false;
         }
     }
@@ -215,4 +222,95 @@ public class JwtUtil {
         }
     }
     
+    /**
+     * Lấy secret key với độ dài đúng để đảm bảo tính nhất quán
+     */
+    private String getActualSecret() {
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 64) {
+            return secret + "additional-padding-to-make-it-long-enough-for-hs512-algorithm";
+        }
+        return secret;
+    }
+    
+    /**
+     * Lấy secret bytes với độ dài đúng cho HS512
+     */
+    private byte[] getSecretBytes() {
+        return getActualSecret().getBytes(StandardCharsets.UTF_8);
+    }
+    
+    /**
+     * Extract JWT token từ HttpServletRequest (header hoặc cookie)
+     * @param request HttpServletRequest
+     * @return Map chứa token và source, hoặc null nếu không tìm thấy
+     */
+    public Map<String, String> extractTokenFromRequest(HttpServletRequest request) {
+        String token = null;
+        String tokenSource = null;
+        
+        // 1. Thử lấy từ Authorization header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7); // Loại bỏ "Bearer "
+            tokenSource = "header";
+        }
+        // 2. Nếu không có header, thử lấy từ cookie
+        else if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    tokenSource = "cookie:" + cookie.getName();
+                    break;
+                }
+            }
+        }
+        
+        if (token != null) {
+            Map<String, String> result = new HashMap<>();
+            result.put("token", token);
+            result.put("source", tokenSource);
+            return result;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Kiểm tra JWT token và trả về thông tin chi tiết
+     * @param request HttpServletRequest
+     * @return Map chứa thông tin token hoặc error
+     */
+    public Map<String, Object> validateTokenFromRequest(HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        
+        Map<String, String> tokenInfo = extractTokenFromRequest(request);
+        if (tokenInfo == null) {
+            result.put("valid", false);
+            result.put("error", "No token found in header or cookie");
+            result.put("token_source", "none");
+            return result;
+        }
+        
+        String token = tokenInfo.get("token");
+        String tokenSource = tokenInfo.get("source");
+        
+        boolean isValid = validateToken(token);
+        result.put("valid", isValid);
+        result.put("token_source", tokenSource);
+        
+        if (isValid) {
+            try {
+                result.put("username", getUsernameFromToken(token));
+                result.put("role", getRoleFromToken(token));
+                result.put("expiration", getExpirationFromToken(token));
+            } catch (Exception e) {
+                result.put("valid", false);
+                result.put("error", "Error extracting token info: " + e.getMessage());
+            }
+        } else {
+            result.put("error", "Invalid or expired token");
+        }
+        
+        return result;
+    }
 } 

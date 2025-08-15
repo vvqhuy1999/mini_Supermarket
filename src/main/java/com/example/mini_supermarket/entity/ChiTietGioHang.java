@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "ChiTietGioHang", indexes = {
@@ -37,11 +37,12 @@ public class ChiTietGioHang implements Serializable {
     @Column(name = "DonGiaHienTai", precision = 15, scale = 2, nullable = false)
     private BigDecimal donGiaHienTai; // Giá sản phẩm tại thời điểm thêm vào giỏ
 
-    @Column(name = "ThanhTien", precision = 15, scale = 2)
+    @Column(name = "ThanhTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal thanhTien; // SoLuong * DonGiaHienTai (computed)
 
     @Column(name = "NgayThem")
-    private LocalDateTime ngayThem = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayThem;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

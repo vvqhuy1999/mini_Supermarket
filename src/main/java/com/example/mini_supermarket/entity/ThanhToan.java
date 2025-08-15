@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "ThanhToan", indexes = {
@@ -36,7 +36,8 @@ public class ThanhToan implements Serializable {
     private BigDecimal soTienThanhToan;
 
     @Column(name = "NgayGioTT", nullable = false)
-    private LocalDateTime ngayGioTT;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayGioTT;
 
     @Column(name = "TrangThaiTT")
     private Integer trangThaiTT = 0; // 0=Chờ xử lý, 1=Thành công, 2=Thất bại, 3=Hủy, 4=Hoàn tiền
@@ -44,7 +45,7 @@ public class ThanhToan implements Serializable {
     @Column(name = "MaGiaoDichNganHang", length = 100)
     private String maGiaoDichNganHang; // Mã giao dịch từ ngân hàng
 
-    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    @Column(name = "GhiChu", columnDefinition = "TEXT")
     private String ghiChu;
 
     @Column(name = "IsDeleted")

@@ -41,12 +41,15 @@ public class SecurityConfig {
     @Value("${oauth2.frontend.failure-path:/login?error=oauth2_failed}")
     private String frontendFailurePath;
     
-    // Các endpoint công khai không cần authentication
+    // Các endpoint công khai không cần authentication - TẤT CẢ API ĐỂ TEST
     private final String[] PUBLIC_ENDPOINTS = {
+        // Swagger & API Documentation
         "/swagger-ui/**", 
         "/swagger-ui.html", 
         "/api-docs/**", 
         "/v3/api-docs/**",
+        
+        // OAuth2 & Authentication
         "/api/nguoidung/**",
         "/api/auth/**",
         "/api/oauth2/**",
@@ -54,8 +57,50 @@ public class SecurityConfig {
         "/oauth2/**",
         "/oauth2/authorization/**",
         "/login/oauth2/code/**",
-        "/api/sanpham/**",      // Xem sản phẩm, tìm kiếm sản phẩm
-        "/api/loaisanpham/**"   // Xem danh mục sản phẩm
+        
+        // Core Business APIs
+        "/api/sanpham/**",              // Quản lý sản phẩm
+        "/api/loaisanpham/**",          // Quản lý loại sản phẩm
+        "/api/khachhang/**",            // Quản lý khách hàng
+        "/api/nhanvien/**",             // Quản lý nhân viên
+        "/api/nhacungcap/**",           // Quản lý nhà cung cấp
+        "/api/cuahang/**",              // Quản lý cửa hàng
+        "/api/kho/**",                  // Quản lý kho
+        "/api/giohang/**",              // Quản lý giỏ hàng
+        "/api/hoadon/**",               // Quản lý hóa đơn
+        "/api/thanhtoan/**",            // Quản lý thanh toán
+        "/api/phuongthucthanhtoan/**",  // Quản lý phương thức thanh toán
+        
+        // Inventory & Stock Management
+        "/api/phieunhaphang/**",        // Quản lý phiếu nhập hàng
+        "/api/phieuxuatkho/**",         // Quản lý phiếu xuất kho
+        "/api/chitietphieunhap/**",     // Quản lý chi tiết phiếu nhập
+        "/api/chitietphieuxuat/**",     // Quản lý chi tiết phiếu xuất
+        "/api/tonkhochitiet/**",        // Quản lý tồn kho chi tiết
+        "/api/giasanpham/**",           // Quản lý giá sản phẩm
+        
+        // Shopping Cart & Order Details
+        "/api/chitietgiohang/**",       // Quản lý chi tiết giỏ hàng
+        "/api/chitiethoadon/**",        // Quản lý chi tiết hóa đơn
+        
+        // Promotions & Marketing
+        "/api/khuyenmai/**",            // Quản lý khuyến mãi
+        "/api/khuyenmaisanpham/**",     // Quản lý khuyến mãi sản phẩm
+        "/api/khuyenmaikhachhang/**",   // Quản lý khuyến mãi khách hàng
+        
+        // Work Management
+        "/api/calamviec/**",            // Quản lý ca làm việc
+        "/api/lichlamviec/**",          // Quản lý lịch làm việc
+        "/api/bangluong/**",            // Quản lý bảng lương
+        
+        // Media & Images
+        "/api/hinhanh/**",              // Quản lý hình ảnh
+        "/api/upload/**",               // API upload ảnh sản phẩm
+        "/images/**",                   // Truy cập ảnh từ uploads/images
+        "/uploads/**",                  // Truy cập trực tiếp từ thư mục uploads
+        
+        // Reports & Statistics
+        "/api/thongkebaocao/**"         // Quản lý thống kê báo cáo
     };
     
     @Bean

@@ -17,21 +17,25 @@ import java.util.List;
 @AllArgsConstructor
 public class NguoiDung implements Serializable {
     @Id
-    @Column(name = "MaNguoiDung", length = 10)
+    @Column(name = "MaNguoiDung", length = 50)
     private String maNguoiDung;
 
-    @Column(name = "Email", length = 50)
+    @Column(name = "Email", length = 50, unique = true, nullable = false)
     private String email;
 
-    @Column(name = "MatKhau", length = 255)
+    @Column(name = "MatKhau", length = 255, nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Cho phép ghi từ JSON request, không trả về trong response
     private String matKhau;
 
-    @Column(name = "Sub", length = 50)
+    @Column(name = "Sub", length = 255)
     private String sub;
 
     @Column(name = "VaiTro", nullable = false)
-    private Integer vaiTro= 3; // 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    private Integer vaiTro = 3; // 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+
+    @Column(name = "NgayTao")
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayTao;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;

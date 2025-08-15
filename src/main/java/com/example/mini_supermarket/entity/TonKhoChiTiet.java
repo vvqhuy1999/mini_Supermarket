@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "TonKhoChiTiet", indexes = {
@@ -40,7 +40,8 @@ public class TonKhoChiTiet implements Serializable {
     private Integer soLuongToiDa; // Mức tồn kho tối đa
 
     @Column(name = "NgayCapNhat")
-    private LocalDateTime ngayCapNhat = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayCapNhat;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
