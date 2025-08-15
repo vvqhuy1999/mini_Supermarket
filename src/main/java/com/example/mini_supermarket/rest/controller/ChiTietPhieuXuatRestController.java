@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/api/chitietphieuxuat")
@@ -86,10 +87,11 @@ public class ChiTietPhieuXuatRestController {
         }
     }
 
+
     @Operation(summary = "Cập nhật chi tiết phiếu xuất", description = "Cập nhật thông tin chi tiết phiếu xuất theo ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công", 
-                    content = @Content(mediaType = "application/json", 
+            @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ChiTietPhieuXuat.class))),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy chi tiết phiếu xuất"),
             @ApiResponse(responseCode = "500", description = "Lỗi server")

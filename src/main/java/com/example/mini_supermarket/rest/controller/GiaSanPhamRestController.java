@@ -1,6 +1,7 @@
 package com.example.mini_supermarket.rest.controller;
 
 import com.example.mini_supermarket.entity.GiaSanPham;
+import com.example.mini_supermarket.entity.NhanVien;
 import com.example.mini_supermarket.service.GiaSanPhamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/api/giasanpham")
@@ -77,6 +79,9 @@ public class GiaSanPhamRestController {
     @PostMapping
     public ResponseEntity<GiaSanPham> createGiaSanPham(@RequestBody GiaSanPham giaSanPham) {
         try {
+            // Thêm dòng này để tạo mã ngẫu nhiên 5 chữ số
+            int randomMa = new Random().nextInt(90000) + 10000;
+
             giaSanPham.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
             GiaSanPham savedGiaSanPham = giaSanPhamService.save(giaSanPham);
             return new ResponseEntity<>(savedGiaSanPham, HttpStatus.CREATED);
@@ -86,40 +91,36 @@ public class GiaSanPhamRestController {
         }
     }
 
-    @Operation(summary = "Cập nhật giá sản phẩm", description = "Cập nhật thông tin giá sản phẩm theo ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công", 
-                    content = @Content(mediaType = "application/json", 
-                            schema = @Schema(implementation = GiaSanPham.class))),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy giá sản phẩm"),
-            @ApiResponse(responseCode = "500", description = "Lỗi server")
-    })
     @PutMapping("/{id}")
     public ResponseEntity<GiaSanPham> updateGiaSanPham(
-            @Parameter(description = "ID của giá sản phẩm", required = true) @PathVariable Integer id, 
+            @PathVariable Integer id,
             @RequestBody GiaSanPham giaSanPham) {
         try {
-            GiaSanPham existingGiaSanPham = giaSanPhamService.findActiveById(id);
-            if (existingGiaSanPham != null) {
-                giaSanPham.setMaGia(id);
-                giaSanPham.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
-                GiaSanPham updatedGiaSanPham = giaSanPhamService.save(giaSanPham);
-                return new ResponseEntity<>(updatedGiaSanPham, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            GiaSanPham existing = giaSanPhamService.findActiveById(id);
+            if (existing == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+            // Chỉ cập nhật các trường cần thiết
+            if (giaSanPham.getGia() != null) existing.setGia(giaSanPham.getGia());
+            if (giaSanPham.getNgayBatDau() != null) existing.setNgayBatDau(giaSanPham.getNgayBatDau());
+            existing.setNgayKetThuc(giaSanPham.getNgayKetThuc()); // có thể null
+            existing.setLyDoThayDoi(giaSanPham.getLyDoThayDoi());
+
+//            // Nếu muốn cập nhật người thay đổi, cần kiểm tra mã nhân viên có tồn tại
+//            if (giaSanPham.getNguoiThayDoi() != null && giaSanPham.getNguoiThayDoi().getMaNV() != null) {
+////                NhanVien nv = nhanVienService.findById(giaSanPham.getNguoiThayDoi().getMaNV());
+//                if (nv != null) existing.setNguoiThayDoi(nv);
+//            }
+
+            existing.setIsDeleted(false); // giữ trạng thái không bị xóa
+
+            GiaSanPham updated = giaSanPhamService.save(existing);
+            return new ResponseEntity<>(updated, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @Operation(summary = "Xóa giá sản phẩm", description = "Xóa mềm giá sản phẩm (đánh dấu isDeleted = true)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Xóa thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy giá sản phẩm"),
-            @ApiResponse(responseCode = "500", description = "Lỗi server")
-    })
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteGiaSanPham(
             @Parameter(description = "ID của giá sản phẩm", required = true) @PathVariable Integer id) {

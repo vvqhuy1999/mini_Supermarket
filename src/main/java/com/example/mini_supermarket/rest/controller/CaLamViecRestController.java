@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/api/calamviec")
@@ -77,6 +78,9 @@ public class CaLamViecRestController {
     @PostMapping
     public ResponseEntity<CaLamViec> createCaLamViec(@RequestBody CaLamViec caLamViec) {
         try {
+            int randomMaCa = new Random().nextInt(9000) + 1000;
+            caLamViec.setMaCa(randomMaCa);
+
             caLamViec.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
             CaLamViec savedCaLamViec = caLamViecService.save(caLamViec);
             return new ResponseEntity<>(savedCaLamViec, HttpStatus.CREATED);
