@@ -509,6 +509,11 @@ ALTER TABLE LoaiSanPham ADD CONSTRAINT FK_LoaiSanPham_LoaiCha
         ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- Khóa ngoại cho bảng NhanVien
+
+
+
+
+
 ALTER TABLE NhanVien ADD CONSTRAINT FK_NhanVien_NguoiDung
     FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung)
         ON DELETE SET NULL ON UPDATE CASCADE;

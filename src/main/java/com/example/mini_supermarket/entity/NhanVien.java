@@ -12,8 +12,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "NhanVien", indexes = {
-    @Index(name = "idx_nhanvien_cuahang", columnList = "MaCH"),
-    @Index(name = "idx_nhanvien_trangthai", columnList = "TrangThai")
+        @Index(name = "idx_nhanvien_cuahang", columnList = "MaCH"),
+        @Index(name = "idx_nhanvien_trangthai", columnList = "TrangThai")
 })
 @Data
 @NoArgsConstructor
@@ -115,4 +115,4 @@ public class NhanVien implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "nguoiSua", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<HoaDon> hoaDonsSua;
-} 
+}

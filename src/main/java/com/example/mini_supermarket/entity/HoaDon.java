@@ -13,10 +13,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "HoaDon", indexes = {
-    @Index(name = "idx_hoadon_ngaylap", columnList = "NgayLap"),
-    @Index(name = "idx_hoadon_trangthai", columnList = "TrangThai"),
-    @Index(name = "idx_hoadon_khachhang", columnList = "MaKH"),
-    @Index(name = "idx_hoadon_nhanvien", columnList = "MaNVLap")
+        @Index(name = "idx_hoadon_ngaylap", columnList = "NgayLap"),
+        @Index(name = "idx_hoadon_trangthai", columnList = "TrangThai"),
+        @Index(name = "idx_hoadon_khachhang", columnList = "MaKH"),
+        @Index(name = "idx_hoadon_nhanvien", columnList = "MaNVLap")
 })
 @Data
 @NoArgsConstructor
@@ -42,13 +42,13 @@ public class HoaDon implements Serializable {
     @Column(name = "NgayLap", nullable = false)
     private LocalDateTime ngayLap;
 
-    @Column(name = "TongTienHang", precision = 15, scale = 2)
+    @Column(name = "TongTienHang", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal tongTienHang = BigDecimal.ZERO;
 
     @Column(name = "TienGiamGia", precision = 15, scale = 2)
     private BigDecimal tienGiamGia = BigDecimal.ZERO;
 
-    @Column(name = "TongTien", precision = 15, scale = 2)
+    @Column(name = "TongTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal tongTien;
 
     @ManyToOne
@@ -89,4 +89,4 @@ public class HoaDon implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ThanhToan> thanhToans;
-} 
+}

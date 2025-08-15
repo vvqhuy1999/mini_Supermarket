@@ -49,4 +49,5 @@ public class ThanhToan implements Serializable {
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
-} 
+
+}

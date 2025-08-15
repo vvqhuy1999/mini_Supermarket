@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/api/thanhtoan")
@@ -55,6 +57,7 @@ public class ThanhToanRestController {
     public ResponseEntity<ThanhToan> getThanhToanById(
             @Parameter(description = "ID của thanh toán", required = true) @PathVariable Integer id) {
         try {
+
             ThanhToan thanhToan = thanhToanService.findActiveById(id);
             if (thanhToan != null) {
                 return new ResponseEntity<>(thanhToan, HttpStatus.OK);
@@ -77,6 +80,10 @@ public class ThanhToanRestController {
     @PostMapping
     public ResponseEntity<ThanhToan> createThanhToan(@RequestBody ThanhToan thanhToan) {
         try {
+
+            // Sinh mã thanh toán 2 chữ + 8 ký tự ngẫu nhiên
+            String maTT = generateMaThanhToan();
+            thanhToan.setMaTT(thanhToan.getMaTT());
             thanhToan.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
             ThanhToan savedThanhToan = thanhToanService.save(thanhToan);
             return new ResponseEntity<>(savedThanhToan, HttpStatus.CREATED);
@@ -86,10 +93,28 @@ public class ThanhToanRestController {
         }
     }
 
+
+    // Hàm sinh mã
+    private String generateMaThanhToan() {
+        String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+
+        // 2 chữ cái đầu
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            sb.append(letters.charAt(random.nextInt(letters.length())));
+        }
+        // 8 ký tự ngẫu nhiên (chữ hoặc số)
+        for (int i = 0; i < 8; i++) {
+            sb.append(digits.charAt(random.nextInt(digits.length())));
+        }
+        return sb.toString();
+    }
     @Operation(summary = "Cập nhật thanh toán", description = "Cập nhật thông tin thanh toán theo ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công", 
-                    content = @Content(mediaType = "application/json", 
+            @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ThanhToan.class))),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy thanh toán"),
             @ApiResponse(responseCode = "500", description = "Lỗi server")

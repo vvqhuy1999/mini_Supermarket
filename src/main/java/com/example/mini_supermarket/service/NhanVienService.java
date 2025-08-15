@@ -7,6 +7,8 @@ import java.util.List;
 
 @Service
 public interface NhanVienService {
+    boolean existsByMaNVAndNgaySinh(String maNV, java.time.LocalDate ngaySinh);
+
     List<NhanVien> findAll();
 
     List<NhanVien> findAllActive(); // Chỉ lấy các record chưa bị xóa
@@ -22,4 +24,4 @@ public interface NhanVienService {
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     NhanVien update(NhanVien nhanVien);
-} 
+}

@@ -66,18 +66,55 @@ public class SanPhamRestController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    // Thêm sản phẩm mới
     @PostMapping
-    public ResponseEntity<SanPham> createSanPham(@RequestBody SanPham sanPham) {
+    public ResponseEntity<?> createSanPham(@RequestBody SanPham sanPham) {
         try {
+            // Nếu maSP không nhập hoặc rỗng thì tự tạo
+            if (sanPham.getMaSP() == null || sanPham.getMaSP().trim().isEmpty()) {
+                String newMaSP;
+                do {
+                    newMaSP = generateRandomMaSP();
+                } while (sanPhamService.existsByMaSP(newMaSP)); // đảm bảo không trùng
+                sanPham.setMaSP(newMaSP);
+            } else {
+                // Kiểm tra mã sản phẩm trùng
+                if (sanPhamService.existsByMaSP(sanPham.getMaSP())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Mã sản phẩm đã tồn tại!");
+                }
+
+                // Kiểm tra định dạng nếu nhập thủ công
+                String regex = "^[A-Z]{2}[A-Za-z0-9]{8}$";
+                if (!sanPham.getMaSP().matches(regex)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Mã sản phẩm không hợp lệ! Định dạng yêu cầu: 2 ký tự đầu + 8 ký tự chữ/số.");
+                }
+            }
+
+            // Lưu sản phẩm
             SanPham savedSanPham = sanPhamService.save(sanPham);
             return new ResponseEntity<>(savedSanPham, HttpStatus.CREATED);
+
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Hàm random mã sản phẩm
+    private String generateRandomMaSP() {
+        String prefix = "SP"; // 2 ký tự đầu cố định
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder(prefix);
+        for (int i = 0; i < 8; i++) {
+            int index = (int) (Math.random() * chars.length());
+            sb.append(chars.charAt(index));
+        }
+        return sb.toString();
+    }
+
+
+
 
     // Cập nhật sản phẩm
     @PutMapping("/{id}")
