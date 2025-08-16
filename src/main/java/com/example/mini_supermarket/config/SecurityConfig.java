@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -32,6 +34,9 @@ public class SecurityConfig {
     
     @Autowired
     private ClientRegistrationRepository clientRegistrationRepository;
+    
+    // Không cần JwtAuthenticationFilter riêng biệt
+    // OAuth2SuccessHandler sẽ xử lý JWT sau khi OAuth2 thành công
     
     @Value("${oauth2.frontend.base-url:http://localhost:3000}")
     private String frontendBaseUrl;
@@ -58,6 +63,11 @@ public class SecurityConfig {
     // 5. MANAGER_ENDPOINTS: Cần role MANAGER - Quản lý toàn hệ thống
     // 6. ADMIN_ENDPOINTS: Hiện tại chưa cần dùng (đã comment)
     // 7. anyRequest(): Cần authentication (không cần role cụ thể)
+    //
+    // 🛍️ PHÂN QUYỀN SẢN PHẨM:
+    // - PUBLIC: GET /api/sanpham/* (xem sản phẩm, category, optimized) - CHỈ XEM
+    // - MANAGER: POST /api/sanpham (tạo), PUT /api/sanpham/* (cập nhật), DELETE /api/sanpham/* (xóa)
+    // - EMPLOYEE: Không có quyền trực tiếp với sản phẩm (chỉ xem qua PUBLIC)
     //
     // ⚠️ LƯU Ý: 
     // - Spring Security tự động thêm prefix "ROLE_" 
@@ -91,11 +101,15 @@ public class SecurityConfig {
         "/oauth2/**",
         "/oauth2/authorization/**",
         "/login/oauth2/code/**",
-        "/api/auth/log-out",              // Logout endpoint
+        // Logout và check-auth được xử lý bởi AuthenticationController
         
         // API cơ bản cho khách hàng - CHỈ XEM (READ)
         "/api/sanpham",                 // GET: Xem danh sách sản phẩm
-        "/api/sanpham/*",               // GET: Xem chi tiết sản phẩm
+        "/api/sanpham/*",               // GET: Xem chi tiết sản phẩm (không phải POST/PUT/DELETE)
+        "/api/sanpham/optimized",       // GET: Xem danh sách sản phẩm (tối ưu)
+        "/api/sanpham/*/optimized",     // GET: Xem chi tiết sản phẩm (tối ưu)
+        "/api/sanpham/category/*",      // GET: Xem sản phẩm theo category
+        "/api/sanpham/category/*/active", // GET: Xem sản phẩm theo category + active
         "/api/loaisanpham",             // GET: Xem danh sách loại sản phẩm
         "/api/loaisanpham/*",           // GET: Xem chi tiết loại sản phẩm
         "/api/khuyenmai",               // GET: Xem danh sách khuyến mãi
@@ -103,6 +117,11 @@ public class SecurityConfig {
         
         // Media & Images
         "/api/hinhanh/**",              // Xem hình ảnh
+        "/api/upload/serve-image/**",   // Serve ảnh trực tiếp từ server
+        "/api/upload/serve-image-by-id/**", // Serve ảnh theo ID
+        "/api/upload/product-images/**",    // Xem danh sách ảnh sản phẩm
+        "/api/upload/product-image/**",     // Xem ảnh sản phẩm theo ID
+        "/api/upload/product-main-image/**", // Xem ảnh chính sản phẩm
         "/images/**",                   // Truy cập ảnh từ uploads/images
         "/uploads/**",                  // Truy cập trực tiếp từ thư mục uploads
         
@@ -159,12 +178,6 @@ public class SecurityConfig {
         // Quản lý thanh toán - XỬ LÝ
         "/api/thanhtoan/**",   // Xử lý thanh toán (nhân viên)
         
-        // Quản lý sản phẩm cơ bản - CHỈ XEM VÀ CẬP NHẬT
-        "/api/sanpham",        // GET: Xem sản phẩm, PUT: Cập nhật thông tin
-        "/api/sanpham/*",      // GET: Xem chi tiết, PUT: Cập nhật
-        "/api/loaisanpham",    // GET: Xem loại sản phẩm, PUT: Cập nhật
-        "/api/loaisanpham/*",  // GET: Xem chi tiết, PUT: Cập nhật
-        
         // Quản lý khuyến mãi cơ bản - CHỈ XEM VÀ CẬP NHẬT
         "/api/khuyenmai",      // GET: Xem khuyến mãi, PUT: Cập nhật
         "/api/khuyenmai/*",    // GET: Xem chi tiết, PUT: Cập nhật
@@ -209,10 +222,10 @@ public class SecurityConfig {
         "/api/bangluong/**",    // Quản lý bảng lương (tất cả)
         
         // Quản lý sản phẩm nâng cao - FULL CRUD
-        "/api/sanpham/**",      // Quản lý sản phẩm (quản lý)
-        "/api/loaisanpham/**",  // Quản lý loại sản phẩm (quản lý)
+        "/api/sanpham/**",      // Quản lý sản phẩm (quản lý) - FULL CRUD
+        "/api/loaisanpham/**",  // Quản lý loại sản phẩm (quản lý) - FULL CRUD
         
-        // Quản lý khuyến mãi nâng cao - FULL CRUD
+        // Quản lý khuyến mãi cơ bản - FULL CRUD
         "/api/khuyenmai/**",    // Quản lý khuyến mãi (quản lý)
         
         // Quản lý hóa đơn nâng cao - FULL CRUD
@@ -266,17 +279,19 @@ public class SecurityConfig {
             // Tắt form login
             .formLogin(AbstractHttpConfigurer::disable)
             
-            // Cấu hình logout cho JWT (không cần session)
-            .logout(logout -> logout
-                .logoutUrl("/api/auth/log-out")
-                .logoutSuccessUrl("/")
-                .invalidateHttpSession(false)  // Không cần invalidate session với JWT
-                .deleteCookies()               // Không cần delete cookies với JWT
-                .permitAll()
+            // Cấu hình session policy - Stateless cho JWT
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+            
+            // Không cần cấu hình logout ở đây
+            // AuthenticationController sẽ xử lý logout thông qua endpoint /api/auth/log-out
             
             // Cấu hình CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // Không cần JWT filter riêng biệt
+            // OAuth2SuccessHandler sẽ xử lý JWT sau khi OAuth2 thành công
             
             // Cấu hình OAuth2 - Simple Google login
             .oauth2Login(oauth2 -> oauth2

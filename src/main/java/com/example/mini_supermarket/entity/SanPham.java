@@ -3,6 +3,7 @@ package com.example.mini_supermarket.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,6 +23,7 @@ import com.example.mini_supermarket.entity.ChiTietDonHang;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class SanPham implements Serializable {
     @Id
     @Column(name = "MaSP", length = 50)

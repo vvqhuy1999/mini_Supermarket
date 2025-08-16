@@ -25,4 +25,10 @@ public interface HinhAnhService {
     
     // Tìm ảnh theo sản phẩm và chưa bị xóa
     List<HinhAnh> findBySanPhamAndNotDeleted(com.example.mini_supermarket.entity.SanPham sanPham);
+    
+    // Tìm ảnh theo mã sản phẩm
+    List<HinhAnh> findByMaSanPham(String maSP);
+    
+    // Tìm ảnh chính theo mã sản phẩm
+    HinhAnh findHinhAnhChinhByMaSanPham(String maSP);
 } 

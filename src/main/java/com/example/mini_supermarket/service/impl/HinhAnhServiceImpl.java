@@ -80,4 +80,16 @@ public class HinhAnhServiceImpl implements HinhAnhService {
     public List<HinhAnh> findBySanPhamAndNotDeleted(com.example.mini_supermarket.entity.SanPham sanPham) {
         return hinhAnhRepository.findBySanPhamAndIsDeletedFalse(sanPham);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<HinhAnh> findByMaSanPham(String maSP) {
+        return hinhAnhRepository.findByMaSanPham(maSP);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public HinhAnh findHinhAnhChinhByMaSanPham(String maSP) {
+        return hinhAnhRepository.findHinhAnhChinhByMaSanPham(maSP);
+    }
 } 

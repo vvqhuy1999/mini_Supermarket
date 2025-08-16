@@ -25,4 +25,12 @@ public interface HinhAnhRepository extends JpaRepository<HinhAnh, Integer> {
     // Tìm hình ảnh theo sản phẩm và chưa bị xóa
     @Query("SELECT h FROM HinhAnh h WHERE h.sanPham = :sanPham AND h.isDeleted = false ORDER BY h.thuTuHienThi ASC, h.maHinh ASC")
     List<HinhAnh> findBySanPhamAndIsDeletedFalse(@Param("sanPham") com.example.mini_supermarket.entity.SanPham sanPham);
+    
+    // Tìm hình ảnh theo mã sản phẩm và chưa bị xóa
+    @Query("SELECT h FROM HinhAnh h WHERE h.sanPham.maSP = :maSP AND h.isDeleted = false ORDER BY h.thuTuHienThi ASC, h.maHinh ASC")
+    List<HinhAnh> findByMaSanPham(@Param("maSP") String maSP);
+    
+    // Tìm ảnh chính theo mã sản phẩm và chưa bị xóa
+    @Query("SELECT h FROM HinhAnh h WHERE h.sanPham.maSP = :maSP AND h.laChinh = true AND h.isDeleted = false ORDER BY h.thuTuHienThi ASC, h.maHinh ASC")
+    HinhAnh findHinhAnhChinhByMaSanPham(@Param("maSP") String maSP);
 } 

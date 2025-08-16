@@ -271,30 +271,48 @@ public class AuthenticationController {
     
     // ===== JWT LOGOUT ENDPOINT =====
     @PostMapping("/log-out")
-    public ResponseEntity<ApiResponse<String>> logout(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<ApiResponse<String>> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletRequest request) {
         try {
-            // Lấy token từ header
+            String token = null;
+            String tokenSource = null;
+            
+            // 1. Ưu tiên lấy từ Authorization header
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                
-                // TODO: Thêm token vào blacklist hoặc invalidate
-                // Có thể sử dụng Redis để lưu blacklisted tokens
-                
-                System.out.println("🍪 User logged out successfully. Token invalidated.");
-                
-                return ResponseEntity.ok()
+                token = authHeader.substring(7);
+                tokenSource = "header";
+            }
+            // 2. Nếu không có header, thử lấy từ cookie
+            else if (request != null && request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("jwt_token".equals(cookie.getName()) || "token".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        tokenSource = "cookie:" + cookie.getName();
+                        break;
+                    }
+                }
+            }
+            
+            if (token == null) {
+                return ResponseEntity.badRequest()
                     .body(ApiResponse.<String>builder()
-                        .success(true)
-                        .message("Đăng xuất thành công")
-                        .result("Logout successful")
+                        .success(false)
+                        .message("Token không hợp lệ hoặc thiếu trong cả header và cookie!")
+                        .error("Missing token in both header and cookie")
                         .build());
             }
             
-            return ResponseEntity.badRequest()
+            // Thêm token vào blacklist để invalidate
+            tokenBlacklistService.blacklistToken(token);
+            
+            System.out.println("🍪 User logged out successfully. Token invalidated from: " + tokenSource);
+            
+            return ResponseEntity.ok()
                 .body(ApiResponse.<String>builder()
-                    .success(false)
-                    .message("Token không hợp lệ")
-                    .error("Invalid token format")
+                    .success(true)
+                    .message("Đăng xuất thành công")
+                    .result("Logout successful")
                     .build());
                 
         } catch (Exception e) {

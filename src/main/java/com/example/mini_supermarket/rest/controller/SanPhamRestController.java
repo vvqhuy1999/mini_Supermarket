@@ -1,6 +1,7 @@
 package com.example.mini_supermarket.rest.controller;
 
 import com.example.mini_supermarket.entity.SanPham;
+import com.example.mini_supermarket.dto.SanPhamOptimizedDto;
 import com.example.mini_supermarket.service.SanPhamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,6 +26,8 @@ public class SanPhamRestController {
     @Autowired
     private SanPhamService sanPhamService;
 
+    // === ENDPOINTS CƠ BẢN - TRẢ VỀ ENTITY ĐẦY ĐỦ ===
+    
     @Operation(summary = "Lấy tất cả sản phẩm", description = "Trả về danh sách tất cả sản phẩm chưa bị xóa")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Thành công", 
@@ -66,6 +69,104 @@ public class SanPhamRestController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    // === ENDPOINTS TỐI ƯU - SỬ DỤNG DTO VỚI @BUILDER ===
+    
+    @Operation(summary = "Lấy tất cả sản phẩm (tối ưu)", description = "Trả về danh sách sản phẩm với ít trường hơn (không có trangThai, ngayTao, isDeleted)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/optimized")
+    public ResponseEntity<List<SanPhamOptimizedDto>> getAllSanPhamOptimized() {
+        try {
+            List<SanPhamOptimizedDto> sanPhams = sanPhamService.findAllActiveOptimized();
+            return new ResponseEntity<>(sanPhams, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @Operation(summary = "Lấy sản phẩm theo ID (tối ưu)", description = "Trả về thông tin sản phẩm với ít trường hơn (không có trangThai, ngayTao, isDeleted)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tìm thấy sản phẩm", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy sản phẩm"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/{id}/optimized")
+    public ResponseEntity<SanPhamOptimizedDto> getSanPhamByIdOptimized(
+            @Parameter(description = "ID của sản phẩm", required = true) @PathVariable String id) {
+        try {
+            SanPhamOptimizedDto sanPham = sanPhamService.findActiveByIdOptimized(id);
+            if (sanPham != null) {
+                return new ResponseEntity<>(sanPham, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    // === ENDPOINTS THEO CATEGORY - SỬ DỤNG DTO TỐI ƯU ===
+    
+    @Operation(summary = "Lấy sản phẩm theo category (tối ưu)", description = "Trả về danh sách sản phẩm theo loại với ít trường hơn")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "400", description = "Mã loại sản phẩm không hợp lệ"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/category/{maLoaiSP}")
+    public ResponseEntity<List<SanPhamOptimizedDto>> getSanPhamByCategory(
+            @Parameter(description = "Mã loại sản phẩm (VD: LSP001)", required = true) 
+            @PathVariable String maLoaiSP) {
+        try {
+            if (maLoaiSP == null || maLoaiSP.trim().isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            
+            List<SanPhamOptimizedDto> sanPhams = sanPhamService.findByCategoryOptimized(maLoaiSP.trim());
+            return new ResponseEntity<>(sanPhams, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @Operation(summary = "Lấy sản phẩm theo category và trạng thái kinh doanh (tối ưu)", description = "Trả về danh sách sản phẩm theo loại và đang kinh doanh với ít trường hơn")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "400", description = "Mã loại sản phẩm không hợp lệ"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/category/{maLoaiSP}/active")
+    public ResponseEntity<List<SanPhamOptimizedDto>> getActiveSanPhamByCategory(
+            @Parameter(description = "Mã loại sản phẩm (VD: LSP001)", required = true) 
+            @PathVariable String maLoaiSP) {
+        try {
+            if (maLoaiSP == null || maLoaiSP.trim().isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            
+            List<SanPhamOptimizedDto> sanPhams = sanPhamService.findByCategoryAndActiveOptimized(maLoaiSP.trim());
+            return new ResponseEntity<>(sanPhams, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // === ENDPOINTS QUẢN LÝ - FULL CRUD ===
 
     // Thêm sản phẩm mới
     @PostMapping

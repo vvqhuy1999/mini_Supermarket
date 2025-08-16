@@ -1,36 +1,58 @@
 # Default configuration for local development
 spring:
   datasource:
-    url: ${DB_URL:test}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:test}
-    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
-    # Connection Pool Configuration - HikariCP (default)
+    # Force sử dụng local PostgreSQL, không cho phép override
+    url: jdbc:postgresql://localhost:5432/quanlysieuthi
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    
+    # Connection Pool Configuration - HikariCP (PostgreSQL optimized)
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      leak-detection-threshold: 60000
+      maximum-pool-size: 10         # Local PostgreSQL có thể dùng nhiều kết nối hơn
+      minimum-idle: 5               # Giữ 5 kết nối idle
+      connection-timeout: 30000     # 30 giây
+      idle-timeout: 600000          # 10 phút
+      max-lifetime: 1800000         # 30 phút
+      leak-detection-threshold: 60000 # 1 phút
       connection-test-query: SELECT 1
-      validation-timeout: 5000
-      # Prepared Statement Cache
+      validation-timeout: 5000      # 5 giây
+      
+      # Cấu hình để đóng kết nối nhanh hơn
+      auto-commit: true
+      read-only: false
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      
+      # PostgreSQL specific settings
       data-source-properties:
-        cachePrepStmts: true
-        prepStmtCacheSize: 250
-        prepStmtCacheSqlLimit: 2048
-        useServerPrepStmts: true
-        useLocalSessionState: true
-        rewriteBatchedStatements: true
-        cacheResultSetMetadata: true
-        cacheServerConfiguration: true
-        elideSetAutoCommits: true
-        maintainTimeStats: false
+        # Disable prepared statement cache for PostgreSQL compatibility
+        cachePrepStmts: false
+        prepStmtCacheSize: 0
+        prepStmtCacheSqlLimit: 0
+        useServerPrepStmts: false
+        
+        # Connection settings
+        reWriteBatchedInserts: false
+        socketTimeout: 30000
+        connectTimeout: 30000
+        
+        # Force disable prepared statements
+        prepareThreshold: 0
+        
+        # Disable statement caching
+        statementCacheSize: 0
+        
+        # Force simple queries
+        simpleQuery: true
+        
+        # Additional PostgreSQL settings
+        tcpKeepAlive: true
+        defaultRowPrefetch: 100      # Tối ưu cho local
+        unknownLength: 2147483647
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
@@ -38,26 +60,32 @@ spring:
       hibernate:
         dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
         format_sql: true
-        # Prepared Statement Management
+        # Minimal Hibernate configuration for PostgreSQL compatibility
         jdbc:
-          batch_size: 20
-          batch_versioned_data: true
-          batch_builder: legacy
-        # Connection Management
+          batch_size: 0
+          use_get_generated_keys: false
         connection:
-          provider_disables_autocommit: true
-        # Statement Management
-        statement:
-          batch_size: 20
-          batch_versioned_data: true
-        # Cache Management
+          provider_disables_autocommit: false
         cache:
           use_second_level_cache: false
           use_query_cache: false
-        # Performance Optimization
-        order_inserts: true
-        order_updates: true
-        batch_fetch_style: LEGACY
+        # Disable prepared statements completely
+        generate_statistics: false
+        # Force simple SQL generation
+        globally_quoted_identifiers: false
+        globally_quoted_identifiers_skip_column_definitions: true
+        # Disable all optimizations
+        order_inserts: false
+        order_updates: false
+        batch_fetch_style: DYNAMIC
+        # Disable schema validation
+        hbm2ddl:
+          auto: none
+        # Force simple metadata extraction
+        metadata_builder: none
+        # Force simple queries
+        query:
+          fail_on_pagination_over_collection_fetch: false
   security:
     # Bật lại Spring Security
     enabled: true
@@ -74,8 +102,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:test}
-            client-secret: ${GOOGLE_CLIENT_SECRET:test}
+            client-id: ${GOOGLE_CLIENT_ID:1096787831677-f9nhpe4jc0be40sc5s910qihfv22etrl.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET: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}
             scope:
               - email
               - profile
@@ -150,7 +178,7 @@ springdoc:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:your-super-secret-jwt-key-here-make-it-long-enough-for-hs512-algorithm-at-least-64-bytes}
+  secret: ${JWT_SECRET:lj4rZPDvdCsTGInKfrNgFbKPq6xSg5svMzrKfDsTSpATgFuOM268cvRCRzWw2WLc}
   expiration: ${JWT_EXPIRATION:86400}  # 24 hours in seconds
 
 # OAuth2 Frontend Integration - Redirect to Frontend after OAuth2

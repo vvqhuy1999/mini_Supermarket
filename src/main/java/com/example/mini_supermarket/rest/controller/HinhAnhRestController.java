@@ -67,6 +67,54 @@ public class HinhAnhRestController {
         }
     }
 
+    @Operation(summary = "Lấy hình ảnh theo mã sản phẩm", description = "Trả về danh sách hình ảnh của sản phẩm theo mã (chỉ lấy hình ảnh chưa bị xóa)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tìm thấy hình ảnh", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = HinhAnh.class))),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy sản phẩm"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/product/{maSP}")
+    public ResponseEntity<List<HinhAnh>> getHinhAnhByMaSanPham(
+            @Parameter(description = "Mã sản phẩm", required = true) @PathVariable String maSP) {
+        try {
+            List<HinhAnh> hinhAnhs = hinhAnhService.findByMaSanPham(maSP);
+            if (hinhAnhs != null && !hinhAnhs.isEmpty()) {
+                return new ResponseEntity<>(hinhAnhs, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Operation(summary = "Lấy ảnh chính của sản phẩm", description = "Trả về ảnh chính của sản phẩm theo mã (chỉ lấy hình ảnh chưa bị xóa)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tìm thấy ảnh chính", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = HinhAnh.class))),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy ảnh chính"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/product/{maSP}/main")
+    public ResponseEntity<HinhAnh> getHinhAnhChinhByMaSanPham(
+            @Parameter(description = "Mã sản phẩm", required = true) @PathVariable String maSP) {
+        try {
+            HinhAnh hinhAnhChinh = hinhAnhService.findHinhAnhChinhByMaSanPham(maSP);
+            if (hinhAnhChinh != null) {
+                return new ResponseEntity<>(hinhAnhChinh, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Operation(summary = "Thêm hình ảnh mới", description = "Upload và thêm hình ảnh mới cho sản phẩm")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Tạo hình ảnh thành công", 

@@ -2,6 +2,7 @@ package com.example.mini_supermarket.service.impl;
 
 import com.example.mini_supermarket.repository.SanPhamRepository;
 import com.example.mini_supermarket.entity.SanPham;
+import com.example.mini_supermarket.dto.SanPhamOptimizedDto;
 import com.example.mini_supermarket.service.SanPhamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -95,5 +96,39 @@ public class SanPhamServiceImpl implements SanPhamService {
         }
 
         return sanPhamRepository.save(sanPham);
+    }
+    
+    // === IMPLEMENTATION CHO METHODS TỐI ƯU - SỬ DỤNG DTO ===
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SanPhamOptimizedDto> findAllActiveOptimized() {
+        return sanPhamRepository.findAllActiveOptimized();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public SanPhamOptimizedDto findActiveByIdOptimized(String id) {
+        Optional<SanPhamOptimizedDto> result = sanPhamRepository.findActiveByIdOptimized(id);
+        SanPhamOptimizedDto theSanPham = null;
+
+        if (result.isPresent()) {
+            theSanPham = result.get();
+        } else {
+            throw new RuntimeException("Did not find active SanPham id - " + id);
+        }
+        return theSanPham;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SanPhamOptimizedDto> findByCategoryOptimized(String maLoaiSP) {
+        return sanPhamRepository.findByCategoryOptimized(maLoaiSP);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SanPhamOptimizedDto> findByCategoryAndActiveOptimized(String maLoaiSP) {
+        return sanPhamRepository.findByCategoryAndActiveOptimized(maLoaiSP);
     }
 } 
