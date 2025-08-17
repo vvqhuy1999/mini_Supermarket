@@ -52,7 +52,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: none  # Thay đổi từ 'none' thành 'update' để tự động tạo cột mới
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
@@ -78,9 +78,6 @@ spring:
         order_inserts: false
         order_updates: false
         batch_fetch_style: DYNAMIC
-        # Disable schema validation
-        hbm2ddl:
-          auto: none
         # Force simple metadata extraction
         metadata_builder: none
         # Force simple queries
@@ -153,6 +150,24 @@ spring:
         - classpath:/static/
         - file:./uploads/
         - file:./static/
+  
+  # Gmail SMTP Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME:test}
+    password: ${GMAIL_PASSWORD:test}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+        transport:
+          protocol: smtp
 
 # Swagger/OpenAPI Configuration
 springdoc:
@@ -195,6 +210,9 @@ app:
     base-url: ${FRONTEND_URL:http://localhost:3000}
     success-path: ${OAUTH2_SUCCESS_PATH:/oauth2/success}
     failure-path: ${OAUTH2_FAILURE_PATH:/login?error=oauth2_failed}
+  otp:
+    expiration-minutes: ${OTP_EXPIRATION_MINUTES:5}
+    max-attempts: ${OTP_MAX_ATTEMPTS:3}
 
 
 #Google

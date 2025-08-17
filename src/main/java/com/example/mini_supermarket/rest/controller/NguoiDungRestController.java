@@ -1,6 +1,7 @@
 package com.example.mini_supermarket.rest.controller;
 
 import com.example.mini_supermarket.entity.NguoiDung;
+import com.example.mini_supermarket.dto.ChangePasswordRequest;
 import com.example.mini_supermarket.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/nguoidung")
@@ -195,7 +198,7 @@ public class NguoiDungRestController {
     /**
      * Xóa người dùng (soft delete)
      */
-    @Operation(summary = "Xóa người dùng", description = "Xóa mềm người dùng (đánh dấu isDeleted = true)")
+    @Operation(summary = "Xóa người dùng", description = "Xóa người dùng theo mã người dùng (soft delete)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Xóa thành công"),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng"),
@@ -213,6 +216,63 @@ public class NguoiDungRestController {
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Lỗi xóa: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+    
+    /**
+     * Đổi mật khẩu cho người dùng
+     */
+    @Operation(summary = "Đổi mật khẩu", description = "Đổi mật khẩu cho người dùng (cần authentication)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Đổi mật khẩu thành công"),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "Không có quyền truy cập"),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @Parameter(description = "Request đổi mật khẩu", required = true)
+            @RequestBody ChangePasswordRequest request) {
+        try {
+            // Validation cơ bản
+            if (request.getNewPassword() == null || !request.getNewPassword().equals(request.getConfirmPassword())) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Mật khẩu mới và xác nhận mật khẩu không khớp!");
+                return ResponseEntity.badRequest().body(error);
+            }
+            
+            // Lấy thông tin người dùng từ Security Context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Không có quyền truy cập!");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+            
+            String username = authentication.getName();
+            
+            // Đổi mật khẩu
+            boolean success = userService.changePassword(username, request.getOldPassword(), request.getNewPassword());
+            
+            if (success) {
+                Map<String, String> message = new HashMap<>();
+                message.put("message", "Đổi mật khẩu thành công!");
+                return ResponseEntity.ok(message);
+            } else {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Đổi mật khẩu thất bại!");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+            }
+            
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi server: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

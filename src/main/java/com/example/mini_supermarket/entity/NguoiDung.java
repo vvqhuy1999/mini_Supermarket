@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -48,4 +49,54 @@ public class NguoiDung implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "nguoiDung", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<NhanVien> nhanViens;
+    
+    // OTP và Reset Password fields
+    @Column(name = "otp_code", length = 6)
+    private String otpCode;
+    
+    @Column(name = "otp_generated_time")
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp otpGeneratedTime;
+    
+    @Column(name = "otp_attempts")
+    private Integer otpAttempts = 0;
+    
+    @Column(name = "reset_password_token", length = 255)
+    private String resetPasswordToken;
+    
+    @Column(name = "reset_password_token_expiry")
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp resetPasswordTokenExpiry;
+    
+    // Helper methods for OTP
+    public boolean isOtpExpired() {
+        if (otpGeneratedTime == null) return true;
+        LocalDateTime generatedTime = otpGeneratedTime.toLocalDateTime();
+        LocalDateTime expiryTime = generatedTime.plusMinutes(5); // 5 phút theo config
+        return LocalDateTime.now().isAfter(expiryTime);
+    }
+    
+    public boolean isOtpValid() {
+        return otpCode != null && !otpCode.isEmpty() && !isOtpExpired() && otpAttempts < 3;
+    }
+    
+    public void incrementOtpAttempts() {
+        this.otpAttempts = (this.otpAttempts == null) ? 1 : this.otpAttempts + 1;
+    }
+    
+    public void resetOtp() {
+        this.otpCode = null;
+        this.otpGeneratedTime = null;
+        this.otpAttempts = 0;
+    }
+    
+    public boolean isResetTokenExpired() {
+        if (resetPasswordTokenExpiry == null) return true;
+        LocalDateTime expiryTime = resetPasswordTokenExpiry.toLocalDateTime();
+        return LocalDateTime.now().isAfter(expiryTime);
+    }
+    
+    public boolean isResetTokenValid() {
+        return resetPasswordToken != null && !resetPasswordToken.isEmpty() && !isResetTokenExpired();
+    }
 } 

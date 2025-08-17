@@ -106,6 +106,9 @@ public class SecurityConfig {
         "/login/oauth2/code/**",
         // Logout và check-auth được xử lý bởi AuthenticationController
         
+        // Quên mật khẩu và OTP (không cần authentication)
+        "/api/forgot-password/**",    // POST: Gửi OTP, xác thực OTP, reset mật khẩu
+        
         // API cơ bản cho khách hàng - CHỈ XEM (READ)
         "/api/sanpham",                 // GET: Xem danh sách sản phẩm
         "/api/sanpham/*",               // GET: Xem chi tiết sản phẩm (không phải POST/PUT/DELETE)
@@ -166,6 +169,9 @@ public class SecurityConfig {
         // Profile khách hàng - Xem và cập nhật thông tin cá nhân (cần authentication)
         "/api/khachhang/by-nguoidung/*", // GET: Xem profile, PUT: Cập nhật profile
         "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
+        
+        // Đổi mật khẩu
+        "/api/nguoidung/change-password", // POST: Đổi mật khẩu
         
         // Quản lý địa chỉ giao hàng (nếu có)
         "/api/diachigiaohang",          // GET: Xem địa chỉ giao hàng, POST: Thêm địa chỉ
