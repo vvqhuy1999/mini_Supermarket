@@ -68,7 +68,6 @@ CREATE TABLE khachhang (
     manguoidung VARCHAR(50),
     hoten VARCHAR(255) NOT NULL,
     sdt VARCHAR(15),
-    email VARCHAR(100),
     diachi VARCHAR(255),
     ngaysinh DATE,
     diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
@@ -327,7 +326,8 @@ CREATE TABLE donhang (
     ngaydathang TIMESTAMP NOT NULL,
     ngaygiaohang TIMESTAMP,
     diachigiaohang VARCHAR(255) NOT NULL,
-    trangthai VARCHAR(50) NOT NULL -- e.g., Pending, Shipping, Completed, Canceled
+    trangthai VARCHAR(50) NOT NULL, -- e.g., Pending, Shipping, Completed, Canceled
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Order Details Table
@@ -337,7 +337,8 @@ CREATE TABLE chitietdonhang (
     masp VARCHAR(50) NOT NULL,
     soluong INT NOT NULL,
     dongia DECIMAL(15,2) NOT NULL,
-    giamgia DECIMAL(5,2) DEFAULT 0
+    giamgia DECIMAL(5,2) DEFAULT 0,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for sales invoices
@@ -579,7 +580,6 @@ CREATE INDEX idx_nhacungcap_trangthai ON nhacungcap(trangthai);
 CREATE INDEX idx_nhanvien_cuahang ON nhanvien(mach);
 CREATE INDEX idx_nhanvien_trangthai ON nhanvien(trangthai);
 CREATE INDEX idx_khachhang_sdt ON khachhang(sdt);
-CREATE INDEX idx_khachhang_email ON khachhang(email);
 CREATE INDEX idx_khachhang_loai ON khachhang(loaikhachhang);
 CREATE INDEX idx_loaisanpham_cha ON loaisanpham(maloaicha);
 CREATE INDEX idx_sanpham_loai ON sanpham(maloaisp);
