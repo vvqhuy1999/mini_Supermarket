@@ -197,4 +197,27 @@ public class KhachHangServiceImpl implements KhachHangService {
             return null;
         }
     }
+    
+    @Override
+    public KhachHang findByMaNguoiDung(String maNguoiDung) {
+        try {
+            // Khôi phục lại cách cũ để đảm bảo hoạt động
+            List<KhachHang> allCustomers = khachHangRepository.findAllActive();
+            for (KhachHang kh : allCustomers) {
+                if (kh.getNguoiDung() != null && 
+                    kh.getNguoiDung().getMaNguoiDung().equals(maNguoiDung)) {
+                    System.out.println("✅ Tìm thấy khách hàng cho NguoiDung: " + maNguoiDung);
+                    System.out.println("   - Mã KH: " + kh.getMaKH());
+                    System.out.println("   - Họ tên: " + kh.getHoTen());
+                    return kh;
+                }
+            }
+            System.out.println("❌ Không tìm thấy khách hàng cho NguoiDung: " + maNguoiDung);
+            return null; // Không tìm thấy
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi tìm khách hàng theo maNguoiDung: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 } 

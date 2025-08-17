@@ -41,4 +41,11 @@ public interface KhachHangService {
      * @return KhachHang đã được tạo, hoặc null nếu đã tồn tại
      */
     KhachHang createCustomerFromOAuth2(com.example.mini_supermarket.entity.NguoiDung nguoiDung, String hoTen);
+    
+    /**
+     * Tìm khách hàng theo mã người dùng
+     * @param maNguoiDung Mã người dùng cần tìm
+     * @return KhachHang nếu tìm thấy, null nếu không tìm thấy
+     */
+    KhachHang findByMaNguoiDung(String maNguoiDung);
 } 

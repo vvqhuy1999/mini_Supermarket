@@ -35,7 +35,10 @@ public class SecurityConfig {
     @Autowired
     private ClientRegistrationRepository clientRegistrationRepository;
     
-    // Không cần JwtAuthenticationFilter riêng biệt
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    
+    // JWT filter sẽ xử lý JWT token từ header Authorization: Bearer <token>
     // OAuth2SuccessHandler sẽ xử lý JWT sau khi OAuth2 thành công
     
     @Value("${oauth2.frontend.base-url:http://localhost:3000}")
@@ -57,7 +60,7 @@ public class SecurityConfig {
     //
     // 📋 QUY TẮC PHÂN QUYỀN:
     // 1. PUBLIC_ENDPOINTS: Không cần authentication (permitAll) - Chỉ xem thông tin cơ bản
-    // 2. CUSTOMER_ENDPOINTS: Cần authentication (không cần role cụ thể) - Quản lý cá nhân
+    // 2. CUSTOMER_ENDPOINTS: Cần authentication (không cần role cụ thể) - Quản lý cá nhân khách hàng
     // 3. EMPLOYEE_ENDPOINTS: Cần role EMPLOYEE - Quản lý nghiệp vụ cơ bản
     // 4. SHARED_ENDPOINTS: Cần role EMPLOYEE HOẶC MANAGER (hasAnyRole) - Quản lý cá nhân nhân viên
     // 5. MANAGER_ENDPOINTS: Cần role MANAGER - Quản lý toàn hệ thống
@@ -127,7 +130,12 @@ public class SecurityConfig {
         
         // Health check
         "/actuator/health/**",
-        "/health"
+        "/health",
+        // Đăng ký tài khoản khách hàng mới
+        "/api/khachhang/register",      // POST: Đăng ký tài khoản khách hàng mới
+        
+        // Profile khách hàng - Xem thông tin cá nhân (không cần authentication)
+        "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
     };
     
     // ===== API DÀNH CHO KHÁCH HÀNG (Customer) - Cần authentication =====
@@ -154,6 +162,22 @@ public class SecurityConfig {
         "/api/thanhtoan",               // POST: Tạo thanh toán
         "/api/thanhtoan/*",             // GET: Xem trạng thái thanh toán
         "/api/phuongthucthanhtoan",     // GET: Xem phương thức thanh toán
+        
+        // Profile khách hàng - Xem và cập nhật thông tin cá nhân (cần authentication)
+        "/api/khachhang/by-nguoidung/*", // GET: Xem profile, PUT: Cập nhật profile
+        "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
+        
+        // Quản lý địa chỉ giao hàng (nếu có)
+        "/api/diachigiaohang",          // GET: Xem địa chỉ giao hàng, POST: Thêm địa chỉ
+        "/api/diachigiaohang/*",        // GET: Xem chi tiết, PUT: Cập nhật, DELETE: Xóa
+        
+        // Quản lý yêu thích (nếu có)
+        "/api/yeuthich",                // GET: Xem danh sách yêu thích, POST: Thêm yêu thích
+        "/api/yeuthich/*",              // DELETE: Xóa yêu thích
+        
+        // Đánh giá sản phẩm (nếu có)
+        "/api/danhgia",                 // GET: Xem đánh giá cá nhân, POST: Tạo đánh giá
+        "/api/danhgia/*",               // PUT: Cập nhật đánh giá, DELETE: Xóa đánh giá
     };
     
     // ===== API DÀNH CHO NHÂN VIÊN (Employee) - Cần role EMPLOYEE =====
@@ -290,8 +314,8 @@ public class SecurityConfig {
             // Cấu hình CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // Không cần JWT filter riêng biệt
-            // OAuth2SuccessHandler sẽ xử lý JWT sau khi OAuth2 thành công
+            // Thêm JWT filter để xử lý JWT token từ header Authorization
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             
             // Cấu hình OAuth2 - Simple Google login
             .oauth2Login(oauth2 -> oauth2

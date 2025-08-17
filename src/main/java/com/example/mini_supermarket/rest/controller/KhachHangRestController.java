@@ -70,6 +70,30 @@ public class KhachHangRestController {
         }
     }
 
+    @Operation(summary = "Lấy khách hàng theo mã người dùng", description = "Trả về thông tin khách hàng theo mã người dùng (chỉ lấy khách hàng chưa bị xóa)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tìm thấy khách hàng", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = KhachHang.class))),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/by-nguoidung/{maNguoiDung}")
+    public ResponseEntity<KhachHang> getKhachHangByMaNguoiDung(
+            @Parameter(description = "Mã người dùng", required = true) @PathVariable String maNguoiDung) {
+        try {
+            KhachHang khachHang = khachHangService.findByMaNguoiDung(maNguoiDung);
+            if (khachHang != null) {
+                return new ResponseEntity<>(khachHang, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Thêm khách hàng mới
     @PostMapping
     public ResponseEntity<KhachHang> createKhachHang(@RequestBody KhachHang khachHang) {
@@ -90,6 +114,40 @@ public class KhachHangRestController {
             if (existingKhachHang != null) {
                 khachHang.setMaKH(id); // Đảm bảo ID không thay đổi
                 khachHang.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
+                KhachHang updatedKhachHang = khachHangService.update(khachHang);
+                return new ResponseEntity<>(updatedKhachHang, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Operation(summary = "Cập nhật thông tin khách hàng theo mã người dùng", description = "Cập nhật thông tin khách hàng dựa trên mã người dùng")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cập nhật thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = KhachHang.class))),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @PutMapping("/by-nguoidung/{maNguoiDung}")
+    public ResponseEntity<KhachHang> updateKhachHangByMaNguoiDung(
+            @Parameter(description = "Mã người dùng", required = true) @PathVariable String maNguoiDung,
+            @Parameter(description = "Thông tin khách hàng cần cập nhật", required = true) @RequestBody KhachHang khachHang) {
+        try {
+            KhachHang existingKhachHang = khachHangService.findByMaNguoiDung(maNguoiDung);
+            if (existingKhachHang != null) {
+                // Cập nhật thông tin nhưng giữ nguyên các trường quan trọng
+                khachHang.setMaKH(existingKhachHang.getMaKH()); // Giữ nguyên mã khách hàng
+                khachHang.setNguoiDung(existingKhachHang.getNguoiDung()); // Giữ nguyên liên kết với NguoiDung
+                khachHang.setNgayDangKy(existingKhachHang.getNgayDangKy()); // Giữ nguyên ngày đăng ký
+                khachHang.setDiemTichLuy(existingKhachHang.getDiemTichLuy()); // Giữ nguyên điểm tích lũy
+                khachHang.setIsDeleted(false); // Đảm bảo không bị đánh dấu là đã xóa
+                
                 KhachHang updatedKhachHang = khachHangService.update(khachHang);
                 return new ResponseEntity<>(updatedKhachHang, HttpStatus.OK);
             } else {
