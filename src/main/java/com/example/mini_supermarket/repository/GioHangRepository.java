@@ -21,4 +21,13 @@ public interface GioHangRepository extends JpaRepository<GioHang, Integer> {
     // Tìm giỏ hàng theo ID (bao gồm cả đã xóa)
     @Query("SELECT g FROM GioHang g WHERE g.maGH = :id")
     Optional<GioHang> findByIdIncludeDeleted(@Param("id") Integer id);
+
+    // Tìm tất cả giỏ hàng theo khách hàng và chưa bị xóa
+    List<GioHang> findByKhachHang_MaKHAndIsDeletedFalse(String maKH);
+
+    // Lấy giỏ hàng gần nhất theo khách hàng với trạng thái chỉ định (ưu tiên trạng thái đang chọn hàng = 0)
+    Optional<GioHang> findFirstByKhachHang_MaKHAndIsDeletedFalseAndTrangThaiOrderByNgayCapNhatDesc(String maKH, Integer trangThai);
+
+    // Lấy giỏ hàng gần nhất theo khách hàng (bất kỳ trạng thái)
+    Optional<GioHang> findFirstByKhachHang_MaKHAndIsDeletedFalseOrderByNgayCapNhatDesc(String maKH);
 } 

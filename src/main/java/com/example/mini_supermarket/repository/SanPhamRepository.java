@@ -29,28 +29,28 @@ public interface SanPhamRepository extends JpaRepository<SanPham, String> {
     
     // Tìm tất cả sản phẩm active - sử dụng DTO tối ưu
     @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
-           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.giaBan, " +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
            "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung) " +
            "FROM SanPham s WHERE s.isDeleted = false")
     List<SanPhamOptimizedDto> findAllActiveOptimized();
     
     // Tìm sản phẩm theo ID - sử dụng DTO tối ưu
     @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
-           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.giaBan, " +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
            "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung) " +
            "FROM SanPham s WHERE s.maSP = :id AND s.isDeleted = false")
     Optional<SanPhamOptimizedDto> findActiveByIdOptimized(@Param("id") String id);
     
     // Tìm sản phẩm theo category - sử dụng DTO tối ưu
     @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
-           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.giaBan, " +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
            "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung) " +
            "FROM SanPham s WHERE s.loaiSanPham.maLoaiSP = :maLoaiSP AND s.isDeleted = false")
     List<SanPhamOptimizedDto> findByCategoryOptimized(@Param("maLoaiSP") String maLoaiSP);
     
     // Tìm sản phẩm theo category và trạng thái kinh doanh - sử dụng DTO tối ưu
     @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
-           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.giaBan, " +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
            "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung) " +
            "FROM SanPham s WHERE s.loaiSanPham.maLoaiSP = :maLoaiSP AND s.isDeleted = false AND s.trangThai = 1")
     List<SanPhamOptimizedDto> findByCategoryAndActiveOptimized(@Param("maLoaiSP") String maLoaiSP);

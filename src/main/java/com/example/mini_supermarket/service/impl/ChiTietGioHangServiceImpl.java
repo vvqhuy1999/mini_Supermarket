@@ -60,4 +60,10 @@ public class ChiTietGioHangServiceImpl implements ChiTietGioHangService {
             chiTietGioHangRepository.save(chiTietGioHang);
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChiTietGioHang> findByGioHangIdActive(Integer maGH) {
+        return chiTietGioHangRepository.findByGioHang_MaGH_Active(maGH);
+    }
 } 

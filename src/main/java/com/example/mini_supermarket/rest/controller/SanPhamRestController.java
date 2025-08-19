@@ -39,6 +39,12 @@ public class SanPhamRestController {
     public ResponseEntity<List<SanPham>> getAllSanPham() {
         try {
             List<SanPham> sanPhams = sanPhamService.findAllActive();
+            // Populate current price for each product
+            if (sanPhams != null && !sanPhams.isEmpty()) {
+                for (SanPham sp : sanPhams) {
+                    sp.setGiaHienTai(sanPhamService.getCurrentPrice(sp.getMaSP()));
+                }
+            }
             return new ResponseEntity<>(sanPhams, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,11 +65,11 @@ public class SanPhamRestController {
             @Parameter(description = "ID của sản phẩm", required = true) @PathVariable String id) {
         try {
             SanPham sanPham = sanPhamService.findActiveById(id);
-            if (sanPham != null) {
-                return new ResponseEntity<>(sanPham, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            // Giá hiện tại đã được set trong service, nhưng đảm bảo nếu null thì set từ service
+            if (sanPham.getGiaHienTai() == null) {
+                sanPham.setGiaHienTai(sanPhamService.getCurrentPrice(id));
             }
+            return new ResponseEntity<>(sanPham, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

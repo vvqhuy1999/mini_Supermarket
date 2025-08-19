@@ -3,7 +3,6 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.GioHangRepository;
 import com.example.mini_supermarket.entity.GioHang;
 import com.example.mini_supermarket.service.GioHangService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +13,6 @@ import java.util.Optional;
 public class GioHangServiceImpl implements GioHangService {
     private GioHangRepository gioHangRepository;
 
-    @Autowired
     public GioHangServiceImpl(GioHangRepository gioHangRepository) {
         this.gioHangRepository = gioHangRepository;
     }
@@ -77,5 +75,22 @@ public class GioHangServiceImpl implements GioHangService {
             gioHang.setIsDeleted(true);
             gioHangRepository.save(gioHang);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GioHang> findByMaKhachHang(String maKH) {
+        return gioHangRepository.findByKhachHang_MaKHAndIsDeletedFalse(maKH);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GioHang findLatestActiveCartByMaKhachHang(String maKH) {
+        // Ưu tiên trạng thái 0 (đang chọn hàng). Nếu không có, lấy giỏ gần nhất bất kỳ trạng thái
+        return gioHangRepository
+                .findFirstByKhachHang_MaKHAndIsDeletedFalseAndTrangThaiOrderByNgayCapNhatDesc(maKH, 0)
+                .orElseGet(() -> gioHangRepository
+                        .findFirstByKhachHang_MaKHAndIsDeletedFalseOrderByNgayCapNhatDesc(maKH)
+                        .orElse(null));
     }
 } 

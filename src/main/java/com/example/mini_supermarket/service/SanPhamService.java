@@ -26,6 +26,9 @@ public interface SanPhamService {
 
     SanPham update(SanPham sanPham);
     
+    // Lấy giá hiện tại cho sản phẩm
+    java.math.BigDecimal getCurrentPrice(String maSP);
+    
     // === METHODS TỐI ƯU - SỬ DỤNG DTO VỚI @BUILDER ===
     
     // Lấy tất cả sản phẩm active - tối ưu

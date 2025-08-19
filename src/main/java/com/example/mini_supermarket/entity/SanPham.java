@@ -12,12 +12,10 @@ import java.math.BigDecimal;
 
 import java.util.List;
 
-import com.example.mini_supermarket.entity.ChiTietDonHang;
 
 @Entity
 @Table(name = "SanPham", indexes = {
     @Index(name = "idx_sanpham_loai", columnList = "MaLoaiSP"),
-    @Index(name = "idx_sanpham_gia", columnList = "GiaBan"),
     @Index(name = "idx_sanpham_trangthai", columnList = "TrangThai")
 })
 @Data
@@ -39,10 +37,8 @@ public class SanPham implements Serializable {
     @Column(name = "MoTa", columnDefinition = "TEXT")
     private String moTa;
 
-    @Column(name = "GiaBan", precision = 15, scale = 2, nullable = false)
-    private BigDecimal giaBan;
-
     @Column(name = "DonViTinh", length = 50)
+    @Builder.Default
     private String donViTinh = "Cái";
 
     @Column(name = "TrongLuong", precision = 10, scale = 3)
@@ -55,6 +51,7 @@ public class SanPham implements Serializable {
     private Integer hanSuDung; // Số ngày hạn sử dụng
 
     @Column(name = "TrangThai")
+    @Builder.Default
     private Integer trangThai = 1; // 0=Ngừng kinh doanh, 1=Đang kinh doanh
 
     @Column(name = "NgayTao")
@@ -62,7 +59,12 @@ public class SanPham implements Serializable {
     private java.sql.Timestamp ngayTao;
 
     @Column(name = "IsDeleted")
+    @Builder.Default
     private Boolean isDeleted = false;
+
+    // Giá hiện tại (không lưu DB)
+    @Transient
+    private java.math.BigDecimal giaHienTai;
 
     // Quan hệ OneToMany
     @JsonIgnore

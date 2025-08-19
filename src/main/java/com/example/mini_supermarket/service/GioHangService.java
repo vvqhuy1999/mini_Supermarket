@@ -22,4 +22,8 @@ public interface GioHangService {
     void softDeleteById(Integer id); // Soft delete - set isDeleted = true
 
     GioHang update(GioHang gioHang);
+
+    // New methods for frontend routes
+    List<GioHang> findByMaKhachHang(String maKH);
+    GioHang findLatestActiveCartByMaKhachHang(String maKH);
 } 

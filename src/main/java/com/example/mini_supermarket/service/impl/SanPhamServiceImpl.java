@@ -1,10 +1,11 @@
 package com.example.mini_supermarket.service.impl;
 
 import com.example.mini_supermarket.repository.SanPhamRepository;
+import com.example.mini_supermarket.repository.GiaSanPhamRepository;
+import com.example.mini_supermarket.entity.GiaSanPham;
 import com.example.mini_supermarket.entity.SanPham;
 import com.example.mini_supermarket.dto.SanPhamOptimizedDto;
 import com.example.mini_supermarket.service.SanPhamService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +15,11 @@ import java.util.Optional;
 @Service
 public class SanPhamServiceImpl implements SanPhamService {
     private SanPhamRepository sanPhamRepository;
+    private GiaSanPhamRepository giaSanPhamRepository;
 
-    @Autowired
-    public SanPhamServiceImpl(SanPhamRepository sanPhamRepository) {
+    public SanPhamServiceImpl(SanPhamRepository sanPhamRepository, GiaSanPhamRepository giaSanPhamRepository) {
         this.sanPhamRepository = sanPhamRepository;
+        this.giaSanPhamRepository = giaSanPhamRepository;
     }
 
     @Override
@@ -54,6 +56,8 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         if (result.isPresent()) {
             theSanPham = result.get();
+            // set gia hien tai
+            theSanPham.setGiaHienTai(getCurrentPrice(theId));
         } else {
             throw new RuntimeException("Did not find active SanPham id - " + theId);
         }
@@ -97,13 +101,35 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         return sanPhamRepository.save(sanPham);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.math.BigDecimal getCurrentPrice(String maSP) {
+        // 1) Ưu tiên khoảng giá đang hiệu lực theo ngày
+        List<GiaSanPham> applicable = giaSanPhamRepository.findApplicablePrices(maSP);
+        if (!applicable.isEmpty()) {
+            return applicable.get(0).getGia();
+        }
+        // 2) Fallback: lấy bản ghi giá mới nhất
+        List<GiaSanPham> latest = giaSanPhamRepository.findLatestPrices(maSP);
+        if (!latest.isEmpty()) {
+            return latest.get(0).getGia();
+        }
+        return null;
+    }
     
     // === IMPLEMENTATION CHO METHODS TỐI ƯU - SỬ DỤNG DTO ===
     
     @Override
     @Transactional(readOnly = true)
     public List<SanPhamOptimizedDto> findAllActiveOptimized() {
-        return sanPhamRepository.findAllActiveOptimized();
+        List<SanPhamOptimizedDto> list = sanPhamRepository.findAllActiveOptimized();
+        if (list != null) {
+            for (SanPhamOptimizedDto dto : list) {
+                dto.setGiaHienTai(getCurrentPrice(dto.getMaSP()));
+            }
+        }
+        return list;
     }
     
     @Override
@@ -114,6 +140,7 @@ public class SanPhamServiceImpl implements SanPhamService {
 
         if (result.isPresent()) {
             theSanPham = result.get();
+            theSanPham.setGiaHienTai(getCurrentPrice(theSanPham.getMaSP()));
         } else {
             throw new RuntimeException("Did not find active SanPham id - " + id);
         }
@@ -123,12 +150,24 @@ public class SanPhamServiceImpl implements SanPhamService {
     @Override
     @Transactional(readOnly = true)
     public List<SanPhamOptimizedDto> findByCategoryOptimized(String maLoaiSP) {
-        return sanPhamRepository.findByCategoryOptimized(maLoaiSP);
+        List<SanPhamOptimizedDto> list = sanPhamRepository.findByCategoryOptimized(maLoaiSP);
+        if (list != null) {
+            for (SanPhamOptimizedDto dto : list) {
+                dto.setGiaHienTai(getCurrentPrice(dto.getMaSP()));
+            }
+        }
+        return list;
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<SanPhamOptimizedDto> findByCategoryAndActiveOptimized(String maLoaiSP) {
-        return sanPhamRepository.findByCategoryAndActiveOptimized(maLoaiSP);
+        List<SanPhamOptimizedDto> list = sanPhamRepository.findByCategoryAndActiveOptimized(maLoaiSP);
+        if (list != null) {
+            for (SanPhamOptimizedDto dto : list) {
+                dto.setGiaHienTai(getCurrentPrice(dto.getMaSP()));
+            }
+        }
+        return list;
     }
 } 

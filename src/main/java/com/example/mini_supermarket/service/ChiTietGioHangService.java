@@ -11,6 +11,7 @@ public interface ChiTietGioHangService {
     List<ChiTietGioHang> findAllActive();
     ChiTietGioHang findById(Integer id);
     ChiTietGioHang findActiveById(Integer id);
+    List<ChiTietGioHang> findByGioHangIdActive(Integer maGH);
     ChiTietGioHang save(ChiTietGioHang chiTietGioHang);
     void deleteById(Integer id);
     void softDeleteById(Integer id);

@@ -1,6 +1,7 @@
 package com.example.mini_supermarket.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,6 +43,7 @@ public class ChiTietGioHang implements Serializable {
 
     @Column(name = "NgayThem")
     @Temporal(TemporalType.TIMESTAMP)
+    @CreationTimestamp
     private java.sql.Timestamp ngayThem;
 
     @Column(name = "IsDeleted")

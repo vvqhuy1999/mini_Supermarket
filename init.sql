@@ -1,14 +1,22 @@
 
 -- Bảng quản lý thông tin người dùng hệ thống
-CREATE TABLE nguoidung (
-    manguoidung VARCHAR(50) PRIMARY KEY,
-    email VARCHAR(50) UNIQUE NOT NULL,
-    matkhau VARCHAR(255) NOT NULL,
-    sub VARCHAR(255),
-    vaitro INT NOT NULL, -- 0=Admin, 1=Manager, 2=Sales Staff, 3=Warehouse Staff
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
+CREATE TABLE NguoiDung (
+    MaNguoiDung VARCHAR(50) PRIMARY KEY,
+    Email VARCHAR(50) UNIQUE NOT NULL,
+    MatKhau VARCHAR(255) NOT NULL,
+    Sub VARCHAR(255),
+    VaiTro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    NgayTao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    IsDeleted BOOLEAN DEFAULT FALSE,
+    
+    -- Các cột cho chức năng OTP và Reset Password
+    otp_code VARCHAR(6),
+    otp_generated_time TIMESTAMP,
+    otp_attempts INT DEFAULT 0,
+    reset_password_token VARCHAR(255),
+    reset_password_token_expiry TIMESTAMP,
+
+    CONSTRAINT check_vaitro CHECK (VaiTro IN (0, 1, 2, 3))
 );
 
 -- Table to manage store information
@@ -54,12 +62,12 @@ CREATE TABLE nhanvien (
 );
 
 -- Table to manage customer information and loyalty points
+-- *** UPDATED: Removed 'email' column. ***
 CREATE TABLE khachhang (
     makh VARCHAR(50) PRIMARY KEY,
     manguoidung VARCHAR(50),
     hoten VARCHAR(255) NOT NULL,
     sdt VARCHAR(15),
-    email VARCHAR(100),
     diachi VARCHAR(255),
     ngaysinh DATE,
     diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
@@ -81,21 +89,19 @@ CREATE TABLE loaisanpham (
 );
 
 -- Table for detailed product information
+-- *** UPDATED: Removed 'giaban' column. Price is now managed in 'giasanpham' table. ***
 CREATE TABLE sanpham (
     masp VARCHAR(50) PRIMARY KEY,
     maloaisp VARCHAR(50) NOT NULL,
     tensp VARCHAR(255) NOT NULL,
     mota TEXT,
-    giaban DECIMAL(15,2) NOT NULL, -- Current selling price
     donvitinh VARCHAR(50) DEFAULT 'Cái',
     trongluong DECIMAL(10,3), -- Product weight (kg)
     kichthuoc VARCHAR(100), -- Product dimensions
     hansudung INT, -- Shelf life in days
     trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
     ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
-
-    CONSTRAINT chk_sanpham_giaban CHECK (giaban > 0)
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for promotion programs
@@ -572,11 +578,10 @@ CREATE INDEX idx_nhacungcap_trangthai ON nhacungcap(trangthai);
 CREATE INDEX idx_nhanvien_cuahang ON nhanvien(mach);
 CREATE INDEX idx_nhanvien_trangthai ON nhanvien(trangthai);
 CREATE INDEX idx_khachhang_sdt ON khachhang(sdt);
-CREATE INDEX idx_khachhang_email ON khachhang(email);
+-- *** UPDATED: Removed index for 'email' column. ***
 CREATE INDEX idx_khachhang_loai ON khachhang(loaikhachhang);
 CREATE INDEX idx_loaisanpham_cha ON loaisanpham(maloaicha);
 CREATE INDEX idx_sanpham_loai ON sanpham(maloaisp);
-CREATE INDEX idx_sanpham_gia ON sanpham(giaban);
 CREATE INDEX idx_sanpham_trangthai ON sanpham(trangthai);
 CREATE INDEX idx_khuyenmai_ngay ON khuyenmai(ngaybatdau, ngayketthuc);
 CREATE INDEX idx_khuyenmai_trangthai ON khuyenmai(trangthai);
@@ -610,11 +615,6 @@ CREATE INDEX idx_hoadon_khachhang ON hoadon(makh);
 CREATE INDEX idx_hoadon_nhanvien ON hoadon(manvlap);
 CREATE INDEX idx_chitiethoadon_hoadon ON chitiethoadon(mahd);
 CREATE INDEX idx_chitiethoadon_sanpham ON chitiethoadon(masp);
-CREATE INDEX idx_donhang_khachhang ON donhang(makh);
-CREATE INDEX idx_donhang_nhanvien ON donhang(manv);
-CREATE INDEX idx_donhang_ngaydathang ON donhang(ngaydathang);
-CREATE INDEX idx_chitietdonhang_donhang ON chitietdonhang(madh);
-CREATE INDEX idx_chitietdonhang_sanpham ON chitietdonhang(masp);
 CREATE INDEX idx_khuyenmaisanpham_km ON khuyenmaisanpham(makm);
 CREATE INDEX idx_khuyenmaisanpham_sp ON khuyenmaisanpham(masp);
 CREATE INDEX idx_khuyenmaikhachhang_km ON khuyenmaikhachhang(makm);
@@ -629,54 +629,3 @@ CREATE INDEX idx_chitietgiohang_sanpham ON chitietgiohang(masp);
 CREATE INDEX idx_thongke_loai ON thongkebaocao(loaibaocao);
 CREATE INDEX idx_thongke_ngay ON thongkebaocao(ngaybaocao);
 CREATE INDEX idx_thongke_cuahang ON thongkebaocao(mach);
-
--- ===================================
--- CREATE TRIGGERS for ON UPDATE functionality
--- In PostgreSQL, triggers are created in two steps:
--- 1. Create a function that returns a TRIGGER.
--- 2. Create the trigger that executes the function.
--- ===================================
-
--- Trigger for tonkhochitiet to update ngaycapnhat
-CREATE OR REPLACE FUNCTION fn_update_tonkho_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.ngaycapnhat = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_tonkhochitiet_updatedate
-BEFORE UPDATE ON tonkhochitiet
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_tonkho_timestamp();
-
-
--- Trigger for hoadon to update ngaysua
-CREATE OR REPLACE FUNCTION fn_update_hoadon_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.ngaysua = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_hoadon_updatedate
-BEFORE UPDATE ON hoadon
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_hoadon_timestamp();
-
-
--- Trigger for giohang to update ngaycapnhat
-CREATE OR REPLACE FUNCTION fn_update_giohang_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.ngaycapnhat = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_giohang_updatedate
-BEFORE UPDATE ON giohang
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_giohang_timestamp();

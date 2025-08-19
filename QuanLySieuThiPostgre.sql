@@ -9,15 +9,23 @@
 -- ===== CREATE MAIN TABLES =====
 
 -- Bảng quản lý thông tin người dùng hệ thống
-CREATE TABLE nguoidung (
-    manguoidung VARCHAR(50) PRIMARY KEY,
-    email VARCHAR(50) UNIQUE NOT NULL,
-    matkhau VARCHAR(255) NOT NULL,
-    sub VARCHAR(255),
-    vaitro INT NOT NULL, -- 0=Admin, 1=Manager, 2=Sales Staff, 3=Warehouse Staff
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
+CREATE TABLE NguoiDung (
+    MaNguoiDung VARCHAR(50) PRIMARY KEY,
+    Email VARCHAR(50) UNIQUE NOT NULL,
+    MatKhau VARCHAR(255) NOT NULL,
+    Sub VARCHAR(255),
+    VaiTro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    NgayTao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    IsDeleted BOOLEAN DEFAULT FALSE,
+    
+    -- Các cột cho chức năng OTP và Reset Password
+    otp_code VARCHAR(6),
+    otp_generated_time TIMESTAMP,
+    otp_attempts INT DEFAULT 0,
+    reset_password_token VARCHAR(255),
+    reset_password_token_expiry TIMESTAMP,
+
+    CONSTRAINT check_vaitro CHECK (VaiTro IN (0, 1, 2, 3))
 );
 
 -- Table to manage store information
@@ -63,12 +71,12 @@ CREATE TABLE nhanvien (
 );
 
 -- Table to manage customer information and loyalty points
+-- *** UPDATED: Removed 'email' column. ***
 CREATE TABLE khachhang (
     makh VARCHAR(50) PRIMARY KEY,
     manguoidung VARCHAR(50),
     hoten VARCHAR(255) NOT NULL,
     sdt VARCHAR(15),
-    email VARCHAR(100),
     diachi VARCHAR(255),
     ngaysinh DATE,
     diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
@@ -90,21 +98,19 @@ CREATE TABLE loaisanpham (
 );
 
 -- Table for detailed product information
+-- *** UPDATED: Removed 'giaban' column. Price is now managed in 'giasanpham' table. ***
 CREATE TABLE sanpham (
     masp VARCHAR(50) PRIMARY KEY,
     maloaisp VARCHAR(50) NOT NULL,
     tensp VARCHAR(255) NOT NULL,
     mota TEXT,
-    giaban DECIMAL(15,2) NOT NULL, -- Current selling price
     donvitinh VARCHAR(50) DEFAULT 'Cái',
     trongluong DECIMAL(10,3), -- Product weight (kg)
     kichthuoc VARCHAR(100), -- Product dimensions
     hansudung INT, -- Shelf life in days
     trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
     ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
-
-    CONSTRAINT chk_sanpham_giaban CHECK (giaban > 0)
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for promotion programs
@@ -581,11 +587,10 @@ CREATE INDEX idx_nhacungcap_trangthai ON nhacungcap(trangthai);
 CREATE INDEX idx_nhanvien_cuahang ON nhanvien(mach);
 CREATE INDEX idx_nhanvien_trangthai ON nhanvien(trangthai);
 CREATE INDEX idx_khachhang_sdt ON khachhang(sdt);
-CREATE INDEX idx_khachhang_email ON khachhang(email);
+-- *** UPDATED: Removed index for 'email' column. ***
 CREATE INDEX idx_khachhang_loai ON khachhang(loaikhachhang);
 CREATE INDEX idx_loaisanpham_cha ON loaisanpham(maloaicha);
 CREATE INDEX idx_sanpham_loai ON sanpham(maloaisp);
-CREATE INDEX idx_sanpham_gia ON sanpham(giaban);
 CREATE INDEX idx_sanpham_trangthai ON sanpham(trangthai);
 CREATE INDEX idx_khuyenmai_ngay ON khuyenmai(ngaybatdau, ngayketthuc);
 CREATE INDEX idx_khuyenmai_trangthai ON khuyenmai(trangthai);
@@ -787,168 +792,326 @@ INSERT INTO loaisanpham (maloaisp, tenloai, mota, maloaicha, thutuhienthi) VALUE
 
 -- ===================================
 -- DỮ LIỆU SẢN PHẨM THEO TỪNG LOẠI
+-- *** UPDATED: Removed 'giaban' from INSERT statements. ***
 -- ===================================
 
 -- LSP001 – TƯƠI SỐNG (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP001', 'LSP001', 'Dưa leo Đà Lạt', '[Ngắn] Dưa tươi ngon sạch. [Dài] Dưa leo Đà Lạt được chọn lọc kỹ càng từ nông trại sạch, vỏ xanh mướt, giòn ngọt, thích hợp cho các món salad, dưa muối hoặc ăn sống trực tiếp.', 15000, 'Kg', 0.5, '20x5cm', 7, 1),
-('SP002', 'LSP001', 'Cà chua bi', '[Ngắn] Cà chua bi đỏ mọng. [Dài] Cà chua bi được trồng theo phương pháp hữu cơ, vỏ mỏng, vị ngọt thanh, thích hợp cho ăn sống, làm salad hoặc xào nấu.', 18000, 'Kg', 0.3, '2x2cm', 5, 1),
-('SP003', 'LSP001', 'Cải thìa tươi', '[Ngắn] Rau xanh giòn ngọt. [Dài] Cải thìa sạch được thu hoạch trong ngày, giàu vitamin A và C, thường dùng trong các món xào hoặc luộc.', 12000, 'Kg', 0.4, '25x3cm', 3, 1),
-('SP004', 'LSP001', 'Cải ngọt Đà Lạt', '[Ngắn] Rau tươi sạch. [Dài] Cải ngọt được trồng trong điều kiện khí hậu mát mẻ Đà Lạt, ít sâu bệnh, thích hợp nấu canh, xào hoặc ăn lẩu.', 13000, 'Kg', 0.3, '20x2cm', 3, 1),
-('SP005', 'LSP001', 'Rau muống', '[Ngắn] Rau muống giòn ngon. [Dài] Rau muống tươi được lựa chọn kỹ lưỡng, thân giòn, lá xanh, thích hợp cho các món luộc, xào tỏi hoặc làm gỏi.', 10000, 'Kg', 0.5, '30x2cm', 2, 1),
-('SP006', 'LSP001', 'Bắp cải trắng', '[Ngắn] Bắp cải tươi giòn. [Dài] Bắp cải trắng giòn ngọt, có thể dùng để nấu canh, xào hoặc làm dưa muối.', 14000, 'Cái', 1.0, '15x15cm', 7, 1),
-('SP007', 'LSP001', 'Cà rốt Đà Lạt', '[Ngắn] Cà rốt giòn ngọt. [Dài] Cà rốt trồng tại Đà Lạt, củ đều màu cam đẹp, giàu beta-carotene tốt cho mắt, thường dùng nấu canh, luộc, xào.', 16000, 'Kg', 0.6, '20x3cm', 10, 1),
-('SP008', 'LSP001', 'Khoai tây vàng', '[Ngắn] Khoai tây sạch. [Dài] Khoai tây vàng vỏ mỏng, ít nhựa, thích hợp để chiên, nấu súp hoặc nghiền làm món ăn dặm.', 17000, 'Kg', 0.8, '8x5cm', 14, 1),
-('SP009', 'LSP001', 'Hành lá', '[Ngắn] Hành tươi xanh. [Dài] Hành lá được thu hoạch từ vườn sạch, lá xanh, mùi thơm nhẹ, là nguyên liệu không thể thiếu cho các món canh và chiên.', 8000, 'Kg', 0.2, '25x1cm', 5, 1),
-('SP010', 'LSP001', 'Rau dền đỏ', '[Ngắn] Rau dền mát gan. [Dài] Rau dền đỏ nhiều sắt, hỗ trợ tuần hoàn máu, thích hợp cho các món canh và luộc.', 9000, 'Kg', 0.3, '20x2cm', 2, 1),
-('SP011', 'LSP001', 'Mướp hương', '[Ngắn] Mướp mềm thơm. [Dài] Mướp hương có vị ngọt thanh, mềm, thường được dùng trong các món canh hoặc xào chung với trứng.', 11000, 'Kg', 0.4, '25x4cm', 3, 1),
-('SP012', 'LSP001', 'Dưa gang', '[Ngắn] Dưa giải nhiệt. [Dài] Dưa gang mọng nước, vị ngọt nhẹ, được ưa chuộng trong mùa nóng vì tác dụng giải nhiệt, ăn sống hoặc làm sinh tố.', 18000, 'Kg', 0.8, '15x10cm', 5, 1),
-('SP013', 'LSP001', 'Rau má', '[Ngắn] Rau má mát gan. [Dài] Rau má có tác dụng thanh nhiệt, giải độc, thường dùng để ép nước hoặc làm gỏi.', 9000, 'Kg', 0.2, '20x2cm', 2, 1),
-('SP014', 'LSP001', 'Nấm rơm tươi', '[Ngắn] Nấm mềm ngon. [Dài] Nấm rơm tươi từ nông trại sạch, thích hợp cho các món kho, xào, canh.', 28000, 'Kg', 0.3, '3x3cm', 3, 1),
-('SP015', 'LSP001', 'Nấm bào ngư', '[Ngắn] Nấm dai ngon. [Dài] Nấm bào ngư trắng, thịt dày, giòn ngọt, thường dùng trong các món xào, súp hoặc chiên giòn.', 30000, 'Kg', 0.4, '4x2cm', 5, 1),
-('SP016', 'LSP001', 'Mồng tơi', '[Ngắn] Rau trơn mát. [Dài] Mồng tơi chứa nhiều chất nhầy, hỗ trợ tiêu hóa, là nguyên liệu quen thuộc trong món canh cua.', 8000, 'Kg', 0.3, '25x2cm', 2, 1),
-('SP017', 'LSP001', 'Đậu que', '[Ngắn] Đậu non giòn. [Dài] Đậu que non, xanh mướt, thường được xào với thịt bò hoặc luộc ăn kèm nước chấm.', 14000, 'Kg', 0.3, '15x1cm', 3, 1),
-('SP018', 'LSP001', 'Dền cơm', '[Ngắn] Rau dền sạch. [Dài] Dền cơm là loại rau dại giàu dinh dưỡng, được trồng theo hướng hữu cơ, dùng để nấu canh hoặc luộc.', 9000, 'Kg', 0.2, '20x2cm', 2, 1),
-('SP019', 'LSP001', 'Rau tần ô', '[Ngắn] Rau thơm ngon. [Dài] Tần ô có hương thơm đặc trưng, thường xuất hiện trong lẩu hoặc nấu canh với thịt bằm.', 11000, 'Kg', 0.3, '25x2cm', 3, 1),
-('SP020', 'LSP001', 'Bí đỏ trái tròn', '[Ngắn] Bí đỏ ngọt dẻo. [Dài] Bí đỏ được trồng tại nông trại hữu cơ, giàu vitamin A, thường dùng nấu canh hoặc hấp.', 13000, 'Kg', 1.5, '20x15cm', 7, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP001', 'LSP001', 'Dưa leo Đà Lạt', '[Ngắn] Dưa tươi ngon sạch. [Dài] Dưa leo Đà Lạt được chọn lọc kỹ càng từ nông trại sạch, vỏ xanh mướt, giòn ngọt, thích hợp cho các món salad, dưa muối hoặc ăn sống trực tiếp.', 'Kg', 0.5, '20x5cm', 7, 1),
+('SP002', 'LSP001', 'Cà chua bi', '[Ngắn] Cà chua bi đỏ mọng. [Dài] Cà chua bi được trồng theo phương pháp hữu cơ, vỏ mỏng, vị ngọt thanh, thích hợp cho ăn sống, làm salad hoặc xào nấu.', 'Kg', 0.3, '2x2cm', 5, 1),
+('SP003', 'LSP001', 'Cải thìa tươi', '[Ngắn] Rau xanh giòn ngọt. [Dài] Cải thìa sạch được thu hoạch trong ngày, giàu vitamin A và C, thường dùng trong các món xào hoặc luộc.', 'Kg', 0.4, '25x3cm', 3, 1),
+('SP004', 'LSP001', 'Cải ngọt Đà Lạt', '[Ngắn] Rau tươi sạch. [Dài] Cải ngọt được trồng trong điều kiện khí hậu mát mẻ Đà Lạt, ít sâu bệnh, thích hợp nấu canh, xào hoặc ăn lẩu.', 'Kg', 0.3, '20x2cm', 3, 1),
+('SP005', 'LSP001', 'Rau muống', '[Ngắn] Rau muống giòn ngon. [Dài] Rau muống tươi được lựa chọn kỹ lưỡng, thân giòn, lá xanh, thích hợp cho các món luộc, xào tỏi hoặc làm gỏi.', 'Kg', 0.5, '30x2cm', 2, 1),
+('SP006', 'LSP001', 'Bắp cải trắng', '[Ngắn] Bắp cải tươi giòn. [Dài] Bắp cải trắng giòn ngọt, có thể dùng để nấu canh, xào hoặc làm dưa muối.', 'Cái', 1.0, '15x15cm', 7, 1),
+('SP007', 'LSP001', 'Cà rốt Đà Lạt', '[Ngắn] Cà rốt giòn ngọt. [Dài] Cà rốt trồng tại Đà Lạt, củ đều màu cam đẹp, giàu beta-carotene tốt cho mắt, thường dùng nấu canh, luộc, xào.', 'Kg', 0.6, '20x3cm', 10, 1),
+('SP008', 'LSP001', 'Khoai tây vàng', '[Ngắn] Khoai tây sạch. [Dài] Khoai tây vàng vỏ mỏng, ít nhựa, thích hợp để chiên, nấu súp hoặc nghiền làm món ăn dặm.', 'Kg', 0.8, '8x5cm', 14, 1),
+('SP009', 'LSP001', 'Hành lá', '[Ngắn] Hành tươi xanh. [Dài] Hành lá được thu hoạch từ vườn sạch, lá xanh, mùi thơm nhẹ, là nguyên liệu không thể thiếu cho các món canh và chiên.', 'Kg', 0.2, '25x1cm', 5, 1),
+('SP010', 'LSP001', 'Rau dền đỏ', '[Ngắn] Rau dền mát gan. [Dài] Rau dền đỏ nhiều sắt, hỗ trợ tuần hoàn máu, thích hợp cho các món canh và luộc.', 'Kg', 0.3, '20x2cm', 2, 1),
+('SP011', 'LSP001', 'Mướp hương', '[Ngắn] Mướp mềm thơm. [Dài] Mướp hương có vị ngọt thanh, mềm, thường được dùng trong các món canh hoặc xào chung với trứng.', 'Kg', 0.4, '25x4cm', 3, 1),
+('SP012', 'LSP001', 'Dưa gang', '[Ngắn] Dưa giải nhiệt. [Dài] Dưa gang mọng nước, vị ngọt nhẹ, được ưa chuộng trong mùa nóng vì tác dụng giải nhiệt, ăn sống hoặc làm sinh tố.', 'Kg', 0.8, '15x10cm', 5, 1),
+('SP013', 'LSP001', 'Rau má', '[Ngắn] Rau má mát gan. [Dài] Rau má có tác dụng thanh nhiệt, giải độc, thường dùng để ép nước hoặc làm gỏi.', 'Kg', 0.2, '20x2cm', 2, 1),
+('SP014', 'LSP001', 'Nấm rơm tươi', '[Ngắn] Nấm mềm ngon. [Dài] Nấm rơm tươi từ nông trại sạch, thích hợp cho các món kho, xào, canh.', 'Kg', 0.3, '3x3cm', 3, 1),
+('SP015', 'LSP001', 'Nấm bào ngư', '[Ngắn] Nấm dai ngon. [Dài] Nấm bào ngư trắng, thịt dày, giòn ngọt, thường dùng trong các món xào, súp hoặc chiên giòn.', 'Kg', 0.4, '4x2cm', 5, 1),
+('SP016', 'LSP001', 'Mồng tơi', '[Ngắn] Rau trơn mát. [Dài] Mồng tơi chứa nhiều chất nhầy, hỗ trợ tiêu hóa, là nguyên liệu quen thuộc trong món canh cua.', 'Kg', 0.3, '25x2cm', 2, 1),
+('SP017', 'LSP001', 'Đậu que', '[Ngắn] Đậu non giòn. [Dài] Đậu que non, xanh mướt, thường được xào với thịt bò hoặc luộc ăn kèm nước chấm.', 'Kg', 0.3, '15x1cm', 3, 1),
+('SP018', 'LSP001', 'Dền cơm', '[Ngắn] Rau dền sạch. [Dài] Dền cơm là loại rau dại giàu dinh dưỡng, được trồng theo hướng hữu cơ, dùng để nấu canh hoặc luộc.', 'Kg', 0.2, '20x2cm', 2, 1),
+('SP019', 'LSP001', 'Rau tần ô', '[Ngắn] Rau thơm ngon. [Dài] Tần ô có hương thơm đặc trưng, thường xuất hiện trong lẩu hoặc nấu canh với thịt bằm.', 'Kg', 0.3, '25x2cm', 3, 1),
+('SP020', 'LSP001', 'Bí đỏ trái tròn', '[Ngắn] Bí đỏ ngọt dẻo. [Dài] Bí đỏ được trồng tại nông trại hữu cơ, giàu vitamin A, thường dùng nấu canh hoặc hấp.', 'Kg', 1.5, '20x15cm', 7, 1);
 
 -- LSP002 – ĐÔNG LẠNH (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP021', 'LSP002', 'Tôm sú đông lạnh', '[Ngắn] Tôm đông lạnh sạch. [Dài] Tôm sú đông lạnh được cấp đông ngay sau khi đánh bắt để giữ độ tươi ngon, thịt chắc và ngọt, dùng để nấu lẩu, hấp, chiên xù.', 120000, 'Kg', 1.0, '15x3cm', 180, 1),
-('SP022', 'LSP002', 'Cá hồi phi lê', '[Ngắn] Cá hồi phi lê tươi ngon. [Dài] Cá hồi Na Uy phi lê được cấp đông nhanh, giữ nguyên chất dinh dưỡng và màu sắc tự nhiên, thích hợp cho sashimi hoặc áp chảo.', 230000, 'Kg', 0.8, '20x5cm', 180, 1),
-('SP023', 'LSP002', 'Mực ống đông lạnh', '[Ngắn] Mực tươi cấp đông. [Dài] Mực ống được làm sạch và cấp đông nhanh, giữ được độ giòn và vị ngọt tự nhiên, thích hợp nướng, hấp hoặc chiên giòn.', 150000, 'Kg', 0.5, '12x2cm', 180, 1),
-('SP024', 'LSP002', 'Cá viên đông lạnh', '[Ngắn] Cá viên tiện lợi. [Dài] Cá viên làm từ cá thát lát nguyên chất, được cấp đông sẵn, tiện lợi cho món lẩu, chiên hoặc nấu canh.', 60000, 'Kg', 0.5, '2x2cm', 180, 1),
-('SP025', 'LSP002', 'Thịt bò viên đông lạnh', '[Ngắn] Bò viên thơm ngon. [Dài] Bò viên được chế biến từ thịt bò tươi, có vị thơm đặc trưng, dễ dàng chế biến trong các món lẩu, xào hoặc bún bò.', 65000, 'Kg', 0.5, '2x2cm', 180, 1),
-('SP026', 'LSP002', 'Gà nguyên con đông lạnh', '[Ngắn] Gà cấp đông sạch. [Dài] Gà ta nguyên con được làm sạch và cấp đông theo chuẩn VSATTP, phù hợp để quay, luộc hoặc hấp.', 110000, 'Con', 1.5, '25x15cm', 180, 1),
-('SP027', 'LSP002', 'Chân gà rút xương đông lạnh', '[Ngắn] Chân gà tiện dụng. [Dài] Chân gà đã được rút xương, cấp đông sạch, dùng để trộn gỏi hoặc nướng muối ớt.', 85000, 'Kg', 0.8, '8x3cm', 180, 1),
-('SP028', 'LSP002', 'Cá thu cắt lát đông lạnh', '[Ngắn] Cá thu cắt lát. [Dài] Cá thu được cắt lát và cấp đông nhanh, thích hợp để chiên hoặc kho với nước dừa.', 130000, 'Kg', 0.6, '10x5cm', 180, 1),
-('SP029', 'LSP002', 'Xúc xích tiệt trùng', '[Ngắn] Xúc xích đậm vị. [Dài] Xúc xích heo được tiệt trùng và cấp đông, dễ dàng chế biến các món ăn nhanh hoặc nướng BBQ.', 40000, 'Kg', 0.4, '15x2cm', 180, 1),
-('SP030', 'LSP002', 'Cá basa phi lê đông lạnh', '[Ngắn] Cá basa tiện lợi. [Dài] Cá basa phi lê đã bỏ xương, không tanh, dễ chế biến các món chiên giòn, kho tộ hoặc nấu canh chua.', 85000, 'Kg', 0.7, '18x4cm', 180, 1),
-('SP031', 'LSP002', 'Tôm sú đông lạnh 1kg', 'Tôm tươi ngon được cấp đông nhanh. ... Giữ được vị ngọt tự nhiên và an toàn thực phẩm.', 195000, 'Kg', 1.0, '15x3cm', 180, 1),
-('SP032', 'LSP002', 'Cá diêu hồng đông lạnh 1kg', 'Cá được sơ chế sạch sẽ và cấp đông sâu. ... Tiện lợi cho mọi món ăn hằng ngày.', 85000, 'Kg', 1.0, '25x8cm', 180, 1),
-('SP033', 'LSP002', 'Mực ống đông lạnh 500g', 'Mực tươi được làm sạch và đóng gói kỹ lưỡng. ... Đảm bảo an toàn và tươi ngon cho bữa cơm gia đình.', 97000, 'Kg', 0.5, '12x2cm', 180, 1),
-('SP034', 'LSP002', 'Thịt ba rọi đông lạnh 500g', 'Thịt heo ba rọi thái lát mỏng và đóng gói. ... Phù hợp chế biến món xào, nướng hoặc lẩu.', 72000, 'Kg', 0.5, '10x5cm', 180, 1),
-('SP035', 'LSP002', 'Cánh gà đông lạnh 1kg', 'Cánh gà tươi được lựa chọn kỹ càng. ... Cấp đông nhanh giúp bảo quản lâu và giữ nguyên dinh dưỡng.', 105000, 'Kg', 1.0, '12x8cm', 180, 1),
-('SP036', 'LSP002', 'Thăn bò đông lạnh 500g', 'Thịt bò thăn nhập khẩu, mềm, thơm. ... Rất thích hợp cho món bít tết hoặc lẩu.', 168000, 'Kg', 0.5, '15x8cm', 180, 1),
-('SP037', 'LSP002', 'Hàu nửa vỏ đông lạnh 1kg', 'Hàu biển tươi được sơ chế và cấp đông. ... Dễ chế biến và bổ dưỡng cho cả gia đình.', 125000, 'Kg', 1.0, '8x4cm', 180, 1),
-('SP038', 'LSP002', 'Cá viên đông lạnh 500g', 'Cá viên được làm từ cá tươi nghiền nhuyễn. ... Dùng tốt cho món lẩu hoặc chiên.', 55000, 'Kg', 0.5, '2x2cm', 180, 1),
-('SP039', 'LSP002', 'Súp lơ đông lạnh 500g', 'Súp lơ tươi cắt nhỏ và cấp đông ngay sau thu hoạch. ... Giữ nguyên độ giòn và hương vị tự nhiên.', 39000, 'Kg', 0.5, '15x10cm', 180, 1),
-('SP040', 'LSP002', 'Đậu que đông lạnh 500g', 'Đậu que tươi cấp đông giữ trọn độ giòn và dinh dưỡng. ... Phù hợp chế biến xào, luộc, hấp.', 36000, 'Kg', 0.5, '15x1cm', 180, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP021', 'LSP002', 'Tôm sú đông lạnh', '[Ngắn] Tôm đông lạnh sạch. [Dài] Tôm sú đông lạnh được cấp đông ngay sau khi đánh bắt để giữ độ tươi ngon, thịt chắc và ngọt, dùng để nấu lẩu, hấp, chiên xù.', 'Kg', 1.0, '15x3cm', 180, 1),
+('SP022', 'LSP002', 'Cá hồi phi lê', '[Ngắn] Cá hồi phi lê tươi ngon. [Dài] Cá hồi Na Uy phi lê được cấp đông nhanh, giữ nguyên chất dinh dưỡng và màu sắc tự nhiên, thích hợp cho sashimi hoặc áp chảo.', 'Kg', 0.8, '20x5cm', 180, 1),
+('SP023', 'LSP002', 'Mực ống đông lạnh', '[Ngắn] Mực tươi cấp đông. [Dài] Mực ống được làm sạch và cấp đông nhanh, giữ được độ giòn và vị ngọt tự nhiên, thích hợp nướng, hấp hoặc chiên giòn.', 'Kg', 0.5, '12x2cm', 180, 1),
+('SP024', 'LSP002', 'Cá viên đông lạnh', '[Ngắn] Cá viên tiện lợi. [Dài] Cá viên làm từ cá thát lát nguyên chất, được cấp đông sẵn, tiện lợi cho món lẩu, chiên hoặc nấu canh.', 'Kg', 0.5, '2x2cm', 180, 1),
+('SP025', 'LSP002', 'Thịt bò viên đông lạnh', '[Ngắn] Bò viên thơm ngon. [Dài] Bò viên được chế biến từ thịt bò tươi, có vị thơm đặc trưng, dễ dàng chế biến trong các món lẩu, xào hoặc bún bò.', 'Kg', 0.5, '2x2cm', 180, 1),
+('SP026', 'LSP002', 'Gà nguyên con đông lạnh', '[Ngắn] Gà cấp đông sạch. [Dài] Gà ta nguyên con được làm sạch và cấp đông theo chuẩn VSATTP, phù hợp để quay, luộc hoặc hấp.', 'Con', 1.5, '25x15cm', 180, 1),
+('SP027', 'LSP002', 'Chân gà rút xương đông lạnh', '[Ngắn] Chân gà tiện dụng. [Dài] Chân gà đã được rút xương, cấp đông sạch, dùng để trộn gỏi hoặc nướng muối ớt.', 'Kg', 0.8, '8x3cm', 180, 1),
+('SP028', 'LSP002', 'Cá thu cắt lát đông lạnh', '[Ngắn] Cá thu cắt lát. [Dài] Cá thu được cắt lát và cấp đông nhanh, thích hợp để chiên hoặc kho với nước dừa.', 'Kg', 0.6, '10x5cm', 180, 1),
+('SP029', 'LSP002', 'Xúc xích tiệt trùng', '[Ngắn] Xúc xích đậm vị. [Dài] Xúc xích heo được tiệt trùng và cấp đông, dễ dàng chế biến các món ăn nhanh hoặc nướng BBQ.', 'Kg', 0.4, '15x2cm', 180, 1),
+('SP030', 'LSP002', 'Cá basa phi lê đông lạnh', '[Ngắn] Cá basa tiện lợi. [Dài] Cá basa phi lê đã bỏ xương, không tanh, dễ chế biến các món chiên giòn, kho tộ hoặc nấu canh chua.', 'Kg', 0.7, '18x4cm', 180, 1),
+('SP031', 'LSP002', 'Tôm sú đông lạnh 1kg', 'Tôm tươi ngon được cấp đông nhanh. ... Giữ được vị ngọt tự nhiên và an toàn thực phẩm.', 'Kg', 1.0, '15x3cm', 180, 1),
+('SP032', 'LSP002', 'Cá diêu hồng đông lạnh 1kg', 'Cá được sơ chế sạch sẽ và cấp đông sâu. ... Tiện lợi cho mọi món ăn hằng ngày.', 'Kg', 1.0, '25x8cm', 180, 1),
+('SP033', 'LSP002', 'Mực ống đông lạnh 500g', 'Mực tươi được làm sạch và đóng gói kỹ lưỡng. ... Đảm bảo an toàn và tươi ngon cho bữa cơm gia đình.', 'Kg', 0.5, '12x2cm', 180, 1),
+('SP034', 'LSP002', 'Thịt ba rọi đông lạnh 500g', 'Thịt heo ba rọi thái lát mỏng và đóng gói. ... Phù hợp chế biến món xào, nướng hoặc lẩu.', 'Kg', 0.5, '10x5cm', 180, 1),
+('SP035', 'LSP002', 'Cánh gà đông lạnh 1kg', 'Cánh gà tươi được lựa chọn kỹ càng. ... Cấp đông nhanh giúp bảo quản lâu và giữ nguyên dinh dưỡng.', 'Kg', 1.0, '12x8cm', 180, 1),
+('SP036', 'LSP002', 'Thăn bò đông lạnh 500g', 'Thịt bò thăn nhập khẩu, mềm, thơm. ... Rất thích hợp cho món bít tết hoặc lẩu.', 'Kg', 0.5, '15x8cm', 180, 1),
+('SP037', 'LSP002', 'Hàu nửa vỏ đông lạnh 1kg', 'Hàu biển tươi được sơ chế và cấp đông. ... Dễ chế biến và bổ dưỡng cho cả gia đình.', 'Kg', 1.0, '8x4cm', 180, 1),
+('SP038', 'LSP002', 'Cá viên đông lạnh 500g', 'Cá viên được làm từ cá tươi nghiền nhuyễn. ... Dùng tốt cho món lẩu hoặc chiên.', 'Kg', 0.5, '2x2cm', 180, 1),
+('SP039', 'LSP002', 'Súp lơ đông lạnh 500g', 'Súp lơ tươi cắt nhỏ và cấp đông ngay sau thu hoạch. ... Giữ nguyên độ giòn và hương vị tự nhiên.', 'Kg', 0.5, '15x10cm', 180, 1),
+('SP040', 'LSP002', 'Đậu que đông lạnh 500g', 'Đậu que tươi cấp đông giữ trọn độ giòn và dinh dưỡng. ... Phù hợp chế biến xào, luộc, hấp.', 'Kg', 0.5, '15x1cm', 180, 1);
 
 -- LSP003 – ĐỒ ĐÓNG HỘP (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP041', 'LSP003', 'Cá ngừ ngâm dầu hộp 185g', 'Cá ngừ nguyên miếng ngâm dầu thơm béo. ... Đóng hộp tiện lợi, thích hợp ăn liền hoặc trộn salad.', 32000, 'Hộp', 0.185, '10x8x3cm', 730, 1),
-('SP042', 'LSP003', 'Pate gan heo hộp 170g', 'Pate gan heo mềm mịn, thơm ngon. ... Phù hợp cho bữa sáng hoặc món ăn nhẹ giàu đạm.', 26000, 'Hộp', 0.170, '8x6x2cm', 730, 1),
-('SP043', 'LSP003', 'Đậu hầm sốt cà hộp 400g', 'Đậu trắng được hầm mềm với sốt cà đậm đà. ... Món ăn bổ dưỡng, tiện lợi cho bữa cơm gia đình.', 23000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP044', 'LSP003', 'Măng chua đóng hộp 400g', 'Măng được sơ chế kỹ và đóng hộp an toàn. ... Dùng nấu canh chua hoặc xào rất tiện lợi.', 19000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP045', 'LSP003', 'Nấm rơm hộp 400g', 'Nấm rơm tươi ngon được đóng hộp giữ nguyên vị. ... Dùng cho các món canh, xào, lẩu cực kỳ tiện.', 25000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP046', 'LSP003', 'Thịt kho trứng hộp 400g', 'Món thịt kho trứng truyền thống được chế biến sẵn. ... Hương vị đậm đà, mở nắp là ăn ngay.', 45000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP047', 'LSP003', 'Chả cá sốt cà hộp 200g', 'Chả cá chiên sốt cà đậm vị, dễ dùng. ... Phù hợp cho các bữa ăn nhanh và vẫn đầy đủ dinh dưỡng.', 29000, 'Hộp', 0.200, '10x6x3cm', 730, 1),
-('SP048', 'LSP003', 'Ngô ngọt đóng hộp 400g', 'Ngô ngọt vàng óng, giòn ngọt tự nhiên. ... Có thể ăn liền hoặc chế biến món salad, soup.', 21000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP049', 'LSP003', 'Cá mòi sốt cà hộp 155g', 'Cá mòi được nấu cùng nước sốt cà đậm đà. ... Tiện dụng cho mọi bữa ăn gia đình.', 27000, 'Hộp', 0.155, '8x6x3cm', 730, 1),
-('SP050', 'LSP003', 'Thịt hộp lợn vai 340g', 'Thịt lợn được nấu chín, nén hộp, dễ bảo quản. ... Phù hợp đi du lịch, dã ngoại hoặc ăn nhanh.', 37000, 'Hộp', 0.340, '12x8x4cm', 730, 1),
-('SP051', 'LSP003', 'Bắp cải muối chua hộp 400g', 'Bắp cải được muối chua vừa vị, giòn ngon. ... Dùng ngay hoặc nấu cùng món thịt đều phù hợp.', 18000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP052', 'LSP003', 'Cà rốt đóng hộp 400g', 'Cà rốt được cắt khúc và hấp chín. ... Tiện lợi cho các món xào, soup hoặc salad.', 22000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP053', 'LSP003', 'Giá đỗ đóng hộp 400g', 'Giá đỗ sạch, giòn ngon được đóng hộp. ... Bổ sung dinh dưỡng và dễ bảo quản lâu dài.', 21000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP054', 'LSP003', 'Cà chua xay hộp 400g', 'Cà chua tươi được nghiền nhuyễn và tiệt trùng. ... Dùng làm nước sốt hoặc nấu canh rất tiện.', 24000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP055', 'LSP003', 'Dưa cải chua hộp 400g', 'Dưa cải muối chua đậm đà hương vị Bắc. ... Thích hợp ăn kèm món thịt kho, canh chua.', 18500, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP056', 'LSP003', 'Hạt sen đóng hộp 400g', 'Hạt sen tươi được làm sạch và hấp chín. ... Phù hợp cho món chè, hầm hoặc cháo.', 28000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP057', 'LSP003', 'Dừa non đóng hộp 400g', 'Dừa non thái lát được đóng hộp bảo quản lâu. ... Sử dụng tốt trong món chè hoặc cocktail trái cây.', 31000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP058', 'LSP003', 'Thịt bò hầm hộp 340g', 'Thịt bò hầm mềm, vị đậm đà. ... Món ăn chế biến sẵn phù hợp cho dân văn phòng.', 46000, 'Hộp', 0.340, '12x8x4cm', 730, 1),
-('SP059', 'LSP003', 'Nấm bào ngư hộp 400g', 'Nấm bào ngư tươi được đóng hộp tiện lợi. ... Dùng để xào, nấu lẩu hoặc hầm đều ngon.', 27000, 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP060', 'LSP003', 'Mì bò kho hộp 350g', 'Mì ăn liền với nước dùng bò kho đậm vị. ... Món ăn nhanh đầy đủ năng lượng cho người bận rộn.', 33000, 'Hộp', 0.350, '12x8x4cm', 730, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP041', 'LSP003', 'Cá ngừ ngâm dầu hộp 185g', 'Cá ngừ nguyên miếng ngâm dầu thơm béo. ... Đóng hộp tiện lợi, thích hợp ăn liền hoặc trộn salad.', 'Hộp', 0.185, '10x8x3cm', 730, 1),
+('SP042', 'LSP003', 'Pate gan heo hộp 170g', 'Pate gan heo mềm mịn, thơm ngon. ... Phù hợp cho bữa sáng hoặc món ăn nhẹ giàu đạm.', 'Hộp', 0.170, '8x6x2cm', 730, 1),
+('SP043', 'LSP003', 'Đậu hầm sốt cà hộp 400g', 'Đậu trắng được hầm mềm với sốt cà đậm đà. ... Món ăn bổ dưỡng, tiện lợi cho bữa cơm gia đình.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP044', 'LSP003', 'Măng chua đóng hộp 400g', 'Măng được sơ chế kỹ và đóng hộp an toàn. ... Dùng nấu canh chua hoặc xào rất tiện lợi.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP045', 'LSP003', 'Nấm rơm hộp 400g', 'Nấm rơm tươi ngon được đóng hộp giữ nguyên vị. ... Dùng cho các món canh, xào, lẩu cực kỳ tiện.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP046', 'LSP003', 'Thịt kho trứng hộp 400g', 'Món thịt kho trứng truyền thống được chế biến sẵn. ... Hương vị đậm đà, mở nắp là ăn ngay.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP047', 'LSP003', 'Chả cá sốt cà hộp 200g', 'Chả cá chiên sốt cà đậm vị, dễ dùng. ... Phù hợp cho các bữa ăn nhanh và vẫn đầy đủ dinh dưỡng.', 'Hộp', 0.200, '10x6x3cm', 730, 1),
+('SP048', 'LSP003', 'Ngô ngọt đóng hộp 400g', 'Ngô ngọt vàng óng, giòn ngọt tự nhiên. ... Có thể ăn liền hoặc chế biến món salad, soup.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP049', 'LSP003', 'Cá mòi sốt cà hộp 155g', 'Cá mòi được nấu cùng nước sốt cà đậm đà. ... Tiện dụng cho mọi bữa ăn gia đình.', 'Hộp', 0.155, '8x6x3cm', 730, 1),
+('SP050', 'LSP003', 'Thịt hộp lợn vai 340g', 'Thịt lợn được nấu chín, nén hộp, dễ bảo quản. ... Phù hợp đi du lịch, dã ngoại hoặc ăn nhanh.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
+('SP051', 'LSP003', 'Bắp cải muối chua hộp 400g', 'Bắp cải được muối chua vừa vị, giòn ngon. ... Dùng ngay hoặc nấu cùng món thịt đều phù hợp.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP052', 'LSP003', 'Cà rốt đóng hộp 400g', 'Cà rốt được cắt khúc và hấp chín. ... Tiện lợi cho các món xào, soup hoặc salad.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP053', 'LSP003', 'Giá đỗ đóng hộp 400g', 'Giá đỗ sạch, giòn ngon được đóng hộp. ... Bổ sung dinh dưỡng và dễ bảo quản lâu dài.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP054', 'LSP003', 'Cà chua xay hộp 400g', 'Cà chua tươi được nghiền nhuyễn và tiệt trùng. ... Dùng làm nước sốt hoặc nấu canh rất tiện.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP055', 'LSP003', 'Dưa cải chua hộp 400g', 'Dưa cải muối chua đậm đà hương vị Bắc. ... Thích hợp ăn kèm món thịt kho, canh chua.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP056', 'LSP003', 'Hạt sen đóng hộp 400g', 'Hạt sen tươi được làm sạch và hấp chín. ... Phù hợp cho món chè, hầm hoặc cháo.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP057', 'LSP003', 'Dừa non đóng hộp 400g', 'Dừa non thái lát được đóng hộp bảo quản lâu. ... Sử dụng tốt trong món chè hoặc cocktail trái cây.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP058', 'LSP003', 'Thịt bò hầm hộp 340g', 'Thịt bò hầm mềm, vị đậm đà. ... Món ăn chế biến sẵn phù hợp cho dân văn phòng.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
+('SP059', 'LSP003', 'Nấm bào ngư hộp 400g', 'Nấm bào ngư tươi được đóng hộp tiện lợi. ... Dùng để xào, nấu lẩu hoặc hầm đều ngon.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+('SP060', 'LSP003', 'Mì bò kho hộp 350g', 'Mì ăn liền với nước dùng bò kho đậm vị. ... Món ăn nhanh đầy đủ năng lượng cho người bận rộn.', 'Hộp', 0.350, '12x8x4cm', 730, 1);
 
 -- LSP004 – ĐỒ UỐNG (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP061', 'LSP004', 'Nước khoáng thiên nhiên 500ml', 'Nước khoáng tinh khiết, giải khát tức thì. ... Giàu khoáng chất, tốt cho sức khỏe, thích hợp sử dụng hàng ngày.', 6000, 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP062', 'LSP004', 'Trà xanh không độ 455ml', 'Trà xanh thanh mát, không đường. ... Giúp giải nhiệt, chống oxy hóa và tăng cường sức khỏe.', 9000, 'Chai', 0.455, '6x6x18cm', 365, 1),
-('SP063', 'LSP004', 'Nước tăng lực Red Bull 250ml', 'Nước uống tăng lực hương vị đặc trưng. ... Phù hợp cho người hoạt động thể chất cao, giúp tỉnh táo.', 12000, 'Lon', 0.250, '6x6x12cm', 365, 1),
-('SP064', 'LSP004', 'Nước ép cam nguyên chất 330ml', 'Nước ép cam giàu vitamin C, vị tự nhiên. ... Tăng cường đề kháng, tốt cho làn da và hệ miễn dịch.', 18000, 'Chai', 0.330, '6x6x15cm', 180, 1),
-('SP065', 'LSP004', 'Sữa đậu nành Fami 200ml', 'Sữa đậu nành nguyên chất từ hạt đậu nành Việt. ... Bổ sung đạm thực vật và tốt cho tim mạch.', 7000, 'Hộp', 0.200, '5x5x10cm', 180, 1),
-('SP066', 'LSP004', 'Nước suối Aquafina 1.5L', 'Nước uống tinh khiết được lọc 7 bước. ... Thích hợp dùng cho cả gia đình và mang đi học, đi làm.', 10000, 'Chai', 1.500, '8x8x25cm', 365, 1),
-('SP067', 'LSP004', 'Nước ngọt Coca-Cola lon 330ml', 'Nước ngọt có gas hương vị cổ điển. ... Giải khát tức thì, phù hợp với các bữa tiệc và ăn nhanh.', 10000, 'Lon', 0.330, '6x6x12cm', 365, 1),
-('SP068', 'LSP004', 'Trà sữa trân châu đóng chai 320ml', 'Trà sữa thơm ngọt, kèm trân châu mềm dai. ... Phù hợp cho giới trẻ, mang đi mọi nơi.', 19000, 'Chai', 0.320, '6x6x15cm', 180, 1),
-('SP069', 'LSP004', 'Nước ép táo nguyên chất 330ml', 'Nước ép táo ngọt dịu, không chất bảo quản. ... Tốt cho hệ tiêu hóa và cung cấp vitamin A.', 17500, 'Chai', 0.330, '6x6x15cm', 180, 1),
-('SP070', 'LSP004', 'Bò húc Thái chai thủy tinh 250ml', 'Nước tăng lực nhập khẩu hương vị đậm đà. ... Giúp tỉnh táo, bổ sung vitamin B và taurine.', 15000, 'Chai', 0.250, '5x5x12cm', 365, 1),
-('SP071', 'LSP004', 'Nước dừa tươi đóng hộp 330ml', 'Nước dừa tự nhiên, giữ nguyên hương vị tươi mát. ... Giàu khoáng và chất điện giải, giải nhiệt tốt.', 14000, 'Hộp', 0.330, '6x6x15cm', 180, 1),
-('SP072', 'LSP004', 'Trà đào hương vị trái cây 455ml', 'Trà đào ngọt thanh, mùi thơm dịu nhẹ. ... Dùng lạnh sẽ ngon hơn, hợp mọi lứa tuổi.', 10000, 'Chai', 0.455, '6x6x18cm', 365, 1),
-('SP073', 'LSP004', 'Nước yến sào có đường 240ml', 'Nước yến giàu đạm và vi khoáng. ... Hỗ trợ phục hồi sức khỏe, đẹp da và tăng cường sức đề kháng.', 28000, 'Chai', 0.240, '5x5x12cm', 365, 1),
-('SP074', 'LSP004', 'Cà phê sữa đá đóng lon 330ml', 'Cà phê Việt đậm đà, hương vị truyền thống. ... Tiện lợi khi di chuyển, giữ nguyên độ ngon như pha máy.', 11000, 'Lon', 0.330, '6x6x12cm', 365, 1),
-('SP075', 'LSP004', 'Trà atiso đỏ 500ml', 'Trà atiso đỏ thanh mát, vị chua nhẹ. ... Giúp mát gan, hỗ trợ tiêu hóa và lợi tiểu.', 9000, 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP076', 'LSP004', 'Nước ép nho nguyên chất 330ml', 'Nước ép nho ngọt dịu, giàu vitamin và chất chống oxy hóa. ... Giúp cải thiện làn da và ngăn ngừa lão hóa.', 18000, 'Chai', 0.330, '6x6x15cm', 180, 1),
-('SP077', 'LSP004', 'Nước nha đam hạt chia 500ml', 'Nước uống kết hợp nha đam và hạt chia. ... Bổ dưỡng, làm mát cơ thể, đẹp da.', 16000, 'Chai', 0.500, '7x7x20cm', 180, 1),
-('SP078', 'LSP004', 'Nước cam có tép 450ml', 'Nước cam có tép thật, vị ngọt dịu tự nhiên. ... Giàu vitamin C, tăng cường miễn dịch và sáng da.', 15000, 'Chai', 0.450, '6x6x18cm', 180, 1),
-('SP079', 'LSP004', 'Nước khoáng có gas Vĩnh Hảo 500ml', 'Nước khoáng có gas vị nhẹ nhàng. ... Giúp tiêu hóa tốt, dùng với trái cây tươi rất ngon.', 10000, 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP080', 'LSP004', 'Nước chanh muối đóng chai 350ml', 'Nước chanh muối pha sẵn, vị mặn ngọt hài hòa. ... Giải khát, bù điện giải khi vận động nhiều.', 9500, 'Chai', 0.350, '6x6x15cm', 180, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP061', 'LSP004', 'Nước khoáng thiên nhiên 500ml', 'Nước khoáng tinh khiết, giải khát tức thì. ... Giàu khoáng chất, tốt cho sức khỏe, thích hợp sử dụng hàng ngày.', 'Chai', 0.500, '7x7x20cm', 365, 1),
+('SP062', 'LSP004', 'Trà xanh không độ 455ml', 'Trà xanh thanh mát, không đường. ... Giúp giải nhiệt, chống oxy hóa và tăng cường sức khỏe.', 'Chai', 0.455, '6x6x18cm', 365, 1),
+('SP063', 'LSP004', 'Nước tăng lực Red Bull 250ml', 'Nước uống tăng lực hương vị đặc trưng. ... Phù hợp cho người hoạt động thể chất cao, giúp tỉnh táo.', 'Lon', 0.250, '6x6x12cm', 365, 1),
+('SP064', 'LSP004', 'Nước ép cam nguyên chất 330ml', 'Nước ép cam giàu vitamin C, vị tự nhiên. ... Tăng cường đề kháng, tốt cho làn da và hệ miễn dịch.', 'Chai', 0.330, '6x6x15cm', 180, 1),
+('SP065', 'LSP004', 'Sữa đậu nành Fami 200ml', 'Sữa đậu nành nguyên chất từ hạt đậu nành Việt. ... Bổ sung đạm thực vật và tốt cho tim mạch.', 'Hộp', 0.200, '5x5x10cm', 180, 1),
+('SP066', 'LSP004', 'Nước suối Aquafina 1.5L', 'Nước uống tinh khiết được lọc 7 bước. ... Thích hợp dùng cho cả gia đình và mang đi học, đi làm.', 'Chai', 1.500, '8x8x25cm', 365, 1),
+('SP067', 'LSP004', 'Nước ngọt Coca-Cola lon 330ml', 'Nước ngọt có gas hương vị cổ điển. ... Giải khát tức thì, phù hợp với các bữa tiệc và ăn nhanh.', 'Lon', 0.330, '6x6x12cm', 365, 1),
+('SP068', 'LSP004', 'Trà sữa trân châu đóng chai 320ml', 'Trà sữa thơm ngọt, kèm trân châu mềm dai. ... Phù hợp cho giới trẻ, mang đi mọi nơi.', 'Chai', 0.320, '6x6x15cm', 180, 1),
+('SP069', 'LSP004', 'Nước ép táo nguyên chất 330ml', 'Nước ép táo ngọt dịu, không chất bảo quản. ... Tốt cho hệ tiêu hóa và cung cấp vitamin A.', 'Chai', 0.330, '6x6x15cm', 180, 1),
+('SP070', 'LSP004', 'Bò húc Thái chai thủy tinh 250ml', 'Nước tăng lực nhập khẩu hương vị đậm đà. ... Giúp tỉnh táo, bổ sung vitamin B và taurine.', 'Chai', 0.250, '5x5x12cm', 365, 1),
+('SP071', 'LSP004', 'Nước dừa tươi đóng hộp 330ml', 'Nước dừa tự nhiên, giữ nguyên hương vị tươi mát. ... Giàu khoáng và chất điện giải, giải nhiệt tốt.', 'Hộp', 0.330, '6x6x15cm', 180, 1),
+('SP072', 'LSP004', 'Trà đào hương vị trái cây 455ml', 'Trà đào ngọt thanh, mùi thơm dịu nhẹ. ... Dùng lạnh sẽ ngon hơn, hợp mọi lứa tuổi.', 'Chai', 0.455, '6x6x18cm', 365, 1),
+('SP073', 'LSP004', 'Nước yến sào có đường 240ml', 'Nước yến giàu đạm và vi khoáng. ... Hỗ trợ phục hồi sức khỏe, đẹp da và tăng cường sức đề kháng.', 'Chai', 0.240, '5x5x12cm', 365, 1),
+('SP074', 'LSP004', 'Cà phê sữa đá đóng lon 330ml', 'Cà phê Việt đậm đà, hương vị truyền thống. ... Tiện lợi khi di chuyển, giữ nguyên độ ngon như pha máy.', 'Lon', 0.330, '6x6x12cm', 365, 1),
+('SP075', 'LSP004', 'Trà atiso đỏ 500ml', 'Trà atiso đỏ thanh mát, vị chua nhẹ. ... Giúp mát gan, hỗ trợ tiêu hóa và lợi tiểu.', 'Chai', 0.500, '7x7x20cm', 365, 1),
+('SP076', 'LSP004', 'Nước ép nho nguyên chất 330ml', 'Nước ép nho ngọt dịu, giàu vitamin và chất chống oxy hóa. ... Giúp cải thiện làn da và ngăn ngừa lão hóa.', 'Chai', 0.330, '6x6x15cm', 180, 1),
+('SP077', 'LSP004', 'Nước nha đam hạt chia 500ml', 'Nước uống kết hợp nha đam và hạt chia. ... Bổ dưỡng, làm mát cơ thể, đẹp da.', 'Chai', 0.500, '7x7x20cm', 180, 1),
+('SP078', 'LSP004', 'Nước cam có tép 450ml', 'Nước cam có tép thật, vị ngọt dịu tự nhiên. ... Giàu vitamin C, tăng cường miễn dịch và sáng da.', 'Chai', 0.450, '6x6x18cm', 180, 1),
+('SP079', 'LSP004', 'Nước khoáng có gas Vĩnh Hảo 500ml', 'Nước khoáng có gas vị nhẹ nhàng. ... Giúp tiêu hóa tốt, dùng với trái cây tươi rất ngon.', 'Chai', 0.500, '7x7x20cm', 365, 1),
+('SP080', 'LSP004', 'Nước chanh muối đóng chai 350ml', 'Nước chanh muối pha sẵn, vị mặn ngọt hài hòa. ... Giải khát, bù điện giải khi vận động nhiều.', 'Chai', 0.350, '6x6x15cm', 180, 1);
 
 -- LSP005 – SỮA & EM BÉ (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP081', 'LSP005', 'Sữa bột Enfagrow 400g', 'Sữa bột cho trẻ từ 1-3 tuổi, giàu DHA. ... Giúp phát triển trí não, tăng cường miễn dịch và tiêu hóa khỏe.', 245000, 'Hộp', 0.400, '15x10x8cm', 730, 1),
-('SP082', 'LSP005', 'Sữa tươi tiệt trùng TH True Milk 180ml', 'Sữa tươi tiệt trùng, vị nguyên chất. ... Giàu canxi, tốt cho xương, phù hợp mọi lứa tuổi.', 7000, 'Hộp', 0.180, '5x5x10cm', 180, 1),
-('SP083', 'LSP005', 'Bột ăn dặm Nestle gạo sữa 200g', 'Bột ăn dặm vị gạo sữa dễ tiêu hóa. ... Hỗ trợ bé tập ăn dặm, bổ sung vitamin và khoáng.', 58000, 'Hộp', 0.200, '12x8x6cm', 730, 1),
-('SP084', 'LSP005', 'Tã dán Pampers NB 40 miếng', 'Tã dán siêu mềm, thấm hút tốt. ... Giúp bé ngủ ngon, da khô thoáng suốt cả đêm.', 195000, 'Gói', 0.800, '25x15x8cm', 1095, 1),
-('SP085', 'LSP005', 'Nước rửa bình sữa D-nee 620ml', 'Dung dịch rửa bình sữa an toàn. ... Không chứa hóa chất độc hại, dễ trôi sạch, không mùi.', 53000, 'Chai', 0.620, '8x8x20cm', 730, 1),
-('SP086', 'LSP005', 'Khăn ướt Bobby không mùi 100 tờ', 'Khăn ướt mềm mại, không chứa cồn. ... Phù hợp vệ sinh cho bé, dùng được cho da nhạy cảm.', 33000, 'Gói', 0.300, '15x10x5cm', 730, 1),
-('SP087', 'LSP005', 'Sữa chua uống Probi 65ml (lốc 4 chai)', 'Sữa chua uống men sống hỗ trợ tiêu hóa. ... Tăng cường hệ miễn dịch, ngon mát dễ uống.', 16000, 'Lốc', 0.260, '15x10x8cm', 180, 1),
-('SP088', 'LSP005', 'Dụng cụ hút mũi cho bé', 'Dụng cụ hút mũi bằng silicon mềm. ... Giúp làm sạch mũi nhẹ nhàng, không gây tổn thương.', 29000, 'Cái', 0.050, '8x3x2cm', 1095, 1),
-('SP089', 'LSP005', 'Sữa công thức Friso Gold 900g', 'Sữa công thức dành cho trẻ từ 1-2 tuổi. ... Bổ sung chất xơ GOS, hỗ trợ đường ruột và miễn dịch.', 510000, 'Hộp', 0.900, '20x15x10cm', 730, 1),
-('SP090', 'LSP005', 'Bánh ăn dặm Pigeon vị bí đỏ 50g', 'Bánh ăn dặm tan nhanh trong miệng. ... Giúp bé làm quen với đồ ăn, dễ cầm nắm.', 45000, 'Hộp', 0.050, '10x8x3cm', 730, 1),
-('SP091', 'LSP005', 'Sữa rửa mặt cho mẹ bầu Organic 100ml', 'Sữa rửa mặt thiên nhiên cho da nhạy cảm. ... Không chứa paraben, dịu nhẹ và an toàn.', 79000, 'Chai', 0.100, '6x6x15cm', 730, 1),
-('SP092', 'LSP005', 'Dầu gội em bé Johnson 200ml', 'Dầu gội dịu nhẹ, không cay mắt. ... Làm sạch tóc và da đầu cho bé mà không gây kích ứng.', 57000, 'Chai', 0.200, '7x7x18cm', 730, 1),
-('SP093', 'LSP005', 'Thermometer đo trán điện tử', 'Nhiệt kế hồng ngoại đo trán nhanh chóng. ... Cho kết quả chính xác trong vài giây, an toàn.', 195000, 'Cái', 0.100, '10x3x2cm', 1095, 1),
-('SP094', 'LSP005', 'Sữa nước Grow Plus đỏ 180ml', 'Sữa dành cho bé nhẹ cân, suy dinh dưỡng. ... Giúp tăng cân đều, phát triển khỏe mạnh.', 12000, 'Hộp', 0.180, '5x5x10cm', 180, 1),
-('SP095', 'LSP005', 'Bình sữa Avent nhựa PP 260ml', 'Bình sữa cổ rộng, van chống sặc. ... Giúp bé bú dễ dàng, không bị đầy hơi.', 230000, 'Cái', 0.150, '8x8x20cm', 1095, 1),
-('SP096', 'LSP005', 'Nước muối sinh lý BabyCare 500ml', 'Nước muối sinh lý dùng nhỏ mũi cho bé. ... Làm sạch nhẹ nhàng, hỗ trợ phòng ngừa viêm mũi.', 18000, 'Chai', 0.500, '7x7x20cm', 730, 1),
-('SP097', 'LSP005', 'Trái cây nghiền Hipp táo chuối 125g', 'Trái cây nghiền sẵn, vị ngọt tự nhiên. ... Cung cấp vitamin C, giúp bé ăn ngon miệng.', 40000, 'Hộp', 0.125, '8x6x4cm', 730, 1),
-('SP098', 'LSP005', 'Sữa tươi tiệt trùng Dutch Lady 110ml', 'Sữa tươi vị socola hoặc dâu. ... Bổ sung dưỡng chất, ngon miệng dễ uống.', 5000, 'Hộp', 0.110, '4x4x8cm', 180, 1),
-('SP099', 'LSP005', 'Bàn chải răng silicon cho bé 6 tháng+', 'Bàn chải mềm, an toàn cho bé. ... Giúp bé tập đánh răng ngay từ sớm.', 29000, 'Cái', 0.050, '12x2x1cm', 1095, 1),
-('SP100', 'LSP005', 'Balo y tá đựng đồ sơ sinh', 'Balo chuyên dụng mang theo khi ra ngoài. ... Có nhiều ngăn, dễ sắp xếp đồ dùng cho bé.', 155000, 'Cái', 0.800, '30x20x15cm', 1095, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP081', 'LSP005', 'Sữa bột Enfagrow 400g', 'Sữa bột cho trẻ từ 1-3 tuổi, giàu DHA. ... Giúp phát triển trí não, tăng cường miễn dịch và tiêu hóa khỏe.', 'Hộp', 0.400, '15x10x8cm', 730, 1),
+('SP082', 'LSP005', 'Sữa tươi tiệt trùng TH True Milk 180ml', 'Sữa tươi tiệt trùng, vị nguyên chất. ... Giàu canxi, tốt cho xương, phù hợp mọi lứa tuổi.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
+('SP083', 'LSP005', 'Bột ăn dặm Nestle gạo sữa 200g', 'Bột ăn dặm vị gạo sữa dễ tiêu hóa. ... Hỗ trợ bé tập ăn dặm, bổ sung vitamin và khoáng.', 'Hộp', 0.200, '12x8x6cm', 730, 1),
+('SP084', 'LSP005', 'Tã dán Pampers NB 40 miếng', 'Tã dán siêu mềm, thấm hút tốt. ... Giúp bé ngủ ngon, da khô thoáng suốt cả đêm.', 'Gói', 0.800, '25x15x8cm', 1095, 1),
+('SP085', 'LSP005', 'Nước rửa bình sữa D-nee 620ml', 'Dung dịch rửa bình sữa an toàn. ... Không chứa hóa chất độc hại, dễ trôi sạch, không mùi.', 'Chai', 0.620, '8x8x20cm', 730, 1),
+('SP086', 'LSP005', 'Khăn ướt Bobby không mùi 100 tờ', 'Khăn ướt mềm mại, không chứa cồn. ... Phù hợp vệ sinh cho bé, dùng được cho da nhạy cảm.', 'Gói', 0.300, '15x10x5cm', 730, 1),
+('SP087', 'LSP005', 'Sữa chua uống Probi 65ml (lốc 4 chai)', 'Sữa chua uống men sống hỗ trợ tiêu hóa. ... Tăng cường hệ miễn dịch, ngon mát dễ uống.', 'Lốc', 0.260, '15x10x8cm', 180, 1),
+('SP088', 'LSP005', 'Dụng cụ hút mũi cho bé', 'Dụng cụ hút mũi bằng silicon mềm. ... Giúp làm sạch mũi nhẹ nhàng, không gây tổn thương.', 'Cái', 0.050, '8x3x2cm', 1095, 1),
+('SP089', 'LSP005', 'Sữa công thức Friso Gold 900g', 'Sữa công thức dành cho trẻ từ 1-2 tuổi. ... Bổ sung chất xơ GOS, hỗ trợ đường ruột và miễn dịch.', 'Hộp', 0.900, '20x15x10cm', 730, 1),
+('SP090', 'LSP005', 'Bánh ăn dặm Pigeon vị bí đỏ 50g', 'Bánh ăn dặm tan nhanh trong miệng. ... Giúp bé làm quen với đồ ăn, dễ cầm nắm.', 'Hộp', 0.050, '10x8x3cm', 730, 1),
+('SP091', 'LSP005', 'Sữa rửa mặt cho mẹ bầu Organic 100ml', 'Sữa rửa mặt thiên nhiên cho da nhạy cảm. ... Không chứa paraben, dịu nhẹ và an toàn.', 'Chai', 0.100, '6x6x15cm', 730, 1),
+('SP092', 'LSP005', 'Dầu gội em bé Johnson 200ml', 'Dầu gội dịu nhẹ, không cay mắt. ... Làm sạch tóc và da đầu cho bé mà không gây kích ứng.', 'Chai', 0.200, '7x7x18cm', 730, 1),
+('SP093', 'LSP005', 'Thermometer đo trán điện tử', 'Nhiệt kế hồng ngoại đo trán nhanh chóng. ... Cho kết quả chính xác trong vài giây, an toàn.', 'Cái', 0.100, '10x3x2cm', 1095, 1),
+('SP094', 'LSP005', 'Sữa nước Grow Plus đỏ 180ml', 'Sữa dành cho bé nhẹ cân, suy dinh dưỡng. ... Giúp tăng cân đều, phát triển khỏe mạnh.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
+('SP095', 'LSP005', 'Bình sữa Avent nhựa PP 260ml', 'Bình sữa cổ rộng, van chống sặc. ... Giúp bé bú dễ dàng, không bị đầy hơi.', 'Cái', 0.150, '8x8x20cm', 1095, 1),
+('SP096', 'LSP005', 'Nước muối sinh lý BabyCare 500ml', 'Nước muối sinh lý dùng nhỏ mũi cho bé. ... Làm sạch nhẹ nhàng, hỗ trợ phòng ngừa viêm mũi.', 'Chai', 0.500, '7x7x20cm', 730, 1),
+('SP097', 'LSP005', 'Trái cây nghiền Hipp táo chuối 125g', 'Trái cây nghiền sẵn, vị ngọt tự nhiên. ... Cung cấp vitamin C, giúp bé ăn ngon miệng.', 'Hộp', 0.125, '8x6x4cm', 730, 1),
+('SP098', 'LSP005', 'Sữa tươi tiệt trùng Dutch Lady 110ml', 'Sữa tươi vị socola hoặc dâu. ... Bổ sung dưỡng chất, ngon miệng dễ uống.', 'Hộp', 0.110, '4x4x8cm', 180, 1),
+('SP099', 'LSP005', 'Bàn chải răng silicon cho bé 6 tháng+', 'Bàn chải mềm, an toàn cho bé. ... Giúp bé tập đánh răng ngay từ sớm.', 'Cái', 0.050, '12x2x1cm', 1095, 1),
+('SP100', 'LSP005', 'Balo y tá đựng đồ sơ sinh', 'Balo chuyên dụng mang theo khi ra ngoài. ... Có nhiều ngăn, dễ sắp xếp đồ dùng cho bé.', 'Cái', 0.800, '30x20x15cm', 1095, 1);
 
 -- LSP006 – GIA VỊ & DẦU ĂN (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP101', 'LSP006', 'Nước mắm Nam Ngư 500ml', 'Nước mắm truyền thống đậm đà. ... Được ủ từ cá cơm, hương vị tự nhiên, dùng nêm nếm và chấm.', 24000, 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP102', 'LSP006', 'Nước tương Maggi đậm đặc 700ml', 'Nước tương đậm đà, hương vị quen thuộc. ... Thích hợp ăn kèm món luộc, chiên, xào.', 32000, 'Chai', 0.700, '8x8x25cm', 1095, 1),
-('SP103', 'LSP006', 'Dầu ăn Tường An 1L', 'Dầu thực vật nguyên chất. ... Giàu vitamin A, E tốt cho tim mạch và sức khỏe.', 42000, 'Chai', 1.000, '8x8x25cm', 1095, 1),
-('SP104', 'LSP006', 'Muối i-ốt 500g', 'Muối trắng tinh khiết có bổ sung i-ốt. ... Giúp phòng ngừa bướu cổ và tăng cường sức khỏe.', 8000, 'Gói', 0.500, '15x10x2cm', 1095, 1),
-('SP105', 'LSP006', 'Hạt nêm Knorr thịt thăn 400g', 'Hạt nêm vị thịt thăn xương ống. ... Giúp món ăn đậm vị, thơm ngon hơn.', 45000, 'Hộp', 0.400, '12x8x6cm', 1095, 1),
-('SP106', 'LSP006', 'Tiêu đen xay Dh Foods 50g', 'Tiêu đen xay mịn, thơm nồng. ... Tăng hương vị cho các món kho, nướng, súp.', 29000, 'Hộp', 0.050, '8x6x3cm', 1095, 1),
-('SP107', 'LSP006', 'Tỏi băm sẵn 200g', 'Tỏi tươi xay nhuyễn, tiện lợi khi nấu ăn. ... Giữ nguyên hương vị và mùi thơm tự nhiên.', 17000, 'Hộp', 0.200, '10x8x4cm', 180, 1),
-('SP108', 'LSP006', 'Hành phi giòn 100g', 'Hành phi vàng thơm, giòn rụm. ... Dùng rắc lên cơm, cháo, bún, phở tăng hương vị.', 23000, 'Hộp', 0.100, '8x6x3cm', 365, 1),
-('SP109', 'LSP006', 'Dầu hào Maggi 350g', 'Dầu hào vị ngọt thanh. ... Dùng để xào rau, thịt giúp món ăn thêm đậm đà, bóng đẹp.', 27000, 'Chai', 0.350, '7x7x18cm', 1095, 1),
-('SP110', 'LSP006', 'Ớt bột Hàn Quốc 100g', 'Ớt bột vị cay nhẹ, màu đẹp. ... Dùng làm kim chi, lẩu, các món cay kiểu Hàn.', 38000, 'Hộp', 0.100, '8x6x3cm', 1095, 1),
-('SP111', 'LSP006', 'Bột nghệ nguyên chất 100g', 'Bột nghệ vàng nguyên chất. ... Dùng ướp thịt, làm bánh, tốt cho tiêu hóa.', 25000, 'Hộp', 0.100, '8x6x3cm', 1095, 1),
-('SP112', 'LSP006', 'Giấm gạo Lâm Thủy 500ml', 'Giấm gạo lên men tự nhiên. ... Dùng trộn gỏi, pha nước chấm, khử mùi tanh.', 16000, 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP113', 'LSP006', 'Dầu mè đen Lee Kum Kee 200ml', 'Dầu mè nguyên chất thơm ngon. ... Tăng hương vị cho món Nhật, Hàn, salad.', 46000, 'Chai', 0.200, '6x6x15cm', 1095, 1),
-('SP114', 'LSP006', 'Bột canh Hải Châu 190g', 'Bột canh pha sẵn muối, bột ngọt. ... Dùng để nêm nếm tiện lợi, nhanh chóng.', 11000, 'Hộp', 0.190, '10x8x4cm', 1095, 1),
-('SP115', 'LSP006', 'Nước cốt dừa Aroy-D 400ml', 'Nước cốt dừa đóng hộp thơm béo. ... Dùng nấu chè, cà ri, bánh, món Thái.', 34000, 'Hộp', 0.400, '12x8x4cm', 1095, 1),
-('SP116', 'LSP006', 'Bột ngọt Ajinomoto 400g', 'Bột ngọt giúp làm nổi bật vị ngọt tự nhiên. ... Phù hợp cho mọi món ăn.', 28000, 'Hộp', 0.400, '12x8x6cm', 1095, 1),
-('SP117', 'LSP006', 'Bột sả khô 50g', 'Sả khô xay nhuyễn. ... Dùng tẩm ướp thịt nướng, món chay, món kho.', 15000, 'Hộp', 0.050, '8x6x3cm', 1095, 1),
-('SP118', 'LSP006', 'Tương ớt Chin-Su 250g', 'Tương ớt cay vừa, màu sắc hấp dẫn. ... Dùng chấm đồ chiên, rán, ăn với phở, bún.', 12000, 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP119', 'LSP006', 'Nước màu dừa Bến Tre 250ml', 'Nước hàng kho cá, kho thịt. ... Giúp món ăn lên màu đẹp, vị ngọt thanh.', 20000, 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP120', 'LSP006', 'Nước mắm Phú Quốc truyền thống 520ml', 'Nước mắm nguyên chất cá cơm. ... Đậm đà, thơm ngon đúng chất nước mắm xưa.', 68000, 'Chai', 0.520, '7x7x20cm', 1095, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP101', 'LSP006', 'Nước mắm Nam Ngư 500ml', 'Nước mắm truyền thống đậm đà. ... Được ủ từ cá cơm, hương vị tự nhiên, dùng nêm nếm và chấm.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+('SP102', 'LSP006', 'Nước tương Maggi đậm đặc 700ml', 'Nước tương đậm đà, hương vị quen thuộc. ... Thích hợp ăn kèm món luộc, chiên, xào.', 'Chai', 0.700, '8x8x25cm', 1095, 1),
+('SP103', 'LSP006', 'Dầu ăn Tường An 1L', 'Dầu thực vật nguyên chất. ... Giàu vitamin A, E tốt cho tim mạch và sức khỏe.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
+('SP104', 'LSP006', 'Muối i-ốt 500g', 'Muối trắng tinh khiết có bổ sung i-ốt. ... Giúp phòng ngừa bướu cổ và tăng cường sức khỏe.', 'Gói', 0.500, '15x10x2cm', 1095, 1),
+('SP105', 'LSP006', 'Hạt nêm Knorr thịt thăn 400g', 'Hạt nêm vị thịt thăn xương ống. ... Giúp món ăn đậm vị, thơm ngon hơn.', 'Hộp', 0.400, '12x8x6cm', 1095, 1),
+('SP106', 'LSP006', 'Tiêu đen xay Dh Foods 50g', 'Tiêu đen xay mịn, thơm nồng. ... Tăng hương vị cho các món kho, nướng, súp.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
+('SP107', 'LSP006', 'Tỏi băm sẵn 200g', 'Tỏi tươi xay nhuyễn, tiện lợi khi nấu ăn. ... Giữ nguyên hương vị và mùi thơm tự nhiên.', 'Hộp', 0.200, '10x8x4cm', 180, 1),
+('SP108', 'LSP006', 'Hành phi giòn 100g', 'Hành phi vàng thơm, giòn rụm. ... Dùng rắc lên cơm, cháo, bún, phở tăng hương vị.', 'Hộp', 0.100, '8x6x3cm', 365, 1),
+('SP109', 'LSP006', 'Dầu hào Maggi 350g', 'Dầu hào vị ngọt thanh. ... Dùng để xào rau, thịt giúp món ăn thêm đậm đà, bóng đẹp.', 'Chai', 0.350, '7x7x18cm', 1095, 1),
+('SP110', 'LSP006', 'Ớt bột Hàn Quốc 100g', 'Ớt bột vị cay nhẹ, màu đẹp. ... Dùng làm kim chi, lẩu, các món cay kiểu Hàn.', 'Hộp', 0.100, '8x6x3cm', 1095, 1),
+('SP111', 'LSP006', 'Bột nghệ nguyên chất 100g', 'Bột nghệ vàng nguyên chất. ... Dùng ướp thịt, làm bánh, tốt cho tiêu hóa.', 'Hộp', 0.100, '8x6x3cm', 1095, 1),
+('SP112', 'LSP006', 'Giấm gạo Lâm Thủy 500ml', 'Giấm gạo lên men tự nhiên. ... Dùng trộn gỏi, pha nước chấm, khử mùi tanh.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+('SP113', 'LSP006', 'Dầu mè đen Lee Kum Kee 200ml', 'Dầu mè nguyên chất thơm ngon. ... Tăng hương vị cho món Nhật, Hàn, salad.', 'Chai', 0.200, '6x6x15cm', 1095, 1),
+('SP114', 'LSP006', 'Bột canh Hải Châu 190g', 'Bột canh pha sẵn muối, bột ngọt. ... Dùng để nêm nếm tiện lợi, nhanh chóng.', 'Hộp', 0.190, '10x8x4cm', 1095, 1),
+('SP115', 'LSP006', 'Nước cốt dừa Aroy-D 400ml', 'Nước cốt dừa đóng hộp thơm béo. ... Dùng nấu chè, cà ri, bánh, món Thái.', 'Hộp', 0.400, '12x8x4cm', 1095, 1),
+('SP116', 'LSP006', 'Bột ngọt Ajinomoto 400g', 'Bột ngọt giúp làm nổi bật vị ngọt tự nhiên. ... Phù hợp cho mọi món ăn.', 'Hộp', 0.400, '12x8x6cm', 1095, 1),
+('SP117', 'LSP006', 'Bột sả khô 50g', 'Sả khô xay nhuyễn. ... Dùng tẩm ướp thịt nướng, món chay, món kho.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
+('SP118', 'LSP006', 'Tương ớt Chin-Su 250g', 'Tương ớt cay vừa, màu sắc hấp dẫn. ... Dùng chấm đồ chiên, rán, ăn với phở, bún.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
+('SP119', 'LSP006', 'Nước màu dừa Bến Tre 250ml', 'Nước hàng kho cá, kho thịt. ... Giúp món ăn lên màu đẹp, vị ngọt thanh.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
+('SP120', 'LSP006', 'Nước mắm Phú Quốc truyền thống 520ml', 'Nước mắm nguyên chất cá cơm. ... Đậm đà, thơm ngon đúng chất nước mắm xưa.', 'Chai', 0.520, '7x7x20cm', 1095, 1);
 
 -- LSP007 – HÓA PHẨM & TẨY RỬA (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, giaban, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP121', 'LSP007', 'Nước rửa chén Sunlight chanh 750ml', 'Nước rửa chén hương chanh. ... Tẩy sạch dầu mỡ, dịu nhẹ với da tay.', 28000, 'Chai', 0.750, '8x8x25cm', 1095, 1),
-('SP122', 'LSP007', 'Nước lau sàn Gift lavender 1L', 'Nước lau sàn hương oải hương. ... Diệt khuẩn, khử mùi hiệu quả, sàn sạch bóng.', 34000, 'Chai', 1.000, '8x8x25cm', 1095, 1),
-('SP123', 'LSP007', 'Nước giặt Omo Matic 2.7kg', 'Nước giặt cho máy giặt cửa ngang. ... Đánh bay vết bẩn, lưu hương thơm lâu.', 132000, 'Chai', 2.700, '15x10x25cm', 1095, 1),
-('SP124', 'LSP007', 'Nước xả vải Downy hương nắng mai 800ml', 'Nước xả làm mềm vải. ... Giữ mùi thơm mát, giúp quần áo luôn mềm mại.', 49000, 'Chai', 0.800, '8x8x25cm', 1095, 1),
-('SP125', 'LSP007', 'Nước tẩy toilet Duck 900ml', 'Tẩy rửa toilet diệt khuẩn. ... Làm sạch và khử mùi bồn cầu hiệu quả.', 36000, 'Chai', 0.900, '8x8x25cm', 1095, 1),
-('SP126', 'LSP007', 'Nước rửa tay Lifebuoy 500ml', 'Rửa tay diệt khuẩn 99.9%. ... Hương thơm dễ chịu, bảo vệ tay sạch khuẩn.', 42000, 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP127', 'LSP007', 'Nước lau kính Gift 500ml', 'Nước lau kính chống bám bụi. ... Cho bề mặt kính sáng bóng, không vệt.', 26000, 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP128', 'LSP007', 'Nước tẩy đa năng CIF 500ml', 'Tẩy rửa vết bẩn cứng đầu. ... Dùng cho nhà bếp, nhà tắm, vật dụng inox.', 45000, 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP129', 'LSP007', 'Bột giặt Ariel hương Downy 3.8kg', 'Bột giặt sạch sâu, thơm lâu. ... Loại bỏ vết bẩn, giữ màu vải bền đẹp.', 125000, 'Hộp', 3.800, '20x15x25cm', 1095, 1),
-('SP130', 'LSP007', 'Khăn giấy Bless You hộp 200 tờ', 'Giấy mềm mịn, thấm hút tốt. ... Dùng lau mặt, dùng trong gia đình, văn phòng.', 29000, 'Hộp', 0.200, '15x10x8cm', 1095, 1),
-('SP131', 'LSP007', 'Giấy vệ sinh Pulppy 10 cuộn', 'Giấy vệ sinh trắng mềm. ... An toàn cho da, phù hợp gia đình và văn phòng.', 49000, 'Gói', 0.800, '25x15x8cm', 1095, 1),
-('SP132', 'LSP007', 'Nước rửa bình sữa D-nee 620ml', 'Rửa sạch bình sữa, đồ dùng trẻ em. ... Dịu nhẹ, an toàn cho bé sơ sinh.', 52000, 'Chai', 0.620, '8x8x20cm', 730, 1),
-('SP133', 'LSP007', 'Bông gòn y tế 100g', 'Bông trắng sạch, không tạp chất. ... Dùng lau chùi vết thương, vệ sinh cá nhân.', 17000, 'Gói', 0.100, '15x10x3cm', 1095, 1),
-('SP134', 'LSP007', 'Bàn chải vệ sinh nhà tắm đa năng', 'Thiết kế chắc chắn, dễ cầm. ... Làm sạch ngóc ngách nhà tắm, bồn rửa.', 32000, 'Cái', 0.200, '25x5x2cm', 1095, 1),
-('SP135', 'LSP007', 'Khăn ướt Mamamy 100 tờ', 'Khăn mềm, không cồn. ... Dùng lau mặt, tay chân cho bé và người lớn.', 37000, 'Gói', 0.300, '15x10x5cm', 730, 1),
-('SP136', 'LSP007', 'Bình xịt côn trùng Raid 600ml', 'Diệt muỗi, gián hiệu quả. ... Hương nhẹ, dùng an toàn trong nhà.', 69000, 'Chai', 0.600, '8x8x20cm', 1095, 1),
-('SP137', 'LSP007', 'Nước súc miệng Listerine 250ml', 'Làm sạch miệng, khử mùi. ... Giúp hơi thở thơm mát, bảo vệ răng miệng.', 49000, 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP138', 'LSP007', 'Bột thông cống Hando 100g', 'Làm tan chất thải hữu cơ. ... Thông tắc ống thoát nước, không gây hại đường ống.', 14000, 'Gói', 0.100, '10x8x3cm', 1095, 1),
-('SP139', 'LSP007', 'Nước diệt khuẩn Dettol 500ml', 'Sát khuẩn mạnh mẽ, đa năng. ... Pha loãng để lau sàn, giặt đồ, vệ sinh da.', 87000, 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP140', 'LSP007', 'Găng tay cao su Latex', 'Găng tay dẻo, co giãn tốt. ... Dùng khi rửa chén, lau dọn, an toàn cho da tay.', 22000, 'Đôi', 0.050, '20x10x2cm', 1095, 1);
+INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP121', 'LSP007', 'Nước rửa chén Sunlight chanh 750ml', 'Nước rửa chén hương chanh. ... Tẩy sạch dầu mỡ, dịu nhẹ với da tay.', 'Chai', 0.750, '8x8x25cm', 1095, 1),
+('SP122', 'LSP007', 'Nước lau sàn Gift lavender 1L', 'Nước lau sàn hương oải hương. ... Diệt khuẩn, khử mùi hiệu quả, sàn sạch bóng.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
+('SP123', 'LSP007', 'Nước giặt Omo Matic 2.7kg', 'Nước giặt cho máy giặt cửa ngang. ... Đánh bay vết bẩn, lưu hương thơm lâu.', 'Chai', 2.700, '15x10x25cm', 1095, 1),
+('SP124', 'LSP007', 'Nước xả vải Downy hương nắng mai 800ml', 'Nước xả làm mềm vải. ... Giữ mùi thơm mát, giúp quần áo luôn mềm mại.', 'Chai', 0.800, '8x8x25cm', 1095, 1),
+('SP125', 'LSP007', 'Nước tẩy toilet Duck 900ml', 'Tẩy rửa toilet diệt khuẩn. ... Làm sạch và khử mùi bồn cầu hiệu quả.', 'Chai', 0.900, '8x8x25cm', 1095, 1),
+('SP126', 'LSP007', 'Nước rửa tay Lifebuoy 500ml', 'Rửa tay diệt khuẩn 99.9%. ... Hương thơm dễ chịu, bảo vệ tay sạch khuẩn.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+('SP127', 'LSP007', 'Nước lau kính Gift 500ml', 'Nước lau kính chống bám bụi. ... Cho bề mặt kính sáng bóng, không vệt.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+('SP128', 'LSP007', 'Nước tẩy đa năng CIF 500ml', 'Tẩy rửa vết bẩn cứng đầu. ... Dùng cho nhà bếp, nhà tắm, vật dụng inox.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+('SP129', 'LSP007', 'Bột giặt Ariel hương Downy 3.8kg', 'Bột giặt sạch sâu, thơm lâu. ... Loại bỏ vết bẩn, giữ màu vải bền đẹp.', 'Hộp', 3.800, '20x15x25cm', 1095, 1),
+('SP130', 'LSP007', 'Khăn giấy Bless You hộp 200 tờ', 'Giấy mềm mịn, thấm hút tốt. ... Dùng lau mặt, dùng trong gia đình, văn phòng.', 'Hộp', 0.200, '15x10x8cm', 1095, 1),
+('SP131', 'LSP007', 'Giấy vệ sinh Pulppy 10 cuộn', 'Giấy vệ sinh trắng mềm. ... An toàn cho da, phù hợp gia đình và văn phòng.', 'Gói', 0.800, '25x15x8cm', 1095, 1),
+('SP132', 'LSP007', 'Nước rửa bình sữa D-nee 620ml', 'Rửa sạch bình sữa, đồ dùng trẻ em. ... Dịu nhẹ, an toàn cho bé sơ sinh.', 'Chai', 0.620, '8x8x20cm', 730, 1),
+('SP133', 'LSP007', 'Bông gòn y tế 100g', 'Bông trắng sạch, không tạp chất. ... Dùng lau chùi vết thương, vệ sinh cá nhân.', 'Gói', 0.100, '15x10x3cm', 1095, 1),
+('SP134', 'LSP007', 'Bàn chải vệ sinh nhà tắm đa năng', 'Thiết kế chắc chắn, dễ cầm. ... Làm sạch ngóc ngách nhà tắm, bồn rửa.', 'Cái', 0.200, '25x5x2cm', 1095, 1),
+('SP135', 'LSP007', 'Khăn ướt Mamamy 100 tờ', 'Khăn mềm, không cồn. ... Dùng lau mặt, tay chân cho bé và người lớn.', 'Gói', 0.300, '15x10x5cm', 730, 1),
+('SP136', 'LSP007', 'Bình xịt côn trùng Raid 600ml', 'Diệt muỗi, gián hiệu quả. ... Hương nhẹ, dùng an toàn trong nhà.', 'Chai', 0.600, '8x8x20cm', 1095, 1),
+('SP137', 'LSP007', 'Nước súc miệng Listerine 250ml', 'Làm sạch miệng, khử mùi. ... Giúp hơi thở thơm mát, bảo vệ răng miệng.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
+('SP138', 'LSP007', 'Bột thông cống Hando 100g', 'Làm tan chất thải hữu cơ. ... Thông tắc ống thoát nước, không gây hại đường ống.', 'Gói', 0.100, '10x8x3cm', 1095, 1),
+('SP139', 'LSP007', 'Nước diệt khuẩn Dettol 500ml', 'Sát khuẩn mạnh mẽ, đa năng. ... Pha loãng để lau sàn, giặt đồ, vệ sinh da.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+('SP140', 'LSP007', 'Găng tay cao su Latex', 'Găng tay dẻo, co giãn tốt. ... Dùng khi rửa chén, lau dọn, an toàn cho da tay.', 'Đôi', 0.050, '20x10x2cm', 1095, 1);
+
+-- Thêm dữ liệu giá cho các sản phẩm đã tạo
+-- Thêm dữ liệu giá cho các sản phẩm đã tạo
+INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
+-- LSP001 – TƯƠI SỐNG
+('SP001', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP002', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP003', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP004', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP005', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP006', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP007', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP008', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP009', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP010', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP011', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP012', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP013', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP014', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP015', 30000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP016', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP017', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP018', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP019', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP020', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+
+-- LSP002 – ĐÔNG LẠNH
+('SP021', 120000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP022', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP023', 150000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP024', 60000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP025', 65000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP026', 110000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP027', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP028', 130000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP029', 40000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP030', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP031', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP032', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP033', 97000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP034', 72000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP035', 105000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP036', 168000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP037', 125000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP038', 55000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP039', 39000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP040', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+
+-- LSP003 – ĐỒ ĐÓNG HỘP
+('SP041', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP042', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP043', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP044', 19000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP045', 25000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP046', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP047', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP048', 21000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP049', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP050', 37000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP051', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP052', 22000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP053', 21000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP054', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP055', 18500, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP056', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP057', 31000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP058', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP059', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP060', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+
+-- LSP004 – ĐỒ UỐNG
+('SP061', 6000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP062', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP063', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP064', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP065', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP066', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP067', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP068', 19000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP069', 17500, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP070', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP071', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP072', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP073', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP074', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP075', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP076', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP077', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP078', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP079', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP080', 9500, '2025-01-01', 'Giá niêm yết', 'NV001'),
+
+-- LSP005 – SỮA & EM BÉ
+('SP081', 245000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP082', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP083', 58000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP084', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP085', 53000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP086', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP087', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP088', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP089', 510000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP090', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP091', 79000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP092', 57000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP093', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP094', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP095', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP096', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP097', 40000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP098', 5000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP099', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP100', 155000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+
+-- LSP006 – GIA VỊ & DẦU ĂN
+('SP101', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP102', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP103', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP104', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP105', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP106', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP107', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP108', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP109', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP110', 38000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP111', 25000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP112', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP113', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP114', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP115', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP116', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP117', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP118', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP119', 20000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP120', 68000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+
+-- LSP007 – HÓA PHẨM & TẨY RỬA
+('SP121', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP122', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP123', 132000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP124', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP125', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP126', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP127', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP128', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP129', 125000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP130', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP131', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP132', 52000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP133', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP134', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP135', 37000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP136', 69000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP137', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP138', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP139', 87000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+('SP140', 22000, '2025-01-01', 'Giá niêm yết', 'NV001');
 
 -- Thêm dữ liệu khuyến mãi
 INSERT INTO khuyenmai (makm, tenchuongtrinh, mota, loaikm, giatrikm, dieukienapdung, ngaybatdau, ngayketthuc, soluongtoida, dasudung, maquanly, trangthai) VALUES
@@ -976,14 +1139,6 @@ INSERT INTO calamviec (tenca, giobatdau, gioketthuc, trangthai) VALUES
 ('Tối', '18:00:00', '22:00:00', 1),
 ('Cả ngày', '08:00:00', '22:00:00', 1),
 ('Ca đêm', '22:00:00', '07:00:00', 1);
-
--- Thêm dữ liệu giá sản phẩm
-INSERT INTO giasanpham (masp, gia, ngaybatdau, ngayketthuc, lydothaydoi, nguoithaydoi) VALUES
-('SP001', 15000, '2025-07-01', '2025-07-31', 'Giá mới tháng 7', 'NV002'),
-('SP002', 18000, '2025-07-01', '2025-07-31', 'Giá mới tháng 7', 'NV002'),
-('SP003', 12000, '2025-07-01', '2025-07-31', 'Giá mới tháng 7', 'NV002'),
-('SP004', 13000, '2025-07-01', '2025-07-31', 'Giá mới tháng 7', 'NV002'),
-('SP005', 10000, '2025-07-01', '2025-07-31', 'Giá mới tháng 7', 'NV002');
 
 -- Thêm dữ liệu tồn kho chi tiết
 INSERT INTO tonkhochitiet (masp, makho, soluongton, soluongtoithieu, soluongtoida) VALUES

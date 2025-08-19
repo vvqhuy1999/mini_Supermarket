@@ -2,6 +2,8 @@ package com.example.mini_supermarket.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,10 +36,12 @@ public class GioHang implements Serializable {
 
     @Column(name = "NgayTao")
     @Temporal(TemporalType.TIMESTAMP)
+    @CreationTimestamp
     private java.sql.Timestamp ngayTao;
 
     @Column(name = "NgayCapNhat")
     @Temporal(TemporalType.TIMESTAMP)
+    @UpdateTimestamp
     private java.sql.Timestamp ngayCapNhat;
 
     @Column(name = "TrangThai")
