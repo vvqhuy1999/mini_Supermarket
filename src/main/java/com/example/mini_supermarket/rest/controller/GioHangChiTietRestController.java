@@ -59,24 +59,34 @@ public class GioHangChiTietRestController {
         List<GioHangChiTiet> items = gioHangChiTietService.findActiveCartItemsByCustomer(maKH);
         System.out.println("[CART][WITH_ITEMS] maKH=" + maKH + " itemsCount=" + items.size());
         
-        if (items.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
         // Tính tổng tiền
         BigDecimal tongTien = gioHangChiTietService.calculateTotalByCustomerAndStatus(maKH, 0);
         
-        // Lấy thông tin từ item đầu tiên (vì tất cả cùng khách hàng)
-        GioHangChiTiet firstItem = items.get(0);
+        // Tạo DTO với thông tin cơ bản, ngay cả khi cart trống
+        GioHangWithItemsDto dto;
         
-        GioHangWithItemsDto dto = GioHangWithItemsDto.builder()
-                .maKH(maKH)
-                .trangThai(0) // Shopping
-                .ngayTao(firstItem.getNgayThem())
-                .ngayCapNhat(firstItem.getNgayCapNhat())
-                .items(items)
-                .tongTien(tongTien)
-                .build();
+        if (items.isEmpty()) {
+            // Cart trống - trả về DTO với thông tin cơ bản
+            dto = GioHangWithItemsDto.builder()
+                    .maKH(maKH)
+                    .trangThai(0) // Shopping
+                    .ngayTao(new java.sql.Timestamp(System.currentTimeMillis()))
+                    .ngayCapNhat(new java.sql.Timestamp(System.currentTimeMillis()))
+                    .items(items) // Empty list
+                    .tongTien(BigDecimal.ZERO)
+                    .build();
+        } else {
+            // Cart có items - lấy thông tin từ item đầu tiên
+            GioHangChiTiet firstItem = items.get(0);
+            dto = GioHangWithItemsDto.builder()
+                    .maKH(maKH)
+                    .trangThai(0) // Shopping
+                    .ngayTao(firstItem.getNgayThem())
+                    .ngayCapNhat(firstItem.getNgayCapNhat())
+                    .items(items)
+                    .tongTien(tongTien)
+                    .build();
+        }
         
         return ResponseEntity.ok(dto);
     }
