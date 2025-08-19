@@ -143,11 +143,8 @@ public class SecurityConfig {
     
     // ===== API DÀNH CHO KHÁCH HÀNG (Customer) - Cần authentication =====
     private final String[] CUSTOMER_ENDPOINTS = {
-        // Giỏ hàng cá nhân - FULL CRUD
-        "/api/giohang",                 // GET: Xem giỏ hàng, POST: Tạo giỏ hàng
-        "/api/giohang/*",               // GET: Xem chi tiết, PUT: Cập nhật, DELETE: Xóa
-        "/api/chitietgiohang",          // GET: Xem chi tiết giỏ hàng, POST: Thêm sản phẩm
-        "/api/chitietgiohang/*",        // GET: Xem chi tiết, PUT: Cập nhật, DELETE: Xóa
+        // Giỏ hàng cá nhân - FULL CRUD (merged controller)
+        "/api/giohang/**",              // FULL CRUD giỏ hàng và items, sync, status
         
         // Đơn hàng cá nhân - CHỈ XEM VÀ TẠO
         "/api/donhang",                 // GET: Xem đơn hàng cá nhân, POST: Tạo đơn hàng

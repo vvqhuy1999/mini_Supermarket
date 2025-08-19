@@ -66,7 +66,7 @@ public class NhanVien implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<GioHang> gioHangs;
+    private List<GioHangChiTiet> gioHangChiTiets;
 
     @JsonIgnore
     @OneToMany(mappedBy = "nhanVienLap", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

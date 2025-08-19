@@ -1,13 +1,16 @@
+-- ===================================
+-- CREATE TABLES
+-- ===================================
 
 -- Bảng quản lý thông tin người dùng hệ thống
-CREATE TABLE NguoiDung (
-    MaNguoiDung VARCHAR(50) PRIMARY KEY,
-    Email VARCHAR(50) UNIQUE NOT NULL,
-    MatKhau VARCHAR(255) NOT NULL,
-    Sub VARCHAR(255),
-    VaiTro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
-    NgayTao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    IsDeleted BOOLEAN DEFAULT FALSE,
+CREATE TABLE nguoidung (
+    manguoidung VARCHAR(50) PRIMARY KEY,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    matkhau VARCHAR(255) NOT NULL,
+    sub VARCHAR(255),
+    vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE,
     
     -- Các cột cho chức năng OTP và Reset Password
     otp_code VARCHAR(6),
@@ -16,7 +19,7 @@ CREATE TABLE NguoiDung (
     reset_password_token VARCHAR(255),
     reset_password_token_expiry TIMESTAMP,
 
-    CONSTRAINT check_vaitro CHECK (VaiTro IN (0, 1, 2, 3))
+    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
 );
 
 -- Table to manage store information
@@ -62,7 +65,6 @@ CREATE TABLE nhanvien (
 );
 
 -- Table to manage customer information and loyalty points
--- *** UPDATED: Removed 'email' column. ***
 CREATE TABLE khachhang (
     makh VARCHAR(50) PRIMARY KEY,
     manguoidung VARCHAR(50),
@@ -89,7 +91,6 @@ CREATE TABLE loaisanpham (
 );
 
 -- Table for detailed product information
--- *** UPDATED: Removed 'giaban' column. Price is now managed in 'giasanpham' table. ***
 CREATE TABLE sanpham (
     masp VARCHAR(50) PRIMARY KEY,
     maloaisp VARCHAR(50) NOT NULL,
@@ -408,31 +409,24 @@ CREATE TABLE thanhtoan (
     isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Table for customer shopping carts
-CREATE TABLE giohang (
-    magh SERIAL PRIMARY KEY,
-    makh VARCHAR(50),
+-- Merged table for shopping cart and its details
+CREATE TABLE giohang_chitiet (
+    maghct SERIAL PRIMARY KEY, -- Unique ID for each row
+    makh VARCHAR(50), -- Customer ID
     manv VARCHAR(50), -- Assisting employee (if any)
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ngaycapnhat TIMESTAMP,
-    trangthai INT DEFAULT 0, -- 0=Shopping, 1=Ordered, 2=Paid, 3=Canceled
-    ghichu TEXT,
-    isdeleted BOOLEAN DEFAULT FALSE
-);
-
--- Table for shopping cart details
-CREATE TABLE chitietgiohang (
-    mactgh SERIAL PRIMARY KEY,
-    magh INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluong INT NOT NULL,
+    masp VARCHAR(50) NOT NULL, -- Product ID
+    soluong INT NOT NULL, -- Product quantity
     dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED,
-    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
+    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
+    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
+    ngaycapnhat TIMESTAMP, -- Last update time
+    trangthai INT DEFAULT 0, -- 0=Shopping, 1=Paid, 2=Canceled
 
-    CONSTRAINT chk_chitietgiohang_soluong CHECK (soluong > 0),
-    CONSTRAINT chk_chitietgiohang_dongia CHECK (dongiahientai > 0)
+
+
+    -- Constraints
+    CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
+    CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
 );
 
 -- Table for statistics and reports
@@ -460,7 +454,6 @@ CREATE TABLE thongkebaocao (
 ALTER TABLE tonkhochitiet ADD CONSTRAINT uq_sanpham_kho UNIQUE (masp, makho);
 ALTER TABLE khuyenmaisanpham ADD CONSTRAINT uq_khuyenmai_sanpham UNIQUE (makm, masp);
 ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT uq_khuyenmai_khachhang UNIQUE (makm, makh);
-ALTER TABLE chitietgiohang ADD CONSTRAINT uq_giohang_sanpham UNIQUE (magh, masp);
 
 -- ===================================
 -- ADD FOREIGN KEYS
@@ -555,13 +548,10 @@ ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT fk_khuyenmaikhachhang_khachhang FO
 ALTER TABLE thanhtoan ADD CONSTRAINT fk_thanhtoan_hoadon FOREIGN KEY (mahd) REFERENCES hoadon(mahd) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE thanhtoan ADD CONSTRAINT fk_thanhtoan_phuongthucthanhtoan FOREIGN KEY (mapttt) REFERENCES phuongthucthanhtoan(mapttt) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Foreign keys for giohang
-ALTER TABLE giohang ADD CONSTRAINT fk_giohang_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE giohang ADD CONSTRAINT fk_giohang_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
--- Foreign keys for chitietgiohang
-ALTER TABLE chitietgiohang ADD CONSTRAINT fk_chitietgiohang_giohang FOREIGN KEY (magh) REFERENCES giohang(magh) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE chitietgiohang ADD CONSTRAINT fk_chitietgiohang_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for giohang_chitiet
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Foreign keys for thongkebaocao
 ALTER TABLE thongkebaocao ADD CONSTRAINT fk_thongkebaocao_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -578,7 +568,6 @@ CREATE INDEX idx_nhacungcap_trangthai ON nhacungcap(trangthai);
 CREATE INDEX idx_nhanvien_cuahang ON nhanvien(mach);
 CREATE INDEX idx_nhanvien_trangthai ON nhanvien(trangthai);
 CREATE INDEX idx_khachhang_sdt ON khachhang(sdt);
--- *** UPDATED: Removed index for 'email' column. ***
 CREATE INDEX idx_khachhang_loai ON khachhang(loaikhachhang);
 CREATE INDEX idx_loaisanpham_cha ON loaisanpham(maloaicha);
 CREATE INDEX idx_sanpham_loai ON sanpham(maloaisp);
@@ -622,10 +611,46 @@ CREATE INDEX idx_khuyenmaikhachhang_kh ON khuyenmaikhachhang(makh);
 CREATE INDEX idx_thanhtoan_hoadon ON thanhtoan(mahd);
 CREATE INDEX idx_thanhtoan_trangthai ON thanhtoan(trangthaitt);
 CREATE INDEX idx_thanhtoan_ngay ON thanhtoan(ngaygiott);
-CREATE INDEX idx_giohang_khachhang ON giohang(makh);
-CREATE INDEX idx_giohang_trangthai ON giohang(trangthai);
-CREATE INDEX idx_chitietgiohang_giohang ON chitietgiohang(magh);
-CREATE INDEX idx_chitietgiohang_sanpham ON chitietgiohang(masp);
 CREATE INDEX idx_thongke_loai ON thongkebaocao(loaibaocao);
 CREATE INDEX idx_thongke_ngay ON thongkebaocao(ngaybaocao);
 CREATE INDEX idx_thongke_cuahang ON thongkebaocao(mach);
+CREATE INDEX idx_giohang_chitiet_khachhang ON giohang_chitiet(makh);
+CREATE INDEX idx_giohang_chitiet_sanpham ON giohang_chitiet(masp);
+CREATE INDEX idx_giohang_chitiet_trangthai ON giohang_chitiet(trangthai);
+
+-- ===================================
+-- CREATE TRIGGERS
+-- ===================================
+
+-- Trigger function to update a timestamp column to the current time
+CREATE OR REPLACE FUNCTION fn_update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+   IF TG_TABLE_NAME = 'tonkhochitiet' THEN
+      NEW.ngaycapnhat = CURRENT_TIMESTAMP;
+   ELSIF TG_TABLE_NAME = 'hoadon' THEN
+      NEW.ngaysua = CURRENT_TIMESTAMP;
+   ELSIF TG_TABLE_NAME = 'giohang_chitiet' THEN
+      NEW.ngaycapnhat = CURRENT_TIMESTAMP;
+   END IF;
+   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for tonkhochitiet to update ngaycapnhat
+CREATE TRIGGER trg_tonkhochitiet_updatedate
+BEFORE UPDATE ON tonkhochitiet
+FOR EACH ROW
+EXECUTE FUNCTION fn_update_timestamp();
+
+-- Trigger for hoadon to update ngaysua
+CREATE TRIGGER trg_hoadon_updatedate
+BEFORE UPDATE ON hoadon
+FOR EACH ROW
+EXECUTE FUNCTION fn_update_timestamp();
+
+-- Trigger for giohang_chitiet to update ngaycapnhat
+CREATE TRIGGER trg_giohang_chitiet_updatedate
+BEFORE UPDATE ON giohang_chitiet
+FOR EACH ROW
+EXECUTE FUNCTION fn_update_timestamp();

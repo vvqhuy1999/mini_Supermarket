@@ -1,6 +1,6 @@
 package com.example.mini_supermarket.dto;
 
-import com.example.mini_supermarket.entity.ChiTietGioHang;
+import com.example.mini_supermarket.entity.GioHangChiTiet;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,15 +14,16 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class GioHangWithItemsDto {
-	private Integer maGH;
 	private String maKH;
 	private Integer trangThai;
 	private String ghiChu;
 	private java.sql.Timestamp ngayTao;
 	private java.sql.Timestamp ngayCapNhat;
-	private List<ChiTietGioHang> items;
+	private List<GioHangChiTiet> items;
+	private BigDecimal tongTien;
 
 	public BigDecimal getTongTien() {
+		if (tongTien != null) return tongTien;
 		if (items == null || items.isEmpty()) return BigDecimal.ZERO;
 		return items.stream()
 			.map(i -> i.getThanhTien() != null ? i.getThanhTien() : BigDecimal.ZERO)

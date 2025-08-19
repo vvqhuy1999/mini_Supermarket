@@ -1,22 +1,16 @@
--- In PostgreSQL, you typically connect to the default 'postgres' database
--- to create a new database. Then, you connect to your newly created database
--- to run the rest of the script.
---
--- Example using psql:
--- CREATE DATABASE quanlysieuthi;
--- \c quanlysieuthi
-
--- ===== CREATE MAIN TABLES =====
+-- ===================================
+-- CREATE TABLES
+-- ===================================
 
 -- Bảng quản lý thông tin người dùng hệ thống
-CREATE TABLE NguoiDung (
-    MaNguoiDung VARCHAR(50) PRIMARY KEY,
-    Email VARCHAR(50) UNIQUE NOT NULL,
-    MatKhau VARCHAR(255) NOT NULL,
-    Sub VARCHAR(255),
-    VaiTro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
-    NgayTao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    IsDeleted BOOLEAN DEFAULT FALSE,
+CREATE TABLE nguoidung (
+    manguoidung VARCHAR(50) PRIMARY KEY,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    matkhau VARCHAR(255) NOT NULL,
+    sub VARCHAR(255),
+    vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE,
     
     -- Các cột cho chức năng OTP và Reset Password
     otp_code VARCHAR(6),
@@ -25,7 +19,7 @@ CREATE TABLE NguoiDung (
     reset_password_token VARCHAR(255),
     reset_password_token_expiry TIMESTAMP,
 
-    CONSTRAINT check_vaitro CHECK (VaiTro IN (0, 1, 2, 3))
+    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
 );
 
 -- Table to manage store information
@@ -71,7 +65,6 @@ CREATE TABLE nhanvien (
 );
 
 -- Table to manage customer information and loyalty points
--- *** UPDATED: Removed 'email' column. ***
 CREATE TABLE khachhang (
     makh VARCHAR(50) PRIMARY KEY,
     manguoidung VARCHAR(50),
@@ -98,7 +91,6 @@ CREATE TABLE loaisanpham (
 );
 
 -- Table for detailed product information
--- *** UPDATED: Removed 'giaban' column. Price is now managed in 'giasanpham' table. ***
 CREATE TABLE sanpham (
     masp VARCHAR(50) PRIMARY KEY,
     maloaisp VARCHAR(50) NOT NULL,
@@ -417,31 +409,24 @@ CREATE TABLE thanhtoan (
     isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Table for customer shopping carts
-CREATE TABLE giohang (
-    magh SERIAL PRIMARY KEY,
-    makh VARCHAR(50),
+-- Merged table for shopping cart and its details
+CREATE TABLE giohang_chitiet (
+    maghct SERIAL PRIMARY KEY, -- Unique ID for each row
+    makh VARCHAR(50), -- Customer ID
     manv VARCHAR(50), -- Assisting employee (if any)
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ngaycapnhat TIMESTAMP,
-    trangthai INT DEFAULT 0, -- 0=Shopping, 1=Ordered, 2=Paid, 3=Canceled
-    ghichu TEXT,
-    isdeleted BOOLEAN DEFAULT FALSE
-);
-
--- Table for shopping cart details
-CREATE TABLE chitietgiohang (
-    mactgh SERIAL PRIMARY KEY,
-    magh INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluong INT NOT NULL,
+    masp VARCHAR(50) NOT NULL, -- Product ID
+    soluong INT NOT NULL, -- Product quantity
     dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED,
-    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
+    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
+    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
+    ngaycapnhat TIMESTAMP, -- Last update time
+    trangthai INT DEFAULT 0, -- 0=Shopping, 1=Paid, 2=Canceled
 
-    CONSTRAINT chk_chitietgiohang_soluong CHECK (soluong > 0),
-    CONSTRAINT chk_chitietgiohang_dongia CHECK (dongiahientai > 0)
+
+
+    -- Constraints
+    CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
+    CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
 );
 
 -- Table for statistics and reports
@@ -469,7 +454,6 @@ CREATE TABLE thongkebaocao (
 ALTER TABLE tonkhochitiet ADD CONSTRAINT uq_sanpham_kho UNIQUE (masp, makho);
 ALTER TABLE khuyenmaisanpham ADD CONSTRAINT uq_khuyenmai_sanpham UNIQUE (makm, masp);
 ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT uq_khuyenmai_khachhang UNIQUE (makm, makh);
-ALTER TABLE chitietgiohang ADD CONSTRAINT uq_giohang_sanpham UNIQUE (magh, masp);
 
 -- ===================================
 -- ADD FOREIGN KEYS
@@ -564,13 +548,10 @@ ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT fk_khuyenmaikhachhang_khachhang FO
 ALTER TABLE thanhtoan ADD CONSTRAINT fk_thanhtoan_hoadon FOREIGN KEY (mahd) REFERENCES hoadon(mahd) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE thanhtoan ADD CONSTRAINT fk_thanhtoan_phuongthucthanhtoan FOREIGN KEY (mapttt) REFERENCES phuongthucthanhtoan(mapttt) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Foreign keys for giohang
-ALTER TABLE giohang ADD CONSTRAINT fk_giohang_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE giohang ADD CONSTRAINT fk_giohang_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
--- Foreign keys for chitietgiohang
-ALTER TABLE chitietgiohang ADD CONSTRAINT fk_chitietgiohang_giohang FOREIGN KEY (magh) REFERENCES giohang(magh) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE chitietgiohang ADD CONSTRAINT fk_chitietgiohang_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for giohang_chitiet
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Foreign keys for thongkebaocao
 ALTER TABLE thongkebaocao ADD CONSTRAINT fk_thongkebaocao_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -587,7 +568,6 @@ CREATE INDEX idx_nhacungcap_trangthai ON nhacungcap(trangthai);
 CREATE INDEX idx_nhanvien_cuahang ON nhanvien(mach);
 CREATE INDEX idx_nhanvien_trangthai ON nhanvien(trangthai);
 CREATE INDEX idx_khachhang_sdt ON khachhang(sdt);
--- *** UPDATED: Removed index for 'email' column. ***
 CREATE INDEX idx_khachhang_loai ON khachhang(loaikhachhang);
 CREATE INDEX idx_loaisanpham_cha ON loaisanpham(maloaicha);
 CREATE INDEX idx_sanpham_loai ON sanpham(maloaisp);
@@ -631,64 +611,49 @@ CREATE INDEX idx_khuyenmaikhachhang_kh ON khuyenmaikhachhang(makh);
 CREATE INDEX idx_thanhtoan_hoadon ON thanhtoan(mahd);
 CREATE INDEX idx_thanhtoan_trangthai ON thanhtoan(trangthaitt);
 CREATE INDEX idx_thanhtoan_ngay ON thanhtoan(ngaygiott);
-CREATE INDEX idx_giohang_khachhang ON giohang(makh);
-CREATE INDEX idx_giohang_trangthai ON giohang(trangthai);
-CREATE INDEX idx_chitietgiohang_giohang ON chitietgiohang(magh);
-CREATE INDEX idx_chitietgiohang_sanpham ON chitietgiohang(masp);
 CREATE INDEX idx_thongke_loai ON thongkebaocao(loaibaocao);
 CREATE INDEX idx_thongke_ngay ON thongkebaocao(ngaybaocao);
 CREATE INDEX idx_thongke_cuahang ON thongkebaocao(mach);
+CREATE INDEX idx_giohang_chitiet_khachhang ON giohang_chitiet(makh);
+CREATE INDEX idx_giohang_chitiet_sanpham ON giohang_chitiet(masp);
+CREATE INDEX idx_giohang_chitiet_trangthai ON giohang_chitiet(trangthai);
 
 -- ===================================
--- CREATE TRIGGERS for ON UPDATE functionality
--- In PostgreSQL, triggers are created in two steps:
--- 1. Create a function that returns a TRIGGER.
--- 2. Create the trigger that executes the function.
+-- CREATE TRIGGERS
 -- ===================================
 
--- Trigger for tonkhochitiet to update ngaycapnhat
-CREATE OR REPLACE FUNCTION fn_update_tonkho_timestamp()
+-- Trigger function to update a timestamp column to the current time
+CREATE OR REPLACE FUNCTION fn_update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.ngaycapnhat = CURRENT_TIMESTAMP;
-    RETURN NEW;
+   IF TG_TABLE_NAME = 'tonkhochitiet' THEN
+      NEW.ngaycapnhat = CURRENT_TIMESTAMP;
+   ELSIF TG_TABLE_NAME = 'hoadon' THEN
+      NEW.ngaysua = CURRENT_TIMESTAMP;
+   ELSIF TG_TABLE_NAME = 'giohang_chitiet' THEN
+      NEW.ngaycapnhat = CURRENT_TIMESTAMP;
+   END IF;
+   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+-- Trigger for tonkhochitiet to update ngaycapnhat
 CREATE TRIGGER trg_tonkhochitiet_updatedate
 BEFORE UPDATE ON tonkhochitiet
 FOR EACH ROW
-EXECUTE FUNCTION fn_update_tonkho_timestamp();
-
+EXECUTE FUNCTION fn_update_timestamp();
 
 -- Trigger for hoadon to update ngaysua
-CREATE OR REPLACE FUNCTION fn_update_hoadon_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.ngaysua = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE TRIGGER trg_hoadon_updatedate
 BEFORE UPDATE ON hoadon
 FOR EACH ROW
-EXECUTE FUNCTION fn_update_hoadon_timestamp();
+EXECUTE FUNCTION fn_update_timestamp();
 
-
--- Trigger for giohang to update ngaycapnhat
-CREATE OR REPLACE FUNCTION fn_update_giohang_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.ngaycapnhat = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_giohang_updatedate
-BEFORE UPDATE ON giohang
+-- Trigger for giohang_chitiet to update ngaycapnhat
+CREATE TRIGGER trg_giohang_chitiet_updatedate
+BEFORE UPDATE ON giohang_chitiet
 FOR EACH ROW
-EXECUTE FUNCTION fn_update_giohang_timestamp();
+EXECUTE FUNCTION fn_update_timestamp();
 
 -- ===================================
 -- INSERT SAMPLE DATA
@@ -763,7 +728,6 @@ INSERT INTO khachhang (makh, manguoidung, hoten, sdt, diachi, ngaysinh, diemtich
 ('KH009', 'ND023', 'Trương Mỹ KH9', '0909000111', '35 Quận 5', '1993-09-09', 80, 'Thường', '2020-09-01'),
 ('KH010', 'ND024', 'Lâm Quốc KH10', '0988776655', '77 Quận 8', '1994-10-10', 260, 'Kim cương', '2020-10-01');
 
--- Thêm dữ liệu bảng lương
 INSERT INTO bangluong (manv, thangluong, namluong, luongcoban, phucap, thuong, khautru, songaylam, sogiolam, ghichu, trangthai) VALUES
 ('NV001', 7, 2025, 15000000, 2000000, 1000000, 0, 22, 176, 'Lương tháng 7/2025', 1),
 ('NV002', 7, 2025, 12000000, 1500000, 800000, 0, 21, 168, 'Lương tháng 7/2025', 1),
@@ -780,7 +744,6 @@ INSERT INTO bangluong (manv, thangluong, namluong, luongcoban, phucap, thuong, k
 ('NV013', 7, 2025, 7000000, 300000, 150000, 0, 18, 144, 'Lương tháng 7/2025', 1),
 ('NV014', 7, 2025, 6500000, 250000, 100000, 0, 17, 136, 'Lương tháng 7/2025', 1);
 
--- Tiếp tục với các bảng khác...
 INSERT INTO loaisanpham (maloaisp, tenloai, mota, maloaicha, thutuhienthi) VALUES
 ('LSP001', 'Tươi sống', 'Các loại rau củ quả tươi', NULL, 1),
 ('LSP002', 'Đông lạnh', 'Thực phẩm đông lạnh', NULL, 2),
@@ -790,12 +753,6 @@ INSERT INTO loaisanpham (maloaisp, tenloai, mota, maloaicha, thutuhienthi) VALUE
 ('LSP006', 'Gia vị & Dầu ăn', 'Gia vị và dầu ăn', NULL, 6),
 ('LSP007', 'Hóa phẩm & Tẩy rửa', 'Sản phẩm vệ sinh', NULL, 7);
 
--- ===================================
--- DỮ LIỆU SẢN PHẨM THEO TỪNG LOẠI
--- *** UPDATED: Removed 'giaban' from INSERT statements. ***
--- ===================================
-
--- LSP001 – TƯƠI SỐNG (20 sản phẩm)
 INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
 ('SP001', 'LSP001', 'Dưa leo Đà Lạt', '[Ngắn] Dưa tươi ngon sạch. [Dài] Dưa leo Đà Lạt được chọn lọc kỹ càng từ nông trại sạch, vỏ xanh mướt, giòn ngọt, thích hợp cho các món salad, dưa muối hoặc ăn sống trực tiếp.', 'Kg', 0.5, '20x5cm', 7, 1),
 ('SP002', 'LSP001', 'Cà chua bi', '[Ngắn] Cà chua bi đỏ mọng. [Dài] Cà chua bi được trồng theo phương pháp hữu cơ, vỏ mỏng, vị ngọt thanh, thích hợp cho ăn sống, làm salad hoặc xào nấu.', 'Kg', 0.3, '2x2cm', 5, 1),
@@ -816,10 +773,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP017', 'LSP001', 'Đậu que', '[Ngắn] Đậu non giòn. [Dài] Đậu que non, xanh mướt, thường được xào với thịt bò hoặc luộc ăn kèm nước chấm.', 'Kg', 0.3, '15x1cm', 3, 1),
 ('SP018', 'LSP001', 'Dền cơm', '[Ngắn] Rau dền sạch. [Dài] Dền cơm là loại rau dại giàu dinh dưỡng, được trồng theo hướng hữu cơ, dùng để nấu canh hoặc luộc.', 'Kg', 0.2, '20x2cm', 2, 1),
 ('SP019', 'LSP001', 'Rau tần ô', '[Ngắn] Rau thơm ngon. [Dài] Tần ô có hương thơm đặc trưng, thường xuất hiện trong lẩu hoặc nấu canh với thịt bằm.', 'Kg', 0.3, '25x2cm', 3, 1),
-('SP020', 'LSP001', 'Bí đỏ trái tròn', '[Ngắn] Bí đỏ ngọt dẻo. [Dài] Bí đỏ được trồng tại nông trại hữu cơ, giàu vitamin A, thường dùng nấu canh hoặc hấp.', 'Kg', 1.5, '20x15cm', 7, 1);
-
--- LSP002 – ĐÔNG LẠNH (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP020', 'LSP001', 'Bí đỏ trái tròn', '[Ngắn] Bí đỏ ngọt dẻo. [Dài] Bí đỏ được trồng tại nông trại hữu cơ, giàu vitamin A, thường dùng nấu canh hoặc hấp.', 'Kg', 1.5, '20x15cm', 7, 1),
 ('SP021', 'LSP002', 'Tôm sú đông lạnh', '[Ngắn] Tôm đông lạnh sạch. [Dài] Tôm sú đông lạnh được cấp đông ngay sau khi đánh bắt để giữ độ tươi ngon, thịt chắc và ngọt, dùng để nấu lẩu, hấp, chiên xù.', 'Kg', 1.0, '15x3cm', 180, 1),
 ('SP022', 'LSP002', 'Cá hồi phi lê', '[Ngắn] Cá hồi phi lê tươi ngon. [Dài] Cá hồi Na Uy phi lê được cấp đông nhanh, giữ nguyên chất dinh dưỡng và màu sắc tự nhiên, thích hợp cho sashimi hoặc áp chảo.', 'Kg', 0.8, '20x5cm', 180, 1),
 ('SP023', 'LSP002', 'Mực ống đông lạnh', '[Ngắn] Mực tươi cấp đông. [Dài] Mực ống được làm sạch và cấp đông nhanh, giữ được độ giòn và vị ngọt tự nhiên, thích hợp nướng, hấp hoặc chiên giòn.', 'Kg', 0.5, '12x2cm', 180, 1),
@@ -839,10 +793,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP037', 'LSP002', 'Hàu nửa vỏ đông lạnh 1kg', 'Hàu biển tươi được sơ chế và cấp đông. ... Dễ chế biến và bổ dưỡng cho cả gia đình.', 'Kg', 1.0, '8x4cm', 180, 1),
 ('SP038', 'LSP002', 'Cá viên đông lạnh 500g', 'Cá viên được làm từ cá tươi nghiền nhuyễn. ... Dùng tốt cho món lẩu hoặc chiên.', 'Kg', 0.5, '2x2cm', 180, 1),
 ('SP039', 'LSP002', 'Súp lơ đông lạnh 500g', 'Súp lơ tươi cắt nhỏ và cấp đông ngay sau thu hoạch. ... Giữ nguyên độ giòn và hương vị tự nhiên.', 'Kg', 0.5, '15x10cm', 180, 1),
-('SP040', 'LSP002', 'Đậu que đông lạnh 500g', 'Đậu que tươi cấp đông giữ trọn độ giòn và dinh dưỡng. ... Phù hợp chế biến xào, luộc, hấp.', 'Kg', 0.5, '15x1cm', 180, 1);
-
--- LSP003 – ĐỒ ĐÓNG HỘP (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP040', 'LSP002', 'Đậu que đông lạnh 500g', 'Đậu que tươi cấp đông giữ trọn độ giòn và dinh dưỡng. ... Phù hợp chế biến xào, luộc, hấp.', 'Kg', 0.5, '15x1cm', 180, 1),
 ('SP041', 'LSP003', 'Cá ngừ ngâm dầu hộp 185g', 'Cá ngừ nguyên miếng ngâm dầu thơm béo. ... Đóng hộp tiện lợi, thích hợp ăn liền hoặc trộn salad.', 'Hộp', 0.185, '10x8x3cm', 730, 1),
 ('SP042', 'LSP003', 'Pate gan heo hộp 170g', 'Pate gan heo mềm mịn, thơm ngon. ... Phù hợp cho bữa sáng hoặc món ăn nhẹ giàu đạm.', 'Hộp', 0.170, '8x6x2cm', 730, 1),
 ('SP043', 'LSP003', 'Đậu hầm sốt cà hộp 400g', 'Đậu trắng được hầm mềm với sốt cà đậm đà. ... Món ăn bổ dưỡng, tiện lợi cho bữa cơm gia đình.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
@@ -862,10 +813,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP057', 'LSP003', 'Dừa non đóng hộp 400g', 'Dừa non thái lát được đóng hộp bảo quản lâu. ... Sử dụng tốt trong món chè hoặc cocktail trái cây.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
 ('SP058', 'LSP003', 'Thịt bò hầm hộp 340g', 'Thịt bò hầm mềm, vị đậm đà. ... Món ăn chế biến sẵn phù hợp cho dân văn phòng.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
 ('SP059', 'LSP003', 'Nấm bào ngư hộp 400g', 'Nấm bào ngư tươi được đóng hộp tiện lợi. ... Dùng để xào, nấu lẩu hoặc hầm đều ngon.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP060', 'LSP003', 'Mì bò kho hộp 350g', 'Mì ăn liền với nước dùng bò kho đậm vị. ... Món ăn nhanh đầy đủ năng lượng cho người bận rộn.', 'Hộp', 0.350, '12x8x4cm', 730, 1);
-
--- LSP004 – ĐỒ UỐNG (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP060', 'LSP003', 'Mì bò kho hộp 350g', 'Mì ăn liền với nước dùng bò kho đậm vị. ... Món ăn nhanh đầy đủ năng lượng cho người bận rộn.', 'Hộp', 0.350, '12x8x4cm', 730, 1),
 ('SP061', 'LSP004', 'Nước khoáng thiên nhiên 500ml', 'Nước khoáng tinh khiết, giải khát tức thì. ... Giàu khoáng chất, tốt cho sức khỏe, thích hợp sử dụng hàng ngày.', 'Chai', 0.500, '7x7x20cm', 365, 1),
 ('SP062', 'LSP004', 'Trà xanh không độ 455ml', 'Trà xanh thanh mát, không đường. ... Giúp giải nhiệt, chống oxy hóa và tăng cường sức khỏe.', 'Chai', 0.455, '6x6x18cm', 365, 1),
 ('SP063', 'LSP004', 'Nước tăng lực Red Bull 250ml', 'Nước uống tăng lực hương vị đặc trưng. ... Phù hợp cho người hoạt động thể chất cao, giúp tỉnh táo.', 'Lon', 0.250, '6x6x12cm', 365, 1),
@@ -885,10 +833,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP077', 'LSP004', 'Nước nha đam hạt chia 500ml', 'Nước uống kết hợp nha đam và hạt chia. ... Bổ dưỡng, làm mát cơ thể, đẹp da.', 'Chai', 0.500, '7x7x20cm', 180, 1),
 ('SP078', 'LSP004', 'Nước cam có tép 450ml', 'Nước cam có tép thật, vị ngọt dịu tự nhiên. ... Giàu vitamin C, tăng cường miễn dịch và sáng da.', 'Chai', 0.450, '6x6x18cm', 180, 1),
 ('SP079', 'LSP004', 'Nước khoáng có gas Vĩnh Hảo 500ml', 'Nước khoáng có gas vị nhẹ nhàng. ... Giúp tiêu hóa tốt, dùng với trái cây tươi rất ngon.', 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP080', 'LSP004', 'Nước chanh muối đóng chai 350ml', 'Nước chanh muối pha sẵn, vị mặn ngọt hài hòa. ... Giải khát, bù điện giải khi vận động nhiều.', 'Chai', 0.350, '6x6x15cm', 180, 1);
-
--- LSP005 – SỮA & EM BÉ (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP080', 'LSP004', 'Nước chanh muối đóng chai 350ml', 'Nước chanh muối pha sẵn, vị mặn ngọt hài hòa. ... Giải khát, bù điện giải khi vận động nhiều.', 'Chai', 0.350, '6x6x15cm', 180, 1),
 ('SP081', 'LSP005', 'Sữa bột Enfagrow 400g', 'Sữa bột cho trẻ từ 1-3 tuổi, giàu DHA. ... Giúp phát triển trí não, tăng cường miễn dịch và tiêu hóa khỏe.', 'Hộp', 0.400, '15x10x8cm', 730, 1),
 ('SP082', 'LSP005', 'Sữa tươi tiệt trùng TH True Milk 180ml', 'Sữa tươi tiệt trùng, vị nguyên chất. ... Giàu canxi, tốt cho xương, phù hợp mọi lứa tuổi.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
 ('SP083', 'LSP005', 'Bột ăn dặm Nestle gạo sữa 200g', 'Bột ăn dặm vị gạo sữa dễ tiêu hóa. ... Hỗ trợ bé tập ăn dặm, bổ sung vitamin và khoáng.', 'Hộp', 0.200, '12x8x6cm', 730, 1),
@@ -908,10 +853,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP097', 'LSP005', 'Trái cây nghiền Hipp táo chuối 125g', 'Trái cây nghiền sẵn, vị ngọt tự nhiên. ... Cung cấp vitamin C, giúp bé ăn ngon miệng.', 'Hộp', 0.125, '8x6x4cm', 730, 1),
 ('SP098', 'LSP005', 'Sữa tươi tiệt trùng Dutch Lady 110ml', 'Sữa tươi vị socola hoặc dâu. ... Bổ sung dưỡng chất, ngon miệng dễ uống.', 'Hộp', 0.110, '4x4x8cm', 180, 1),
 ('SP099', 'LSP005', 'Bàn chải răng silicon cho bé 6 tháng+', 'Bàn chải mềm, an toàn cho bé. ... Giúp bé tập đánh răng ngay từ sớm.', 'Cái', 0.050, '12x2x1cm', 1095, 1),
-('SP100', 'LSP005', 'Balo y tá đựng đồ sơ sinh', 'Balo chuyên dụng mang theo khi ra ngoài. ... Có nhiều ngăn, dễ sắp xếp đồ dùng cho bé.', 'Cái', 0.800, '30x20x15cm', 1095, 1);
-
--- LSP006 – GIA VỊ & DẦU ĂN (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP100', 'LSP005', 'Balo y tá đựng đồ sơ sinh', 'Balo chuyên dụng mang theo khi ra ngoài. ... Có nhiều ngăn, dễ sắp xếp đồ dùng cho bé.', 'Cái', 0.800, '30x20x15cm', 1095, 1),
 ('SP101', 'LSP006', 'Nước mắm Nam Ngư 500ml', 'Nước mắm truyền thống đậm đà. ... Được ủ từ cá cơm, hương vị tự nhiên, dùng nêm nếm và chấm.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
 ('SP102', 'LSP006', 'Nước tương Maggi đậm đặc 700ml', 'Nước tương đậm đà, hương vị quen thuộc. ... Thích hợp ăn kèm món luộc, chiên, xào.', 'Chai', 0.700, '8x8x25cm', 1095, 1),
 ('SP103', 'LSP006', 'Dầu ăn Tường An 1L', 'Dầu thực vật nguyên chất. ... Giàu vitamin A, E tốt cho tim mạch và sức khỏe.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
@@ -931,10 +873,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP117', 'LSP006', 'Bột sả khô 50g', 'Sả khô xay nhuyễn. ... Dùng tẩm ướp thịt nướng, món chay, món kho.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
 ('SP118', 'LSP006', 'Tương ớt Chin-Su 250g', 'Tương ớt cay vừa, màu sắc hấp dẫn. ... Dùng chấm đồ chiên, rán, ăn với phở, bún.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
 ('SP119', 'LSP006', 'Nước màu dừa Bến Tre 250ml', 'Nước hàng kho cá, kho thịt. ... Giúp món ăn lên màu đẹp, vị ngọt thanh.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP120', 'LSP006', 'Nước mắm Phú Quốc truyền thống 520ml', 'Nước mắm nguyên chất cá cơm. ... Đậm đà, thơm ngon đúng chất nước mắm xưa.', 'Chai', 0.520, '7x7x20cm', 1095, 1);
-
--- LSP007 – HÓA PHẨM & TẨY RỬA (20 sản phẩm)
-INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
+('SP120', 'LSP006', 'Nước mắm Phú Quốc truyền thống 520ml', 'Nước mắm nguyên chất cá cơm. ... Đậm đà, thơm ngon đúng chất nước mắm xưa.', 'Chai', 0.520, '7x7x20cm', 1095, 1),
 ('SP121', 'LSP007', 'Nước rửa chén Sunlight chanh 750ml', 'Nước rửa chén hương chanh. ... Tẩy sạch dầu mỡ, dịu nhẹ với da tay.', 'Chai', 0.750, '8x8x25cm', 1095, 1),
 ('SP122', 'LSP007', 'Nước lau sàn Gift lavender 1L', 'Nước lau sàn hương oải hương. ... Diệt khuẩn, khử mùi hiệu quả, sàn sạch bóng.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
 ('SP123', 'LSP007', 'Nước giặt Omo Matic 2.7kg', 'Nước giặt cho máy giặt cửa ngang. ... Đánh bay vết bẩn, lưu hương thơm lâu.', 'Chai', 2.700, '15x10x25cm', 1095, 1),
@@ -956,10 +895,7 @@ INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthu
 ('SP139', 'LSP007', 'Nước diệt khuẩn Dettol 500ml', 'Sát khuẩn mạnh mẽ, đa năng. ... Pha loãng để lau sàn, giặt đồ, vệ sinh da.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
 ('SP140', 'LSP007', 'Găng tay cao su Latex', 'Găng tay dẻo, co giãn tốt. ... Dùng khi rửa chén, lau dọn, an toàn cho da tay.', 'Đôi', 0.050, '20x10x2cm', 1095, 1);
 
--- Thêm dữ liệu giá cho các sản phẩm đã tạo
--- Thêm dữ liệu giá cho các sản phẩm đã tạo
 INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
--- LSP001 – TƯƠI SỐNG
 ('SP001', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP002', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP003', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -980,8 +916,6 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP018', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP019', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP020', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-
--- LSP002 – ĐÔNG LẠNH
 ('SP021', 120000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP022', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP023', 150000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -1002,8 +936,6 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP038', 55000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP039', 39000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP040', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-
--- LSP003 – ĐỒ ĐÓNG HỘP
 ('SP041', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP042', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP043', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -1024,8 +956,6 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP058', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP059', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP060', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-
--- LSP004 – ĐỒ UỐNG
 ('SP061', 6000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP062', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP063', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -1046,8 +976,6 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP078', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP079', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP080', 9500, '2025-01-01', 'Giá niêm yết', 'NV001'),
-
--- LSP005 – SỮA & EM BÉ
 ('SP081', 245000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP082', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP083', 58000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -1068,8 +996,6 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP098', 5000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP099', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP100', 155000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-
--- LSP006 – GIA VỊ & DẦU ĂN
 ('SP101', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP102', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP103', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -1090,8 +1016,6 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP118', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP119', 20000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP120', 68000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-
--- LSP007 – HÓA PHẨM & TẨY RỬA
 ('SP121', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP122', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP123', 132000, '2025-01-01', 'Giá niêm yết', 'NV001'),
@@ -1113,13 +1037,11 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP139', 87000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP140', 22000, '2025-01-01', 'Giá niêm yết', 'NV001');
 
--- Thêm dữ liệu khuyến mãi
 INSERT INTO khuyenmai (makm, tenchuongtrinh, mota, loaikm, giatrikm, dieukienapdung, ngaybatdau, ngayketthuc, soluongtoida, dasudung, maquanly, trangthai) VALUES
 ('KMSP001', 'Giảm giá tháng 7', 'Giảm giá cho tất cả mặt hàng', 'PhầnTrăm', 10.0, 'Áp dụng cho tất cả sản phẩm', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1000, 50, 'NV002', 1),
 ('KMSP002', 'Tặng điểm tích lũy', 'Tặng điểm cho khách hàng VIP', 'Điểm', 50, 'Khách hàng VIP trở lên', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 500, 25, 'NV002', 1),
 ('KMSP003', 'Mua 1 tặng 1', 'Áp dụng cho sản phẩm mỹ phẩm', 'MuaXTangY', 0, 'Mua 1 sản phẩm tặng 1 sản phẩm cùng loại', '2025-07-10 00:00:00', '2025-07-20 23:59:59', 200, 10, 'NV002', 1);
 
--- Thêm dữ liệu phương thức thanh toán
 INSERT INTO phuongthucthanhtoan (mapttt, tenpttt, mota, phigiaodich, trangthai) VALUES
 ('PTTT001', 'Tiền Mặt', 'Thanh toán bằng tiền mặt', 0, 1),
 ('PTTT002', 'Chuyển Khoản', 'Thanh toán qua ngân hàng', 0.5, 1),
@@ -1127,12 +1049,10 @@ INSERT INTO phuongthucthanhtoan (mapttt, tenpttt, mota, phigiaodich, trangthai) 
 ('PTTT004', 'ZaloPay', 'Thanh toán qua ZaloPay', 1.0, 1),
 ('PTTT005', 'Thẻ Tín Dụng', 'Thanh toán bằng thẻ tín dụng', 2.0, 1);
 
--- Thêm dữ liệu kho
 INSERT INTO kho (tenkho, diachi, dientich, succhua, mach, trangthai) VALUES
 ('Kho EasyMart1', '123 Nguyễn Xí, Bình Thạnh', 500.00, 1000000.00, 'CH001', 1),
 ('Kho EasyMart2', '456 Nguyễn Văn Trối, Phú Nhuận', 600.00, 1200000.00, 'CH002', 1);
 
--- Thêm dữ liệu ca làm việc
 INSERT INTO calamviec (tenca, giobatdau, gioketthuc, trangthai) VALUES
 ('Sáng', '08:00:00', '12:00:00', 1),
 ('Chiều', '13:00:00', '17:00:00', 1),
@@ -1140,7 +1060,6 @@ INSERT INTO calamviec (tenca, giobatdau, gioketthuc, trangthai) VALUES
 ('Cả ngày', '08:00:00', '22:00:00', 1),
 ('Ca đêm', '22:00:00', '07:00:00', 1);
 
--- Thêm dữ liệu tồn kho chi tiết
 INSERT INTO tonkhochitiet (masp, makho, soluongton, soluongtoithieu, soluongtoida) VALUES
 ('SP001', 1, 100, 20, 200),
 ('SP002', 1, 200, 30, 300),
@@ -1153,13 +1072,11 @@ INSERT INTO tonkhochitiet (masp, makho, soluongton, soluongtoithieu, soluongtoid
 ('SP004', 2, 70, 15, 150),
 ('SP005', 2, 100, 20, 180);
 
--- Thêm dữ liệu phiếu nhập hàng
 INSERT INTO phieunhaphang (mancc, makho, manvlap, ngaynhap, tongtiennhap, trangthai, ghichu) VALUES
 ('NCC001', 1, 'NV002', '2025-07-01 09:00:00', 5500000, 1, 'Nhập hàng tháng 7'),
 ('NCC002', 1, 'NV003', '2025-07-01 10:00:00', 2800000, 1, 'Nhập hàng tháng 7'),
 ('NCC003', 2, 'NV004', '2025-07-01 11:00:00', 8000000, 1, 'Nhập hàng tháng 7');
 
--- Thêm dữ liệu chi tiết phiếu nhập
 INSERT INTO chitietphieunhap (mapn, masp, soluongnhap, dongianhap, ngayhethan, solo, ngaysanxuat) VALUES
 (1, 'SP001', 100, 12000, '2025-12-31', 'LOT001', '2025-06-15'),
 (1, 'SP002', 200, 15000, '2025-11-30', 'LOT002', '2025-06-20'),
@@ -1167,13 +1084,11 @@ INSERT INTO chitietphieunhap (mapn, masp, soluongnhap, dongianhap, ngayhethan, s
 (2, 'SP004', 80, 11000, '2025-09-30', 'LOT004', '2025-06-30'),
 (3, 'SP005', 50, 8000, '2025-08-31', 'LOT005', '2025-07-01');
 
--- Thêm dữ liệu phiếu xuất kho
 INSERT INTO phieuxuatkho (makho, manvlap, ngayxuat, tongsoluong, tonggiatri, lydoxuat, trangthai, ghichu) VALUES
 (1, 'NV002', '2025-07-05 08:00:00', 180, 3240000, 'Bán hàng', 1, 'Xuất kho bán hàng'),
 (1, 'NV003', '2025-07-06 09:00:00', 200, 3600000, 'Bán hàng', 1, 'Xuất kho bán hàng'),
 (2, 'NV005', '2025-07-07 10:00:00', 140, 2520000, 'Chuyển kho', 1, 'Chuyển kho giữa các cửa hàng');
 
--- Thêm dữ liệu chi tiết phiếu xuất
 INSERT INTO chitietphieuxuat (mapxk, masp, soluongxuat, dongiaxuat) VALUES
 (1, 'SP001', 40, 15000),
 (1, 'SP002', 60, 18000),
@@ -1184,13 +1099,11 @@ INSERT INTO chitietphieuxuat (mapxk, masp, soluongxuat, dongiaxuat) VALUES
 (3, 'SP002', 40, 18000),
 (3, 'SP003', 50, 12000);
 
--- Thêm dữ liệu đơn hàng
 INSERT INTO donhang (madh, makh, manv, ngaydathang, ngaygiaohang, diachigiaohang, trangthai) VALUES
 ('DH001', 'KH001', 'NV003', '2025-07-15 10:00:00', NULL, '123 Q1', 'Pending'),
 ('DH002', 'KH002', 'NV003', '2025-07-16 11:30:00', '2025-07-17 15:00:00', '456 Q3', 'Completed'),
 ('DH003', 'KH005', 'NV010', '2025-07-16 14:00:00', NULL, '222 Tân Bình', 'Shipping');
 
--- Thêm dữ liệu chi tiết đơn hàng
 INSERT INTO chitietdonhang (madh, masp, soluong, dongia) VALUES
 ('DH001', 'SP001', 2, 15000),
 ('DH001', 'SP021', 1, 120000),
@@ -1198,7 +1111,6 @@ INSERT INTO chitietdonhang (madh, masp, soluong, dongia) VALUES
 ('DH002', 'SP121', 2, 28000),
 ('DH003', 'SP081', 1, 245000);
 
--- Thêm dữ liệu hóa đơn
 INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, mapttt, trangthai, diemtichluy, ghichu, nguoitao) VALUES
 ('KH001', 'NV002', 'KMSP001', '2025-07-11 14:00:00', 500000, 50000, 'PTTT001', 1, 50, 'Hóa đơn tháng 7', 'NV002'),
 ('KH002', 'NV003', 'KMSP002', '2025-07-11 15:00:00', 750000, 0, 'PTTT002', 1, 75, 'Hóa đơn tháng 7', 'NV003'),
@@ -1206,7 +1118,6 @@ INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, map
 ('KH004', 'NV006', NULL, '2025-07-12 08:30:00', 200000, 0, 'PTTT002', 3, 20, 'Hóa đơn tháng 7', 'NV006'),
 ('KH005', 'NV001', 'KMSP003', '2025-07-12 09:45:00', 300000, 0, 'PTTT001', 1, 30, 'Hóa đơn tháng 7', 'NV001');
 
--- Thêm dữ liệu chi tiết hóa đơn
 INSERT INTO chitiethoadon (mahd, masp, soluong, dongiaban, giamgia) VALUES
 (1, 'SP001', 2, 15000, 0),
 (1, 'SP002', 5, 18000, 0),
@@ -1215,7 +1126,6 @@ INSERT INTO chitiethoadon (mahd, masp, soluong, dongiaban, giamgia) VALUES
 (4, 'SP005', 2, 10000, 0),
 (5, 'SP001', 3, 15000, 0);
 
--- Thêm dữ liệu khuyến mãi sản phẩm
 INSERT INTO khuyenmaisanpham (makm, masp, ngaybatdau, ngayketthuc) VALUES
 ('KMSP001', 'SP001', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
 ('KMSP001', 'SP002', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
@@ -1223,7 +1133,6 @@ INSERT INTO khuyenmaisanpham (makm, masp, ngaybatdau, ngayketthuc) VALUES
 ('KMSP003', 'SP004', '2025-07-10 00:00:00', '2025-07-20 23:59:59'),
 ('KMSP003', 'SP005', '2025-07-10 00:00:00', '2025-07-20 23:59:59');
 
--- Thêm dữ liệu khuyến mãi khách hàng
 INSERT INTO khuyenmaikhachhang (makm, makh, ngayapdung, dasudung) VALUES
 ('KMSP001', 'KH001', '2025-07-01 00:00:00', FALSE),
 ('KMSP001', 'KH002', '2025-07-01 00:00:00', FALSE),
@@ -1231,7 +1140,6 @@ INSERT INTO khuyenmaikhachhang (makm, makh, ngayapdung, dasudung) VALUES
 ('KMSP003', 'KH004', '2025-07-10 00:00:00', FALSE),
 ('KMSP003', 'KH005', '2025-07-10 00:00:00', FALSE);
 
--- Thêm dữ liệu thanh toán
 INSERT INTO thanhtoan (mahd, mapttt, sotienthanhtoan, ngaygiott, trangthaitt, magiaodichnganhang, ghichu) VALUES
 (1, 'PTTT001', 450000, '2025-07-11 14:05:00', 1, NULL, 'Thanh toán tiền mặt'),
 (2, 'PTTT002', 750000, '2025-07-11 15:10:00', 1, 'GD001', 'Chuyển khoản ngân hàng'),
@@ -1239,30 +1147,19 @@ INSERT INTO thanhtoan (mahd, mapttt, sotienthanhtoan, ngaygiott, trangthaitt, ma
 (4, 'PTTT002', 200000, '2025-07-12 09:00:00', 3, 'GD002', 'Giao dịch bị hủy'),
 (5, 'PTTT001', 300000, '2025-07-12 10:00:00', 1, NULL, 'Thanh toán tiền mặt');
 
--- Thêm dữ liệu giỏ hàng
-INSERT INTO giohang (makh, manv, ngaytao, trangthai, ghichu) VALUES
-('KH001', 'NV002', '2025-07-10 10:00:00', 0, 'Đang chọn hàng'),
-('KH002', 'NV003', '2025-07-10 11:00:00', 0, 'Đang chọn hàng'),
-('KH003', 'NV005', '2025-07-10 12:00:00', 1, 'Đã đặt hàng'),
-('KH004', 'NV006', '2025-07-10 13:00:00', 2, 'Đã thanh toán'),
-('KH005', 'NV001', '2025-07-10 14:00:00', 3, 'Đã hủy');
+-- Thêm dữ liệu giỏ hàng chi tiết (đã gộp)
+INSERT INTO giohang_chitiet (makh, manv, masp, soluong, dongiahientai, ngaythem, trangthai ) VALUES
+('KH001', 'NV002', 'SP001', 2, 15000, '2025-07-10 10:00:00', 0),
+('KH002', 'NV003', 'SP002', 5, 18000, '2025-07-10 11:00:00', 0),
+('KH003', 'NV005', 'SP003', 1, 12000, '2025-07-10 12:00:00', 1 ),
+('KH004', 'NV006', 'SP004', 2, 13000, '2025-07-10 13:00:00', 2),
+('KH005', 'NV001', 'SP005', 3, 10000, '2025-07-10 14:00:00', 2);
 
--- Thêm dữ liệu chi tiết giỏ hàng
-INSERT INTO chitietgiohang (magh, masp, soluong, dongiahientai) VALUES
-(1, 'SP001', 2, 15000),
-(2, 'SP002', 5, 18000),
-(3, 'SP003', 1, 12000),
-(4, 'SP004', 2, 13000),
-(5, 'SP005', 3, 10000);
-
--- Thêm dữ liệu thống kê báo cáo
 INSERT INTO thongkebaocao (mach, manv, loaibaocao, tenbaocao, thoigiantu, thoigianden, sotien, soluong, ngaybaocao, noidung, trangthai) VALUES
 ('CH001', 'NV001', 'DoanhThu', 'Báo cáo doanh thu Q1', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 5000000, 1000, '2025-07-10 18:00:00', 'Báo cáo doanh thu Q1', 1),
 ('CH002', 'NV008', 'ChiPhi', 'Báo cáo chi phí Q3', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1500000, 500, '2025-07-10 18:30:00', 'Báo cáo chi phí Q3', 1);
 
--- Cập nhật dữ liệu LichLamViec
 INSERT INTO lichlamviec (manv, maca, ngaylam, manvquanly, trangthai, ngayduyet, ghichu) VALUES
--- Ca cho cửa hàng CH001
 ('NV002', 1, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca sáng'),
 ('NV003', 2, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca chiều'),
 ('NV004', 3, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca tối'),
@@ -1270,8 +1167,6 @@ INSERT INTO lichlamviec (manv, maca, ngaylam, manvquanly, trangthai, ngayduyet, 
 ('NV006', 2, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca chiều'),
 ('NV007', 3, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca tối'),
 ('NV008', 1, '2025-07-14', 'NV001', 0, NULL, 'Đang chờ duyệt'),
-
--- Ca cho cửa hàng CH002
 ('NV009', 1, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca sáng'),
 ('NV010', 2, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca chiều'),
 ('NV011', 3, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca tối'),
@@ -1279,32 +1174,26 @@ INSERT INTO lichlamviec (manv, maca, ngaylam, manvquanly, trangthai, ngayduyet, 
 ('NV013', 2, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca chiều'),
 ('NV014', 3, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca tối');
 
-
 -- ===================================
 -- PROCEDURE INSERTPRODUCTIMAGES
 -- ===================================
 
--- Chèn hình ảnh mẫu cho tất cả sản phẩm
 CREATE OR REPLACE PROCEDURE insertproductimages()
 LANGUAGE plpgsql
 AS $$
 DECLARE
     product_record RECORD;
 BEGIN
-    -- Sử dụng vòng lặp FOR để duyệt qua kết quả của câu lệnh SELECT
     FOR product_record IN SELECT masp, tensp FROM sanpham
     LOOP
-        -- Chèn hình chính
         INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
         VALUES (product_record.masp, product_record.masp || '_main.jfif',
                 'Hình chính ' || product_record.tensp, TRUE, 1);
 
-        -- Chèn hình góc nghiêng 1
         INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
         VALUES (product_record.masp, product_record.masp || '_main1.jfif',
                 'Góc nghiêng 1 ' || product_record.tensp, FALSE, 2);
 
-        -- Chèn hình góc nghiêng 2
         INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
         VALUES (product_record.masp, product_record.masp || '_main2.jfif',
                 'Góc nghiêng 2 ' || product_record.tensp, FALSE, 3);
@@ -1312,5 +1201,4 @@ BEGIN
 END;
 $$;
 
--- Thực thi stored procedure để chèn dữ liệu hình ảnh
 CALL insertproductimages();

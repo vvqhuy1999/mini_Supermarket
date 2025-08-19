@@ -99,8 +99,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:1096787831677-f9nhpe4jc0be40sc5s910qihfv22etrl.apps.googleusercontent.com}
-            client-secret: ${GOOGLE_CLIENT_SECRET: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}
+            client-id: ${GOOGLE_CLIENT_ID:test}
+            client-secret: ${GOOGLE_CLIENT_SECRET:test}
             scope:
               - email
               - profile
@@ -155,8 +155,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${GMAIL_USERNAME:huyvvqps38367@fpt.edu.vn}
-    password: ${GMAIL_PASSWORD:qaht pggt ewlw gjvw}
+    username: ${GMAIL_USERNAME:test}
+    password: ${GMAIL_PASSWORD:test}
     properties:
       mail:
         smtp:

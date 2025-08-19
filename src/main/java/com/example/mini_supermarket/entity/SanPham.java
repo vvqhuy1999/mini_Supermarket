@@ -73,7 +73,7 @@ public class SanPham implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ChiTietGioHang> chiTietGioHangs;
+    private List<GioHangChiTiet> gioHangChiTiets;
 
     @JsonIgnore
     @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
