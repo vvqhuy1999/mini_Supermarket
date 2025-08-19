@@ -1,716 +1,656 @@
-
--- Tạo database quản lý siêu thị
-CREATE DATABASE IF NOT EXISTS QuanLySieuThi;
-USE QuanLySieuThi;
-
--- Xóa database nếu cần thiết lập lại
--- DROP DATABASE QuanLySieuThi;
-
--- ===== TẠO CÁC BẢNG CHÍNH =====
+-- ===================================
+-- CREATE TABLES
+-- ===================================
 
 -- Bảng quản lý thông tin người dùng hệ thống
-CREATE TABLE NguoiDung (
-                           MaNguoiDung NVARCHAR(50) PRIMARY KEY,
-                           Email NVARCHAR(50) UNIQUE NOT NULL,
-                           MatKhau NVARCHAR(255) NOT NULL,
-                           VaiTro INT NOT NULL COMMENT '0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng',
-                           NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                           IsDeleted BIT DEFAULT 0,
+CREATE TABLE nguoidung (
+    manguoidung VARCHAR(50) PRIMARY KEY,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    matkhau VARCHAR(255) NOT NULL,
+    sub VARCHAR(255),
+    vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE,
+    
+    -- Các cột cho chức năng OTP và Reset Password
+    otp_code VARCHAR(6),
+    otp_generated_time TIMESTAMP,
+    otp_attempts INT DEFAULT 0,
+    reset_password_token VARCHAR(255),
+    reset_password_token_expiry TIMESTAMP,
 
-                           CHECK (VaiTro IN (0, 1, 2, 3)),
-                           INDEX idx_nguoidung_email (Email),
-                           INDEX idx_nguoidung_vaitro (VaiTro)
+    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
 );
 
--- Bảng quản lý thông tin các cửa hàng trong hệ thống
-CREATE TABLE CuaHang (
-                         MaCH NVARCHAR(50) PRIMARY KEY,
-                         TenCH NVARCHAR(255) NOT NULL,
-                         DiaChi NVARCHAR(255),
-                         SDT NVARCHAR(15),
-                         NgayThanhLap DATE,
-                         TrangThai INT DEFAULT 1 COMMENT '0=Đóng cửa, 1=Hoạt động',
-                         IsDeleted BIT DEFAULT 0,
-
-                         INDEX idx_cuahang_trangthai (TrangThai)
+-- Table to manage store information
+CREATE TABLE cuahang (
+    mach VARCHAR(50) PRIMARY KEY,
+    tench VARCHAR(255) NOT NULL,
+    diachi VARCHAR(255),
+    sdt VARCHAR(15),
+    ngaythanhlap DATE,
+    trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý thông tin nhà cung cấp sản phẩm
-CREATE TABLE NhaCungCap (
-                            MaNCC NVARCHAR(50) PRIMARY KEY,
-                            TenNCC NVARCHAR(255) NOT NULL,
-                            DiaChi NVARCHAR(255),
-                            SDT NVARCHAR(15),
-                            Email NVARCHAR(100),
-                            ThongTinHopDong LONGTEXT,
-                            NgayHopTac DATE,
-                            TrangThai INT DEFAULT 1 COMMENT '0=Ngừng hợp tác, 1=Đang hợp tác',
-                            IsDeleted BIT DEFAULT 0,
-
-                            INDEX idx_nhacungcap_trangthai (TrangThai)
+-- Table to manage supplier information
+CREATE TABLE nhacungcap (
+    mancc VARCHAR(50) PRIMARY KEY,
+    tenncc VARCHAR(255) NOT NULL,
+    diachi VARCHAR(255),
+    sdt VARCHAR(15),
+    email VARCHAR(100),
+    thongtinhopdong TEXT,
+    ngayhoptac DATE,
+    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý thông tin nhân viên làm việc tại cửa hàng
-CREATE TABLE NhanVien (
-                          MaNV NVARCHAR(50) PRIMARY KEY,
-                          MaNguoiDung NVARCHAR(50),
-                          HoTen NVARCHAR(255) NOT NULL,
-                          SDT NVARCHAR(15),
-                          DiaChi NVARCHAR(255),
-                          NgaySinh DATE,
-                          NgayVaoLam DATE,
-                          ChucVu NVARCHAR(100),
-                          MaQuanLy NVARCHAR(50) COMMENT 'Mã nhân viên quản lý trực tiếp',
-                          MaCH NVARCHAR(50) COMMENT 'Cửa hàng nơi nhân viên làm việc',
-                          TrangThai INT DEFAULT 1 COMMENT '0=Nghỉ việc, 1=Đang làm việc',
-                          IsDeleted BIT DEFAULT 0,
+-- Table to manage employee information
+CREATE TABLE nhanvien (
+    manv VARCHAR(50) PRIMARY KEY,
+    manguoidung VARCHAR(50),
+    hoten VARCHAR(255) NOT NULL,
+    sdt VARCHAR(15),
+    diachi VARCHAR(255),
+    ngaysinh DATE,
+    ngayvaolam DATE,
+    chucvu VARCHAR(100),
+    maquanly VARCHAR(50), -- Direct manager's employee ID
+    mach VARCHAR(50), -- Store where the employee works
+    trangthai INT DEFAULT 1, -- 0=Resigned, 1=Working
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                          CHECK (NgaySinh < NgayVaoLam),
-                          INDEX idx_nhanvien_cuahang (MaCH),
-                          INDEX idx_nhanvien_trangthai (TrangThai)
+    CONSTRAINT chk_nhanvien_ngaysinh CHECK (ngaysinh < ngayvaolam)
 );
 
--- Bảng quản lý thông tin khách hàng và điểm tích lũy
-CREATE TABLE KhachHang (
-                           MaKH NVARCHAR(50) PRIMARY KEY,
-                           MaNguoiDung NVARCHAR(50),
-                           HoTen NVARCHAR(255) NOT NULL,
-                           SDT NVARCHAR(15),
-                           Email NVARCHAR(100),
-                           DiaChi NVARCHAR(255),
-                           NgaySinh DATE,
-                           DiemTichLuy INT DEFAULT 0 CHECK (DiemTichLuy >= 0) COMMENT 'Điểm tích lũy từ các giao dịch mua hàng',
-                           LoaiKhachHang NVARCHAR(50) DEFAULT 'Thường' COMMENT 'Thường, VIP, Bạc, Vàng, Kim cương',
-                           NgayDangKy DATETIME DEFAULT CURRENT_TIMESTAMP,
-                           IsDeleted BIT DEFAULT 0,
+-- Table to manage customer information and loyalty points
+CREATE TABLE khachhang (
+    makh VARCHAR(50) PRIMARY KEY,
+    manguoidung VARCHAR(50),
+    hoten VARCHAR(255) NOT NULL,
+    sdt VARCHAR(15),
+    diachi VARCHAR(255),
+    ngaysinh DATE,
+    diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
+    loaikhachhang VARCHAR(50) DEFAULT 'Thường', -- Regular, VIP, Silver, Gold, Diamond
+    ngaydangky TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                           INDEX idx_khachhang_sdt (SDT),
-                           INDEX idx_khachhang_email (Email),
-                           INDEX idx_khachhang_loai (LoaiKhachHang)
+    CONSTRAINT chk_khachhang_diemtichluy CHECK (diemtichluy >= 0)
 );
 
--- Bảng phân loại các sản phẩm trong hệ thống
-CREATE TABLE LoaiSanPham (
-                             MaLoaiSP NVARCHAR(50) PRIMARY KEY,
-                             TenLoai NVARCHAR(255) NOT NULL,
-                             MoTa LONGTEXT,
-                             MaLoaiCha NVARCHAR(50) COMMENT 'Để tạo cây phân loại nhiều cấp',
-                             ThuTuHienThi INT DEFAULT 0,
-                             IsDeleted BIT DEFAULT 0,
-
-                             INDEX idx_loaisanpham_cha (MaLoaiCha)
+-- Table for product categories
+CREATE TABLE loaisanpham (
+    maloaisp VARCHAR(50) PRIMARY KEY,
+    tenloai VARCHAR(255) NOT NULL,
+    mota TEXT,
+    maloaicha VARCHAR(50), -- For multi-level category tree
+    thutuhienthi INT DEFAULT 0,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý thông tin chi tiết sản phẩm
-CREATE TABLE SanPham (
-                         MaSP NVARCHAR(50) PRIMARY KEY,
-                         MaLoaiSP NVARCHAR(50) NOT NULL,
-                         TenSP NVARCHAR(255) NOT NULL,
-                         MoTa LONGTEXT,
-                         GiaBan DECIMAL(15,2) NOT NULL CHECK (GiaBan > 0) COMMENT 'Giá bán hiện tại của sản phẩm',
-                         DonViTinh NVARCHAR(50) DEFAULT 'Cái',
-                         TrongLuong DECIMAL(10,3) COMMENT 'Trọng lượng sản phẩm (kg)',
-                         KichThuoc NVARCHAR(100) COMMENT 'Kích thước sản phẩm',
-                         HanSuDung INT COMMENT 'Số ngày hạn sử dụng',
-                         TrangThai INT DEFAULT 1 COMMENT '0=Ngừng kinh doanh, 1=Đang kinh doanh',
-                         NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                         IsDeleted BIT DEFAULT 0,
-
-                         INDEX idx_sanpham_loai (MaLoaiSP),
-                         INDEX idx_sanpham_gia (GiaBan),
-                         INDEX idx_sanpham_trangthai (TrangThai)
+-- Table for detailed product information
+CREATE TABLE sanpham (
+    masp VARCHAR(50) PRIMARY KEY,
+    maloaisp VARCHAR(50) NOT NULL,
+    tensp VARCHAR(255) NOT NULL,
+    mota TEXT,
+    donvitinh VARCHAR(50) DEFAULT 'Cái',
+    trongluong DECIMAL(10,3), -- Product weight (kg)
+    kichthuoc VARCHAR(100), -- Product dimensions
+    hansudung INT, -- Shelf life in days
+    trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý các chương trình khuyến mãi
-CREATE TABLE KhuyenMai (
-                           MaKM NVARCHAR(50) PRIMARY KEY,
-                           TenChuongTrinh NVARCHAR(255) NOT NULL,
-                           MoTa LONGTEXT,
-                           LoaiKM NVARCHAR(50) NOT NULL COMMENT 'PhầnTrăm, SốTiền, Điểm, MuaXTangY',
-                           GiaTriKM DECIMAL(15,2) NOT NULL COMMENT 'Giá trị khuyến mãi (% hoặc số tiền)',
-                           DieuKienApDung LONGTEXT COMMENT 'Điều kiện để áp dụng khuyến mãi',
-                           NgayBatDau DATETIME NOT NULL,
-                           NgayKetThuc DATETIME NOT NULL,
-                           SoLuongToiDa INT COMMENT 'Số lượng tối đa có thể áp dụng',
-                           DaSuDung INT DEFAULT 0 COMMENT 'Số lượng đã sử dụng',
-                           MaQuanLy NVARCHAR(50) COMMENT 'Nhân viên quản lý phụ trách khuyến mãi',
-                           TrangThai INT DEFAULT 1 COMMENT '0=Tạm dừng, 1=Đang áp dụng',
-                           IsDeleted BIT DEFAULT 0,
+-- Table for promotion programs
+CREATE TABLE khuyenmai (
+    makm VARCHAR(50) PRIMARY KEY,
+    tenchuongtrinh VARCHAR(255) NOT NULL,
+    mota TEXT,
+    loaikm VARCHAR(50) NOT NULL, -- Percentage, Amount, Points, BuyXGetY
+    giatrikm DECIMAL(15,2) NOT NULL, -- Promotion value (% or amount)
+    dieukienapdung TEXT, -- Conditions for applying the promotion
+    ngaybatdau TIMESTAMP NOT NULL,
+    ngayketthuc TIMESTAMP NOT NULL,
+    soluongtoida INT, -- Maximum number of applications
+    dasudung INT DEFAULT 0, -- Number of times used
+    maquanly VARCHAR(50), -- Manager in charge of the promotion
+    trangthai INT DEFAULT 1, -- 0=Paused, 1=Active
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                           CHECK (NgayBatDau < NgayKetThuc),
-                           CHECK (SoLuongToiDa IS NULL OR SoLuongToiDa > 0),
-                           CHECK (DaSuDung >= 0),
-                           INDEX idx_khuyenmai_ngay (NgayBatDau, NgayKetThuc),
-                           INDEX idx_khuyenmai_trangthai (TrangThai)
+    CONSTRAINT chk_khuyenmai_ngay CHECK (ngaybatdau < ngayketthuc),
+    CONSTRAINT chk_khuyenmai_soluongtoida CHECK (soluongtoida IS NULL OR soluongtoida > 0),
+    CONSTRAINT chk_khuyenmai_dasudung CHECK (dasudung >= 0)
 );
 
--- Bảng quản lý các phương thức thanh toán được chấp nhận
-CREATE TABLE PhuongThucThanhToan (
-                                     MaPTTT NVARCHAR(50) PRIMARY KEY,
-                                     TenPTTT NVARCHAR(100) NOT NULL,
-                                     MoTa LONGTEXT,
-                                     PhiGiaoDich DECIMAL(10,4) DEFAULT 0 COMMENT 'Phí giao dịch (%)',
-                                     TrangThai INT DEFAULT 1 COMMENT '0=Ngừng sử dụng, 1=Đang sử dụng',
-                                     IsDeleted BIT DEFAULT 0,
-
-                                     INDEX idx_phuongthucthanhtoan_trangthai (TrangThai)
+-- Table for accepted payment methods
+CREATE TABLE phuongthucthanhtoan (
+    mapttt VARCHAR(50) PRIMARY KEY,
+    tenpttt VARCHAR(100) NOT NULL,
+    mota TEXT,
+    phigiaodich DECIMAL(10,4) DEFAULT 0, -- Transaction fee (%)
+    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý thông tin các kho hàng
-CREATE TABLE Kho (
-                     MaKho INT AUTO_INCREMENT PRIMARY KEY,
-                     TenKho NVARCHAR(255) NOT NULL,
-                     DiaChi NVARCHAR(255),
-                     DienTich DECIMAL(10,2) COMMENT 'Diện tích kho (m²)',
-                     SucChua DECIMAL(15,2) COMMENT 'Sức chứa tối đa',
-                     MaCH NVARCHAR(50) COMMENT 'Cửa hàng quản lý kho',
-                     TrangThai INT DEFAULT 1 COMMENT '0=Đóng cửa, 1=Hoạt động',
-                     IsDeleted BIT DEFAULT 0,
-
-                     INDEX idx_kho_cuahang (MaCH),
-                     INDEX idx_kho_trangthai (TrangThai)
+-- Table for warehouse information
+CREATE TABLE kho (
+    makho SERIAL PRIMARY KEY,
+    tenkho VARCHAR(255) NOT NULL,
+    diachi VARCHAR(255),
+    dientich DECIMAL(10,2), -- Warehouse area (m²)
+    succhua DECIMAL(15,2), -- Maximum capacity
+    mach VARCHAR(50), -- Store managing the warehouse
+    trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng định nghĩa các ca làm việc trong ngày
-CREATE TABLE CaLamViec (
-                           MaCa INT AUTO_INCREMENT PRIMARY KEY,
-                           TenCa NVARCHAR(100) NOT NULL,
-                           GioBatDau TIME NOT NULL COMMENT 'Thời gian bắt đầu ca làm',
-                           GioKetThuc TIME NOT NULL COMMENT 'Thời gian kết thúc ca làm',
-                           SoGioLam DECIMAL(4,2) GENERATED ALWAYS AS (
-                               CASE
-                                   WHEN GioKetThuc >= GioBatDau THEN
-                                       TIME_TO_SEC(TIMEDIFF(GioKetThuc, GioBatDau)) / 3600
-                                   ELSE
-                                       (TIME_TO_SEC(TIMEDIFF('24:00:00', GioBatDau)) + TIME_TO_SEC(GioKetThuc)) / 3600
-                                   END
-                               ) STORED COMMENT 'Số giờ làm việc trong ca',
-                           TrangThai INT DEFAULT 1 COMMENT '0=Ngừng sử dụng, 1=Đang sử dụng',
-                           IsDeleted BIT DEFAULT 0,
+-- Table to define work shifts
+CREATE TABLE calamviec (
+    maca SERIAL PRIMARY KEY,
+    tenca VARCHAR(100) NOT NULL,
+    giobatdau TIME NOT NULL, -- Shift start time
+    gioketthuc TIME NOT NULL, -- Shift end time
+    sogiolam DECIMAL(4,2) GENERATED ALWAYS AS (
+        CAST(
+            EXTRACT(EPOCH FROM (
+                CASE
+                    WHEN gioketthuc < giobatdau THEN gioketthuc::time + interval '1 day'
+                    ELSE gioketthuc::time
+                END - giobatdau::time
+            )) / 3600
+        AS DECIMAL(4,2))
+    ) STORED, -- Calculated work hours
+    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                           CHECK (GioBatDau != GioKetThuc),
-    INDEX idx_calamviec_trangthai (TrangThai)
+    CONSTRAINT chk_calamviec_gio CHECK (giobatdau != gioketthuc)
 );
 
 -- Bảng quản lý lịch làm việc của nhân viên
-CREATE TABLE LichLamViec (
-                             MaLich INT AUTO_INCREMENT PRIMARY KEY,
-                             MaNV NVARCHAR(50) NOT NULL,
-                             MaCa INT NOT NULL,
-                             NgayLam DATE NOT NULL,
-                             MaNVQuanLy NVARCHAR(50) COMMENT 'Người quản lý phê duyệt lịch',
-                             TrangThai INT DEFAULT 0 COMMENT '0=Chờ duyệt, 1=Đã duyệt, 2=Từ chối, 3=Hủy, 4=Đã hoàn thành',
-                             NgayDuyet DATETIME,
-                             GhiChu LONGTEXT,
-                             GioVao TIME COMMENT 'Giờ thực tế vào làm',
-                             GioRa TIME COMMENT 'Giờ thực tế ra về',
-                             IsDeleted BIT DEFAULT 0,
-
-                             UNIQUE KEY unique_nhanvien_ngay_ca (MaNV, NgayLam, MaCa),
-                             INDEX idx_lichlamviec_ngay (NgayLam),
-                             INDEX idx_lichlamviec_trangthai (TrangThai)
+CREATE TABLE lichlamviec (
+    malich SERIAL PRIMARY KEY,
+    manv VARCHAR(50) NOT NULL,
+    maca INT NOT NULL,
+    ngaylam DATE NOT NULL,
+    manvquanly VARCHAR(50),
+    trangthai INT DEFAULT 0,
+    ngayduyet TIMESTAMP,
+    ghichu TEXT,
+    giovao TIME,
+    giora TIME,
+    isdeleted BOOLEAN DEFAULT FALSE,
+    UNIQUE (manv, ngaylam, maca)
 );
 
--- Bảng quản lý lương nhân viên theo tháng
-CREATE TABLE BangLuong (
-                           MaLuong INT AUTO_INCREMENT PRIMARY KEY,
-                           MaNV NVARCHAR(50) NOT NULL,
-                           ThangLuong INT NOT NULL COMMENT 'Tháng áp dụng (1-12)',
-                           NamLuong INT NOT NULL COMMENT 'Năm áp dụng (VD: 2024)',
-                           LuongCoBan DECIMAL(15,2) NOT NULL CHECK (LuongCoBan >= 0),
-                           PhuCap DECIMAL(15,2) DEFAULT 0 CHECK (PhuCap >= 0) COMMENT 'Tổng phụ cấp (nếu có)',
-                           Thuong DECIMAL(15,2) DEFAULT 0 CHECK (Thuong >= 0) COMMENT 'Tổng tiền thưởng (nếu có)',
-                           KhauTru DECIMAL(15,2) DEFAULT 0 CHECK (KhauTru >= 0) COMMENT 'Tổng số tiền bị khấu trừ (nếu có)',
-                           TongLuong DECIMAL(15,2) GENERATED ALWAYS AS (LuongCoBan + PhuCap + Thuong - KhauTru) STORED,
-                           SoNgayLam INT DEFAULT 0 COMMENT 'Số ngày thực tế làm việc',
-                           SoGioLam DECIMAL(8,2) DEFAULT 0 COMMENT 'Tổng số giờ làm việc',
-                           GhiChu LONGTEXT,
-                           TrangThai INT DEFAULT 0 COMMENT '0=Chưa thanh toán, 1=Đã thanh toán',
-                           NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                           NgayThanhToan DATETIME NULL COMMENT 'Ngày thực tế thanh toán lương',
-                           NguoiThanhToan NVARCHAR(50) NULL COMMENT 'Nhân viên thực hiện thanh toán',
-                           IsDeleted BIT DEFAULT 0,
-
-                           CHECK (ThangLuong >= 1 AND ThangLuong <= 12),
-                           CHECK (NamLuong >= 2020),
-                           CHECK (SoNgayLam >= 0),
-                           CHECK (SoGioLam >= 0),
-                           UNIQUE KEY unique_nhanvien_thang_nam (MaNV, ThangLuong, NamLuong),
-                           INDEX idx_bangluong_thangnam (ThangLuong, NamLuong),
-                           INDEX idx_bangluong_trangthai (TrangThai)
+-- Table for monthly employee payroll
+CREATE TABLE bangluong (
+    maluong SERIAL PRIMARY KEY,
+    manv VARCHAR(50) NOT NULL,
+    thangluong INT NOT NULL,
+    namluong INT NOT NULL,
+    luongcoban DECIMAL(15,2) NOT NULL,
+    phucap DECIMAL(15,2) DEFAULT 0,
+    thuong DECIMAL(15,2) DEFAULT 0,
+    khautru DECIMAL(15,2) DEFAULT 0,
+    tongluong DECIMAL(15,2) GENERATED ALWAYS AS (luongcoban + phucap + thuong - khautru) STORED,
+    songaylam INT DEFAULT 0,
+    sogiolam DECIMAL(8,2) DEFAULT 0,
+    ghichu TEXT,
+    trangthai INT DEFAULT 0,
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ngaythanhtoan TIMESTAMP NULL,
+    nguoithanhtoan VARCHAR(50) NULL,
+    isdeleted BOOLEAN DEFAULT FALSE,
+    CONSTRAINT check_thang_luong CHECK (thangluong >= 1 AND thangluong <= 12),
+    CONSTRAINT check_nam_luong CHECK (namluong >= 2020),
+    CONSTRAINT check_luong_co_ban CHECK (luongcoban >= 0),
+    CONSTRAINT check_phu_cap CHECK (phucap >= 0),
+    CONSTRAINT check_thuong CHECK (thuong >= 0),
+    CONSTRAINT check_khau_tru CHECK (khautru >= 0),
+    CONSTRAINT check_so_ngay_lam CHECK (songaylam >= 0),
+    CONSTRAINT check_so_gio_lam CHECK (sogiolam >= 0),
+    UNIQUE (manv, thangluong, namluong)
 );
 
--- Bảng lưu trữ hình ảnh sản phẩm
-CREATE TABLE HinhAnh (
-                         MaHinh INT AUTO_INCREMENT PRIMARY KEY,
-                         MaSP NVARCHAR(50) NOT NULL,
-                         URL NVARCHAR(500) NOT NULL,
-                         MoTa NVARCHAR(255),
-                         LaChinh BOOLEAN DEFAULT FALSE COMMENT 'Đánh dấu ảnh chính của sản phẩm',
-                         ThuTuHienThi INT DEFAULT 0 COMMENT 'Thứ tự hiển thị ảnh',
-                         NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                         IsDeleted BIT DEFAULT 0,
-
-                         INDEX idx_hinhanh_sanpham (MaSP),
-                         INDEX idx_hinhanh_chinh (LaChinh)
+-- Table for product images
+CREATE TABLE hinhanh (
+    mahinh SERIAL PRIMARY KEY,
+    masp VARCHAR(50) NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    mota VARCHAR(255),
+    lachinh BOOLEAN DEFAULT FALSE, -- Marks the main product image
+    thutuhienthi INT DEFAULT 0, -- Display order
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý lịch sử giá sản phẩm
-CREATE TABLE GiaSanPham (
-                            MaGia INT AUTO_INCREMENT PRIMARY KEY,
-                            MaSP NVARCHAR(50) NOT NULL,
-                            Gia DECIMAL(15,2) NOT NULL CHECK (Gia > 0),
-                            NgayBatDau DATE NOT NULL COMMENT 'Ngày bắt đầu áp dụng giá mới',
-                            NgayKetThuc DATE COMMENT 'Ngày kết thúc áp dụng giá',
-                            LyDoThayDoi NVARCHAR(255),
-                            NguoiThayDoi NVARCHAR(50),
-                            IsDeleted BIT DEFAULT 0,
+-- Table for product price history
+CREATE TABLE giasanpham (
+    magia SERIAL PRIMARY KEY,
+    masp VARCHAR(50) NOT NULL,
+    gia DECIMAL(15,2) NOT NULL,
+    ngaybatdau DATE NOT NULL, -- Start date for the new price
+    ngayketthuc DATE, -- End date for the price
+    lydothaydoi VARCHAR(255),
+    nguoithaydoi VARCHAR(50),
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                            CHECK (NgayKetThuc IS NULL OR NgayBatDau <= NgayKetThuc),
-                            INDEX idx_giasanpham_sanpham (MaSP),
-                            INDEX idx_giasanpham_ngay (NgayBatDau, NgayKetThuc)
+    CONSTRAINT chk_giasanpham_gia CHECK (gia > 0),
+    CONSTRAINT chk_giasanpham_ngay CHECK (ngayketthuc IS NULL OR ngaybatdau <= ngayketthuc)
 );
 
--- Bảng theo dõi số lượng tồn kho của sản phẩm
-CREATE TABLE TonKhoChiTiet (
-                               MaTKCT INT AUTO_INCREMENT PRIMARY KEY,
-                               MaSP NVARCHAR(50) NOT NULL,
-                               MaKho INT NOT NULL,
-                               SoLuongTon INT DEFAULT 0 CHECK (SoLuongTon >= 0) COMMENT 'Số lượng sản phẩm hiện có trong kho',
-                               SoLuongToiThieu INT DEFAULT 0 COMMENT 'Mức tồn kho tối thiểu',
-                               SoLuongToiDa INT COMMENT 'Mức tồn kho tối đa',
-                               NgayCapNhat DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                               IsDeleted BIT DEFAULT 0,
+-- Table to track product inventory
+CREATE TABLE tonkhochitiet (
+    matkct SERIAL PRIMARY KEY,
+    masp VARCHAR(50) NOT NULL,
+    makho INT NOT NULL,
+    soluongton INT DEFAULT 0, -- Current stock quantity
+    soluongtoithieu INT DEFAULT 0, -- Minimum stock level
+    soluongtoida INT, -- Maximum stock level
+    ngaycapnhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                               UNIQUE KEY unique_sanpham_kho (MaSP, MaKho),
-                               INDEX idx_tonkho_sanpham (MaSP),
-                               INDEX idx_tonkho_kho (MaKho)
+    CONSTRAINT chk_tonkhochitiet_soluongton CHECK (soluongton >= 0)
 );
 
--- Bảng quản lý phiếu nhập hàng từ nhà cung cấp
-CREATE TABLE PhieuNhapHang (
-                               MaPN INT AUTO_INCREMENT PRIMARY KEY,
-                               MaNCC NVARCHAR(50) NOT NULL,
-                               MaKho INT NOT NULL,
-                               MaNVLap NVARCHAR(50) NOT NULL COMMENT 'Nhân viên lập phiếu nhập',
-                               NgayNhap DATETIME NOT NULL,
-                               TongTienNhap DECIMAL(15,2) DEFAULT 0,
-                               TrangThai INT DEFAULT 0 COMMENT '0=Chờ xử lý, 1=Đã nhập kho, 2=Từ chối, 3=Hủy',
-                               GhiChu LONGTEXT,
-                               NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                               IsDeleted BIT DEFAULT 0,
-
-                               INDEX idx_phieunhap_ngay (NgayNhap),
-                               INDEX idx_phieunhap_trangthai (TrangThai),
-                               INDEX idx_phieunhap_nhacungcap (MaNCC)
+-- Table for goods receipt notes from suppliers
+CREATE TABLE phieunhaphang (
+    mapn SERIAL PRIMARY KEY,
+    mancc VARCHAR(50) NOT NULL,
+    makho INT NOT NULL,
+    manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
+    ngaynhap TIMESTAMP NOT NULL,
+    tongtiennhap DECIMAL(15,2) DEFAULT 0,
+    trangthai INT DEFAULT 0, -- 0=Pending, 1=Stocked, 2=Rejected, 3=Canceled
+    ghichu TEXT,
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng chi tiết các sản phẩm trong phiếu nhập
-CREATE TABLE ChiTietPhieuNhap (
-                                  MaCTPN INT AUTO_INCREMENT PRIMARY KEY,
-                                  MaPN INT NOT NULL,
-                                  MaSP NVARCHAR(50) NOT NULL,
-                                  SoLuongNhap INT NOT NULL CHECK (SoLuongNhap > 0),
-                                  DonGiaNhap DECIMAL(15,2) NOT NULL CHECK (DonGiaNhap > 0),
-                                  ThanhTien DECIMAL(15,2) GENERATED ALWAYS AS (SoLuongNhap * DonGiaNhap) STORED,
-                                  NgayHetHan DATE COMMENT 'Hạn sử dụng của sản phẩm',
-                                  SoLo NVARCHAR(50) COMMENT 'Số lô sản xuất',
-                                  NgaySanXuat DATE,
-                                  IsDeleted BIT DEFAULT 0,
+-- Table for details of goods receipt notes
+CREATE TABLE chitietphieunhap (
+    mactpn SERIAL PRIMARY KEY,
+    mapn INT NOT NULL,
+    masp VARCHAR(50) NOT NULL,
+    soluongnhap INT NOT NULL,
+    dongianhap DECIMAL(15,2) NOT NULL,
+    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongnhap * dongianhap) STORED,
+    ngayhethan DATE, -- Product expiration date
+    solo VARCHAR(50), -- Production batch number
+    ngaysanxuat DATE,
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                                  INDEX idx_chitietphieunhap_phieu (MaPN),
-                                  INDEX idx_chitietphieunhap_sanpham (MaSP)
+    CONSTRAINT chk_chitietphieunhap_soluongnhap CHECK (soluongnhap > 0),
+    CONSTRAINT chk_chitietphieunhap_dongianhap CHECK (dongianhap > 0)
 );
 
--- Bảng quản lý phiếu xuất kho
-CREATE TABLE PhieuXuatKho (
-                              MaPXK INT AUTO_INCREMENT PRIMARY KEY,
-                              MaKho INT NOT NULL,
-                              MaNVLap NVARCHAR(50) NOT NULL COMMENT 'Nhân viên lập phiếu xuất',
-                              NgayXuat DATETIME NOT NULL,
-                              TongSoLuong INT DEFAULT 0,
-                              TongGiaTri DECIMAL(15,2) DEFAULT 0,
-                              LyDoXuat NVARCHAR(255),
-                              TrangThai INT DEFAULT 0 COMMENT '0=Chờ xử lý, 1=Đã xuất, 2=Từ chối, 3=Hủy',
-                              GhiChu LONGTEXT,
-                              NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                              IsDeleted BIT DEFAULT 0,
-
-                              INDEX idx_phieuxuat_ngay (NgayXuat),
-                              INDEX idx_phieuxuat_trangthai (TrangThai),
-                              INDEX idx_phieuxuat_kho (MaKho)
+-- Table for goods issue notes
+CREATE TABLE phieuxuatkho (
+    mapxk SERIAL PRIMARY KEY,
+    makho INT NOT NULL,
+    manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
+    ngayxuat TIMESTAMP NOT NULL,
+    tongsoluong INT DEFAULT 0,
+    tonggiatri DECIMAL(15,2) DEFAULT 0,
+    lydoxuat VARCHAR(255),
+    trangthai INT DEFAULT 0, -- 0=Pending, 1=Issued, 2=Rejected, 3=Canceled
+    ghichu TEXT,
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng chi tiết các sản phẩm trong phiếu xuất
-CREATE TABLE ChiTietPhieuXuat (
-                                  MaCTPXK INT AUTO_INCREMENT PRIMARY KEY,
-                                  MaPXK INT NOT NULL,
-                                  MaSP NVARCHAR(50) NOT NULL,
-                                  SoLuongXuat INT NOT NULL CHECK (SoLuongXuat > 0),
-                                  DonGiaXuat DECIMAL(15,2) NOT NULL CHECK (DonGiaXuat > 0),
-                                  ThanhTien DECIMAL(15,2) GENERATED ALWAYS AS (SoLuongXuat * DonGiaXuat) STORED,
-                                  IsDeleted BIT DEFAULT 0,
+-- Table for details of goods issue notes
+CREATE TABLE chitietphieuxuat (
+    mactpxk SERIAL PRIMARY KEY,
+    mapxk INT NOT NULL,
+    masp VARCHAR(50) NOT NULL,
+    soluongxuat INT NOT NULL,
+    dongiaxuat DECIMAL(15,2) NOT NULL,
+    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongxuat * dongiaxuat) STORED,
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                                  INDEX idx_chitietphieuxuat_phieu (MaPXK),
-                                  INDEX idx_chitietphieuxuat_sanpham (MaSP)
+    CONSTRAINT chk_chitietphieuxuat_soluongxuat CHECK (soluongxuat > 0),
+    CONSTRAINT chk_chitietphieuxuat_dongiaxuat CHECK (dongiaxuat > 0)
 );
 
--- Bảng quản lý hóa đơn bán hàng
-CREATE TABLE HoaDon (
-                        MaHD INT AUTO_INCREMENT PRIMARY KEY,
-                        MaKH NVARCHAR(50),
-                        MaNVLap NVARCHAR(50) NOT NULL COMMENT 'Nhân viên lập hóa đơn',
-                        MaKM NVARCHAR(50) COMMENT 'Mã khuyến mãi áp dụng',
-                        NgayLap DATETIME NOT NULL,
-                        TongTienHang DECIMAL(15,2) DEFAULT 0,
-                        TienGiamGia DECIMAL(15,2) DEFAULT 0,
-                        TongTien DECIMAL(15,2) GENERATED ALWAYS AS (TongTienHang - TienGiamGia) STORED,
-                        MaPTTT NVARCHAR(50),
-                        TrangThai INT DEFAULT 0 COMMENT '0=Chờ xử lý, 1=Đã thanh toán, 2=Đang xử lý, 3=Hủy, 4=Hoàn trả',
-                        DiemTichLuy INT DEFAULT 0 COMMENT 'Điểm tích lũy từ hóa đơn này',
-                        GhiChu LONGTEXT,
-                        NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        NguoiTao NVARCHAR(50),
-                        NgaySua DATETIME ON UPDATE CURRENT_TIMESTAMP,
-                        NguoiSua NVARCHAR(50),
-                        IsDeleted BIT DEFAULT 0,
-
-                        INDEX idx_hoadon_ngaylap (NgayLap),
-                        INDEX idx_hoadon_trangthai (TrangThai),
-                        INDEX idx_hoadon_khachhang (MaKH),
-                        INDEX idx_hoadon_nhanvien (MaNVLap)
+-- Orders Table
+CREATE TABLE donhang (
+    madh VARCHAR(50) PRIMARY KEY,
+    makh VARCHAR(50) NOT NULL,
+    manv VARCHAR(50),
+    ngaydathang TIMESTAMP NOT NULL,
+    ngaygiaohang TIMESTAMP,
+    diachigiaohang VARCHAR(255) NOT NULL,
+    trangthai VARCHAR(50) NOT NULL, -- e.g., Pending, Shipping, Completed, Canceled
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng chi tiết các sản phẩm trong hóa đơn
-CREATE TABLE ChiTietHoaDon (
-                               MaCTHD INT AUTO_INCREMENT PRIMARY KEY,
-                               MaHD INT NOT NULL,
-                               MaSP NVARCHAR(50) NOT NULL,
-                               SoLuong INT NOT NULL CHECK (SoLuong > 0),
-                               DonGiaBan DECIMAL(15,2) NOT NULL,
-                               ThanhTien DECIMAL(15,2) GENERATED ALWAYS AS (SoLuong * DonGiaBan) STORED,
-                               GiamGia DECIMAL(15,2) DEFAULT 0,
-                               ThanhTienSauGiam DECIMAL(15,2) GENERATED ALWAYS AS (ThanhTien - GiamGia) STORED,
-                               IsDeleted BIT DEFAULT 0,
-
-                               INDEX idx_chitiethoadon_hoadon (MaHD),
-                               INDEX idx_chitiethoadon_sanpham (MaSP)
+-- Order Details Table
+CREATE TABLE chitietdonhang (
+    macthd SERIAL PRIMARY KEY,
+    madh VARCHAR(50) NOT NULL,
+    masp VARCHAR(50) NOT NULL,
+    soluong INT NOT NULL,
+    dongia DECIMAL(15,2) NOT NULL,
+    giamgia DECIMAL(5,2) DEFAULT 0,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng áp dụng khuyến mãi cho sản phẩm
-CREATE TABLE KhuyenMaiSanPham (
-                                  MaKMSP INT AUTO_INCREMENT PRIMARY KEY,
-                                  MaKM NVARCHAR(50) NOT NULL,
-                                  MaSP NVARCHAR(50) NOT NULL,
-                                  NgayBatDau DATETIME,
-                                  NgayKetThuc DATETIME,
-                                  IsDeleted BIT DEFAULT 0,
-
-                                  UNIQUE KEY unique_khuyenmai_sanpham (MaKM, MaSP),
-                                  INDEX idx_khuyenmaisanpham_km (MaKM),
-                                  INDEX idx_khuyenmaisanpham_sp (MaSP)
+-- Table for sales invoices
+CREATE TABLE hoadon (
+    mahd SERIAL PRIMARY KEY,
+    makh VARCHAR(50),
+    manvlap VARCHAR(50) NOT NULL, -- Employee who created the invoice
+    makm VARCHAR(50), -- Applied promotion code
+    ngaylap TIMESTAMP NOT NULL,
+    tongtienhang DECIMAL(15,2) DEFAULT 0,
+    tiengiamgia DECIMAL(15,2) DEFAULT 0,
+    tongtien DECIMAL(15,2) GENERATED ALWAYS AS (tongtienhang - tiengiamgia) STORED,
+    mapttt VARCHAR(50),
+    trangthai INT DEFAULT 0, -- 0=Pending, 1=Paid, 2=Processing, 3=Canceled, 4=Returned
+    diemtichluy INT DEFAULT 0, -- Points earned from this invoice
+    ghichu TEXT,
+    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    nguoitao VARCHAR(50),
+    ngaysua TIMESTAMP,
+    nguoisua VARCHAR(50),
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng áp dụng khuyến mãi cho khách hàng
-CREATE TABLE KhuyenMaiKhachHang (
-                                    MaKMKH INT AUTO_INCREMENT PRIMARY KEY,
-                                    MaKM NVARCHAR(50) NOT NULL,
-                                    MaKH NVARCHAR(50) NOT NULL,
-                                    NgayApDung DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                    DaSuDung BOOLEAN DEFAULT FALSE,
-                                    IsDeleted BIT DEFAULT 0,
+-- Table for invoice details
+CREATE TABLE chitiethoadon (
+    macthd SERIAL PRIMARY KEY,
+    mahd INT NOT NULL,
+    masp VARCHAR(50) NOT NULL,
+    soluong INT NOT NULL,
+    dongiaban DECIMAL(15,2) NOT NULL,
+    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiaban) STORED,
+    giamgia DECIMAL(15,2) DEFAULT 0,
+    thanhtiensaugiam DECIMAL(15,2) GENERATED ALWAYS AS ((soluong * dongiaban) - giamgia) STORED,
+    isdeleted BOOLEAN DEFAULT FALSE,
 
-                                    UNIQUE KEY unique_khuyenmai_khachhang (MaKM, MaKH),
-                                    INDEX idx_khuyenmaikhachhang_km (MaKM),
-                                    INDEX idx_khuyenmaikhachhang_kh (MaKH)
+    CONSTRAINT chk_chitiethoadon_soluong CHECK (soluong > 0)
 );
 
--- Bảng quản lý các giao dịch thanh toán
-CREATE TABLE ThanhToan (
-                           MaTT INT AUTO_INCREMENT PRIMARY KEY,
-                           MaHD INT NOT NULL,
-                           MaPTTT NVARCHAR(50) NOT NULL,
-                           SoTienThanhToan DECIMAL(15,2) NOT NULL,
-                           NgayGioTT DATETIME NOT NULL,
-                           TrangThaiTT INT DEFAULT 0 COMMENT '0=Chờ xử lý, 1=Thành công, 2=Thất bại, 3=Hủy, 4=Hoàn tiền',
-                           MaGiaoDichNganHang NVARCHAR(100) COMMENT 'Mã giao dịch từ ngân hàng',
-                           GhiChu LONGTEXT,
-                           IsDeleted BIT DEFAULT 0,
-
-                           INDEX idx_thanhtoan_hoadon (MaHD),
-                           INDEX idx_thanhtoan_trangthai (TrangThaiTT),
-                           INDEX idx_thanhtoan_ngay (NgayGioTT)
+-- Table to apply promotions to products
+CREATE TABLE khuyenmaisanpham (
+    makmsp SERIAL PRIMARY KEY,
+    makm VARCHAR(50) NOT NULL,
+    masp VARCHAR(50) NOT NULL,
+    ngaybatdau TIMESTAMP,
+    ngayketthuc TIMESTAMP,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng quản lý giỏ hàng của khách
-CREATE TABLE GioHang (
-                         MaGH INT AUTO_INCREMENT PRIMARY KEY,
-                         MaKH NVARCHAR(50),
-                         MaNV NVARCHAR(50) COMMENT 'Nhân viên hỗ trợ (nếu có)',
-                         NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                         NgayCapNhat DATETIME ON UPDATE CURRENT_TIMESTAMP,
-                         TrangThai INT DEFAULT 0 COMMENT '0=Đang chọn hàng, 1=Đã đặt hàng, 2=Đã thanh toán, 3=Hủy',
-                         GhiChu LONGTEXT,
-                         IsDeleted BIT DEFAULT 0,
-
-                         INDEX idx_giohang_khachhang (MaKH),
-                         INDEX idx_giohang_trangthai (TrangThai)
+-- Table to apply promotions to customers
+CREATE TABLE khuyenmaikhachhang (
+    makmkh SERIAL PRIMARY KEY,
+    makm VARCHAR(50) NOT NULL,
+    makh VARCHAR(50) NOT NULL,
+    ngayapdung TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    dasudung BOOLEAN DEFAULT FALSE,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng chi tiết sản phẩm trong giỏ hàng
-CREATE TABLE ChiTietGioHang (
-                                MaCTGH INT AUTO_INCREMENT PRIMARY KEY,
-                                MaGH INT NOT NULL,
-                                MaSP NVARCHAR(50) NOT NULL,
-                                SoLuong INT NOT NULL CHECK (SoLuong > 0),
-                                DonGiaHienTai DECIMAL(15,2) NOT NULL CHECK (DonGiaHienTai > 0) COMMENT 'Giá sản phẩm tại thời điểm thêm vào giỏ',
-                                ThanhTien DECIMAL(15,2) GENERATED ALWAYS AS (SoLuong * DonGiaHienTai) STORED,
-                                NgayThem DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                IsDeleted BIT DEFAULT 0,
-
-                                UNIQUE KEY unique_giohang_sanpham (MaGH, MaSP),
-                                INDEX idx_chitietgiohang_giohang (MaGH),
-                                INDEX idx_chitietgiohang_sanpham (MaSP)
+-- Table for payment transactions
+CREATE TABLE thanhtoan (
+    matt SERIAL PRIMARY KEY,
+    mahd INT NOT NULL,
+    mapttt VARCHAR(50) NOT NULL,
+    sotienthanhtoan DECIMAL(15,2) NOT NULL,
+    ngaygiott TIMESTAMP NOT NULL,
+    trangthaitt INT DEFAULT 0, -- 0=Pending, 1=Success, 2=Failed, 3=Canceled, 4=Refunded
+    magiaodichnganhang VARCHAR(100), -- Transaction ID from the bank
+    ghichu TEXT,
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
--- Bảng thống kê báo cáo
-CREATE TABLE ThongKeBaoCao (
-                               MaBaoCao INT AUTO_INCREMENT PRIMARY KEY,
-                               MaCH NVARCHAR(50),
-                               MaNV NVARCHAR(50) NOT NULL COMMENT 'Nhân viên lập báo cáo',
-                               LoaiBaoCao NVARCHAR(100) NOT NULL COMMENT 'Loại báo cáo: DoanhThu, ChiPhi, TonKho, NhanVien, KhachHang',
-                               TenBaoCao NVARCHAR(255) NOT NULL,
-                               ThoiGianTu DATETIME,
-                               ThoiGianDen DATETIME,
-                               SoTien DECIMAL(15,2),
-                               SoLuong INT,
-                               NgayBaoCao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                               NoiDung LONGTEXT,
-                               FileDinhKem NVARCHAR(500),
-                               TrangThai INT DEFAULT 1 COMMENT '0=Nháp, 1=Hoàn thành',
-                               IsDeleted BIT DEFAULT 0,
+-- Merged table for shopping cart and its details
+CREATE TABLE giohang_chitiet (
+    maghct SERIAL PRIMARY KEY, -- Unique ID for each row
+    makh VARCHAR(50), -- Customer ID
+    manv VARCHAR(50), -- Assisting employee (if any)
+    masp VARCHAR(50) NOT NULL, -- Product ID
+    soluong INT NOT NULL, -- Product quantity
+    dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
+    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
+    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
+    ngaycapnhat TIMESTAMP, -- Last update time
+    trangthai INT DEFAULT 0, -- 0=Shopping, 1=Paid, 2=Canceled
 
-                               INDEX idx_thongke_loai (LoaiBaoCao),
-                               INDEX idx_thongke_ngay (NgayBaoCao),
-                               INDEX idx_thongke_cuahang (MaCH)
+
+
+    -- Constraints
+    CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
+    CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
+);
+
+-- Table for statistics and reports
+CREATE TABLE thongkebaocao (
+    mabaocao SERIAL PRIMARY KEY,
+    mach VARCHAR(50),
+    manv VARCHAR(50) NOT NULL, -- Employee who created the report
+    loaibaocao VARCHAR(100) NOT NULL, -- Report type: Revenue, Expense, Inventory, etc.
+    tenbaocao VARCHAR(255) NOT NULL,
+    thoigiantu TIMESTAMP,
+    thoigianden TIMESTAMP,
+    sotien DECIMAL(15,2),
+    soluong INT,
+    ngaybaocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    noidung TEXT,
+    filedinhkem VARCHAR(500),
+    trangthai INT DEFAULT 1, -- 0=Draft, 1=Completed
+    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- ===================================
--- THÊM CÁC KHÓA NGOẠI (FOREIGN KEYS)
+-- ADD UNIQUE CONSTRAINTS
 -- ===================================
 
--- Foreign key constraints will be added in init_fixes.sql after data clearing
+ALTER TABLE tonkhochitiet ADD CONSTRAINT uq_sanpham_kho UNIQUE (masp, makho);
+ALTER TABLE khuyenmaisanpham ADD CONSTRAINT uq_khuyenmai_sanpham UNIQUE (makm, masp);
+ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT uq_khuyenmai_khachhang UNIQUE (makm, makh);
 
+-- ===================================
+-- ADD FOREIGN KEYS
+-- ===================================
 
--- Add foreign key constraints
--- Khóa ngoại cho bảng LoaiSanPham (tự tham chiếu)
-ALTER TABLE LoaiSanPham ADD CONSTRAINT FK_LoaiSanPham_LoaiCha
-    FOREIGN KEY (MaLoaiCha) REFERENCES LoaiSanPham(MaLoaiSP)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign key for loaisanpham (self-referencing)
+ALTER TABLE loaisanpham ADD CONSTRAINT fk_loaisanpham_loaicha FOREIGN KEY (maloaicha) REFERENCES loaisanpham(maloaisp);
 
--- Khóa ngoại cho bảng NhanVien
-ALTER TABLE NhanVien ADD CONSTRAINT FK_NhanVien_NguoiDung
-    FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign keys for nhanvien
+ALTER TABLE nhanvien ADD CONSTRAINT fk_nhanvien_nguoidung FOREIGN KEY (manguoidung) REFERENCES nguoidung(manguoidung) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE nhanvien ADD CONSTRAINT fk_nhanvien_quanly FOREIGN KEY (maquanly) REFERENCES nhanvien(manv);
+ALTER TABLE nhanvien ADD CONSTRAINT fk_nhanvien_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach) ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE NhanVien ADD CONSTRAINT FK_NhanVien_QuanLy
-    FOREIGN KEY (MaQuanLy) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign key for khachhang
+ALTER TABLE khachhang ADD CONSTRAINT fk_khachhang_nguoidung FOREIGN KEY (manguoidung) REFERENCES nguoidung(manguoidung) ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE NhanVien ADD CONSTRAINT FK_NhanVien_CuaHang
-    FOREIGN KEY (MaCH) REFERENCES CuaHang(MaCH)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign key for sanpham
+ALTER TABLE sanpham ADD CONSTRAINT fk_sanpham_loaisanpham FOREIGN KEY (maloaisp) REFERENCES loaisanpham(maloaisp) ON DELETE NO ACTION ON UPDATE CASCADE;
 
--- Khóa ngoại cho bảng KhachHang
-ALTER TABLE KhachHang ADD CONSTRAINT FK_KhachHang_NguoiDung
-    FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign key for khuyenmai
+ALTER TABLE khuyenmai ADD CONSTRAINT fk_khuyenmai_quanly FOREIGN KEY (maquanly) REFERENCES nhanvien(manv) ON DELETE SET NULL ON UPDATE CASCADE;
 
--- Khóa ngoại cho bảng SanPham
-ALTER TABLE SanPham ADD CONSTRAINT FK_SanPham_LoaiSanPham
-    FOREIGN KEY (MaLoaiSP) REFERENCES LoaiSanPham(MaLoaiSP)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign key for kho
+ALTER TABLE kho ADD CONSTRAINT fk_kho_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach) ON DELETE SET NULL ON UPDATE CASCADE;
 
--- Khóa ngoại cho bảng KhuyenMai
-ALTER TABLE KhuyenMai ADD CONSTRAINT FK_KhuyenMai_QuanLy
-    FOREIGN KEY (MaQuanLy) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign keys for lichlamviec
+ALTER TABLE lichlamviec ADD CONSTRAINT fk_lichlamviec_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE lichlamviec ADD CONSTRAINT fk_lichlamviec_ca FOREIGN KEY (maca) REFERENCES calamviec(maca) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE lichlamviec ADD CONSTRAINT fk_lichlamviec_quanly FOREIGN KEY (manvquanly) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Khóa ngoại cho bảng Kho
-ALTER TABLE Kho ADD CONSTRAINT FK_Kho_CuaHang
-    FOREIGN KEY (MaCH) REFERENCES CuaHang(MaCH)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign keys for bangluong
+ALTER TABLE bangluong ADD CONSTRAINT fk_bangluong_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE bangluong ADD CONSTRAINT fk_bangluong_nguoithanhtoan FOREIGN KEY (nguoithanhtoan) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Khóa ngoại cho bảng LichLamViec
-ALTER TABLE LichLamViec ADD CONSTRAINT FK_LichLamViec_NhanVien
-    FOREIGN KEY (MaNV) REFERENCES NhanVien(MaNV)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign key for hinhanh
+ALTER TABLE hinhanh ADD CONSTRAINT fk_hinhanh_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE LichLamViec ADD CONSTRAINT FK_LichLamViec_Ca
-    FOREIGN KEY (MaCa) REFERENCES CaLamViec(MaCa)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys for giasanpham
+ALTER TABLE giasanpham ADD CONSTRAINT fk_giasanpham_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE giasanpham ADD CONSTRAINT fk_giasanpham_nguoithaydoi FOREIGN KEY (nguoithaydoi) REFERENCES nhanvien(manv) ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE LichLamViec ADD CONSTRAINT FK_LichLamViec_QuanLy
-    FOREIGN KEY (MaNVQuanLy) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign keys for tonkhochitiet
+ALTER TABLE tonkhochitiet ADD CONSTRAINT fk_tonkhochitiet_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE tonkhochitiet ADD CONSTRAINT fk_tonkhochitiet_kho FOREIGN KEY (makho) REFERENCES kho(makho) ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Khóa ngoại cho bảng BangLuong
-ALTER TABLE BangLuong ADD CONSTRAINT FK_BangLuong_NhanVien
-    FOREIGN KEY (MaNV) REFERENCES NhanVien(MaNV)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for phieunhaphang
+ALTER TABLE phieunhaphang ADD CONSTRAINT fk_phieunhaphang_nhacungcap FOREIGN KEY (mancc) REFERENCES nhacungcap(mancc) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE phieunhaphang ADD CONSTRAINT fk_phieunhaphang_kho FOREIGN KEY (makho) REFERENCES kho(makho) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE phieunhaphang ADD CONSTRAINT fk_phieunhaphang_nhanvien FOREIGN KEY (manvlap) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE BangLuong ADD CONSTRAINT FK_BangLuong_NguoiThanhToan
-    FOREIGN KEY (NguoiThanhToan) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign keys for chitietphieunhap
+ALTER TABLE chitietphieunhap ADD CONSTRAINT fk_chitietphieunhap_phieunhap FOREIGN KEY (mapn) REFERENCES phieunhaphang(mapn) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE chitietphieunhap ADD CONSTRAINT fk_chitietphieunhap_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE NO ACTION ON UPDATE CASCADE;
 
--- Khóa ngoại cho bảng HinhAnh
-ALTER TABLE HinhAnh ADD CONSTRAINT FK_HinhAnh_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for phieuxuatkho
+ALTER TABLE phieuxuatkho ADD CONSTRAINT fk_phieuxuatkho_kho FOREIGN KEY (makho) REFERENCES kho(makho) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE phieuxuatkho ADD CONSTRAINT fk_phieuxuatkho_nhanvien FOREIGN KEY (manvlap) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Khóa ngoại cho bảng GiaSanPham
-ALTER TABLE GiaSanPham ADD CONSTRAINT FK_GiaSanPham_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for chitietphieuxuat
+ALTER TABLE chitietphieuxuat ADD CONSTRAINT fk_chitietphieuxuat_phieuxuat FOREIGN KEY (mapxk) REFERENCES phieuxuatkho(mapxk) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE chitietphieuxuat ADD CONSTRAINT fk_chitietphieuxuat_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE NO ACTION ON UPDATE CASCADE;
 
-ALTER TABLE GiaSanPham ADD CONSTRAINT FK_GiaSanPham_NguoiThayDoi
-    FOREIGN KEY (NguoiThayDoi) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Foreign keys for donhang
+ALTER TABLE donhang ADD CONSTRAINT fk_donhang_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE donhang ADD CONSTRAINT fk_donhang_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Khóa ngoại cho bảng TonKhoChiTiet
-ALTER TABLE TonKhoChiTiet ADD CONSTRAINT FK_TonKhoChiTiet_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for chitietdonhang
+ALTER TABLE chitietdonhang ADD CONSTRAINT fk_chitietdonhang_donhang FOREIGN KEY (madh) REFERENCES donhang(madh) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE chitietdonhang ADD CONSTRAINT fk_chitietdonhang_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE NO ACTION ON UPDATE CASCADE;
 
-ALTER TABLE TonKhoChiTiet ADD CONSTRAINT FK_TonKhoChiTiet_Kho
-    FOREIGN KEY (MaKho) REFERENCES Kho(MaKho)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for hoadon
+ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nhanvien FOREIGN KEY (manvlap) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khuyenmai FOREIGN KEY (makm) REFERENCES khuyenmai(makm) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_phuongthucthanhtoan FOREIGN KEY (mapttt) REFERENCES phuongthucthanhtoan(mapttt) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nguoitao FOREIGN KEY (nguoitao) REFERENCES nhanvien(manv) ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nguoisua FOREIGN KEY (nguoisua) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Khóa ngoại cho bảng PhieuNhapHang
-ALTER TABLE PhieuNhapHang ADD CONSTRAINT FK_PhieuNhapHang_NhaCungCap
-    FOREIGN KEY (MaNCC) REFERENCES NhaCungCap(MaNCC)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys for chitiethoadon
+ALTER TABLE chitiethoadon ADD CONSTRAINT fk_chitiethoadon_hoadon FOREIGN KEY (mahd) REFERENCES hoadon(mahd) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE chitiethoadon ADD CONSTRAINT fk_chitiethoadon_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE NO ACTION ON UPDATE CASCADE;
 
-ALTER TABLE PhieuNhapHang ADD CONSTRAINT FK_PhieuNhapHang_Kho
-    FOREIGN KEY (MaKho) REFERENCES Kho(MaKho)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys for khuyenmaisanpham
+ALTER TABLE khuyenmaisanpham ADD CONSTRAINT fk_khuyenmaisanpham_khuyenmai FOREIGN KEY (makm) REFERENCES khuyenmai(makm) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE khuyenmaisanpham ADD CONSTRAINT fk_khuyenmaisanpham_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE PhieuNhapHang ADD CONSTRAINT FK_PhieuNhapHang_NhanVien
-    FOREIGN KEY (MaNVLap) REFERENCES NhanVien(MaNV)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys for khuyenmaikhachhang
+ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT fk_khuyenmaikhachhang_khuyenmai FOREIGN KEY (makm) REFERENCES khuyenmai(makm) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT fk_khuyenmaikhachhang_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
--- Khóa ngoại cho bảng ChiTietPhieuNhap
-ALTER TABLE ChiTietPhieuNhap ADD CONSTRAINT FK_ChiTietPhieuNhap_PhieuNhap
-    FOREIGN KEY (MaPN) REFERENCES PhieuNhapHang(MaPN)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+-- Foreign keys for thanhtoan
+ALTER TABLE thanhtoan ADD CONSTRAINT fk_thanhtoan_hoadon FOREIGN KEY (mahd) REFERENCES hoadon(mahd) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE thanhtoan ADD CONSTRAINT fk_thanhtoan_phuongthucthanhtoan FOREIGN KEY (mapttt) REFERENCES phuongthucthanhtoan(mapttt) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE ChiTietPhieuNhap ADD CONSTRAINT FK_ChiTietPhieuNhap_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys for giohang_chitiet
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE giohang_chitiet ADD CONSTRAINT fk_giohang_chitiet_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Khóa ngoại cho bảng PhieuXuatKho
-ALTER TABLE PhieuXuatKho ADD CONSTRAINT FK_PhieuXuatKho_Kho
-    FOREIGN KEY (MaKho) REFERENCES Kho(MaKho)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Foreign keys for thongkebaocao
+ALTER TABLE thongkebaocao ADD CONSTRAINT fk_thongkebaocao_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE thongkebaocao ADD CONSTRAINT fk_thongkebaocao_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE PhieuXuatKho ADD CONSTRAINT FK_PhieuXuatKho_NhanVien
-    FOREIGN KEY (MaNVLap) REFERENCES NhanVien(MaNV)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- ===================================
+-- CREATE INDEXES
+-- ===================================
 
--- Khóa ngoại cho bảng ChiTietPhieuXuat
-ALTER TABLE ChiTietPhieuXuat ADD CONSTRAINT FK_ChiTietPhieuXuat_PhieuXuat
-    FOREIGN KEY (MaPXK) REFERENCES PhieuXuatKho(MaPXK)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE INDEX idx_nguoidung_email ON nguoidung(email);
+CREATE INDEX idx_nguoidung_vaitro ON nguoidung(vaitro);
+CREATE INDEX idx_cuahang_trangthai ON cuahang(trangthai);
+CREATE INDEX idx_nhacungcap_trangthai ON nhacungcap(trangthai);
+CREATE INDEX idx_nhanvien_cuahang ON nhanvien(mach);
+CREATE INDEX idx_nhanvien_trangthai ON nhanvien(trangthai);
+CREATE INDEX idx_khachhang_sdt ON khachhang(sdt);
+CREATE INDEX idx_khachhang_loai ON khachhang(loaikhachhang);
+CREATE INDEX idx_loaisanpham_cha ON loaisanpham(maloaicha);
+CREATE INDEX idx_sanpham_loai ON sanpham(maloaisp);
+CREATE INDEX idx_sanpham_trangthai ON sanpham(trangthai);
+CREATE INDEX idx_khuyenmai_ngay ON khuyenmai(ngaybatdau, ngayketthuc);
+CREATE INDEX idx_khuyenmai_trangthai ON khuyenmai(trangthai);
+CREATE INDEX idx_phuongthucthanhtoan_trangthai ON phuongthucthanhtoan(trangthai);
+CREATE INDEX idx_kho_cuahang ON kho(mach);
+CREATE INDEX idx_kho_trangthai ON kho(trangthai);
+CREATE INDEX idx_calamviec_trangthai ON calamviec(trangthai);
+CREATE INDEX idx_lichlamviec_ngay ON lichlamviec(ngaylam);
+CREATE INDEX idx_lichlamviec_trangthai ON lichlamviec(trangthai);
+CREATE INDEX idx_bangluong_thangnam ON bangluong(thangluong, namluong);
+CREATE INDEX idx_bangluong_trangthai ON bangluong(trangthai);
+CREATE INDEX idx_hinhanh_sanpham ON hinhanh(masp);
+CREATE INDEX idx_hinhanh_chinh ON hinhanh(lachinh);
+CREATE INDEX idx_giasanpham_sanpham ON giasanpham(masp);
+CREATE INDEX idx_giasanpham_ngay ON giasanpham(ngaybatdau, ngayketthuc);
+CREATE INDEX idx_tonkho_sanpham ON tonkhochitiet(masp);
+CREATE INDEX idx_tonkho_kho ON tonkhochitiet(makho);
+CREATE INDEX idx_phieunhap_ngay ON phieunhaphang(ngaynhap);
+CREATE INDEX idx_phieunhap_trangthai ON phieunhaphang(trangthai);
+CREATE INDEX idx_phieunhap_nhacungcap ON phieunhaphang(mancc);
+CREATE INDEX idx_chitietphieunhap_phieu ON chitietphieunhap(mapn);
+CREATE INDEX idx_chitietphieunhap_sanpham ON chitietphieunhap(masp);
+CREATE INDEX idx_phieuxuat_ngay ON phieuxuatkho(ngayxuat);
+CREATE INDEX idx_phieuxuat_trangthai ON phieuxuatkho(trangthai);
+CREATE INDEX idx_phieuxuat_kho ON phieuxuatkho(makho);
+CREATE INDEX idx_chitietphieuxuat_phieu ON chitietphieuxuat(mapxk);
+CREATE INDEX idx_chitietphieuxuat_sanpham ON chitietphieuxuat(masp);
+CREATE INDEX idx_hoadon_ngaylap ON hoadon(ngaylap);
+CREATE INDEX idx_hoadon_trangthai ON hoadon(trangthai);
+CREATE INDEX idx_hoadon_khachhang ON hoadon(makh);
+CREATE INDEX idx_hoadon_nhanvien ON hoadon(manvlap);
+CREATE INDEX idx_chitiethoadon_hoadon ON chitiethoadon(mahd);
+CREATE INDEX idx_chitiethoadon_sanpham ON chitiethoadon(masp);
+CREATE INDEX idx_khuyenmaisanpham_km ON khuyenmaisanpham(makm);
+CREATE INDEX idx_khuyenmaisanpham_sp ON khuyenmaisanpham(masp);
+CREATE INDEX idx_khuyenmaikhachhang_km ON khuyenmaikhachhang(makm);
+CREATE INDEX idx_khuyenmaikhachhang_kh ON khuyenmaikhachhang(makh);
+CREATE INDEX idx_thanhtoan_hoadon ON thanhtoan(mahd);
+CREATE INDEX idx_thanhtoan_trangthai ON thanhtoan(trangthaitt);
+CREATE INDEX idx_thanhtoan_ngay ON thanhtoan(ngaygiott);
+CREATE INDEX idx_thongke_loai ON thongkebaocao(loaibaocao);
+CREATE INDEX idx_thongke_ngay ON thongkebaocao(ngaybaocao);
+CREATE INDEX idx_thongke_cuahang ON thongkebaocao(mach);
+CREATE INDEX idx_giohang_chitiet_khachhang ON giohang_chitiet(makh);
+CREATE INDEX idx_giohang_chitiet_sanpham ON giohang_chitiet(masp);
+CREATE INDEX idx_giohang_chitiet_trangthai ON giohang_chitiet(trangthai);
 
-ALTER TABLE ChiTietPhieuXuat ADD CONSTRAINT FK_ChiTietPhieuXuat_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- ===================================
+-- CREATE TRIGGERS
+-- ===================================
 
--- Khóa ngoại cho bảng HoaDon
-ALTER TABLE HoaDon ADD CONSTRAINT FK_HoaDon_KhachHang
-    FOREIGN KEY (MaKH) REFERENCES KhachHang(MaKH)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Trigger function to update a timestamp column to the current time
+CREATE OR REPLACE FUNCTION fn_update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+   IF TG_TABLE_NAME = 'tonkhochitiet' THEN
+      NEW.ngaycapnhat = CURRENT_TIMESTAMP;
+   ELSIF TG_TABLE_NAME = 'hoadon' THEN
+      NEW.ngaysua = CURRENT_TIMESTAMP;
+   ELSIF TG_TABLE_NAME = 'giohang_chitiet' THEN
+      NEW.ngaycapnhat = CURRENT_TIMESTAMP;
+   END IF;
+   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-ALTER TABLE HoaDon ADD CONSTRAINT FK_HoaDon_NhanVien
-    FOREIGN KEY (MaNVLap) REFERENCES NhanVien(MaNV)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
+-- Trigger for tonkhochitiet to update ngaycapnhat
+CREATE TRIGGER trg_tonkhochitiet_updatedate
+BEFORE UPDATE ON tonkhochitiet
+FOR EACH ROW
+EXECUTE FUNCTION fn_update_timestamp();
 
-ALTER TABLE HoaDon ADD CONSTRAINT FK_HoaDon_KhuyenMai
-    FOREIGN KEY (MaKM) REFERENCES KhuyenMai(MaKM)
-        ON DELETE SET NULL ON UPDATE CASCADE;
+-- Trigger for hoadon to update ngaysua
+CREATE TRIGGER trg_hoadon_updatedate
+BEFORE UPDATE ON hoadon
+FOR EACH ROW
+EXECUTE FUNCTION fn_update_timestamp();
 
-ALTER TABLE HoaDon ADD CONSTRAINT FK_HoaDon_PhuongThucThanhToan
-    FOREIGN KEY (MaPTTT) REFERENCES PhuongThucThanhToan(MaPTTT)
-        ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE HoaDon ADD CONSTRAINT FK_HoaDon_NguoiTao
-    FOREIGN KEY (NguoiTao) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE HoaDon ADD CONSTRAINT FK_HoaDon_NguoiSua
-    FOREIGN KEY (NguoiSua) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng ChiTietHoaDon
-ALTER TABLE ChiTietHoaDon ADD CONSTRAINT FK_ChiTietHoaDon_HoaDon
-    FOREIGN KEY (MaHD) REFERENCES HoaDon(MaHD)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE ChiTietHoaDon ADD CONSTRAINT FK_ChiTietHoaDon_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng KhuyenMaiSanPham
-ALTER TABLE KhuyenMaiSanPham ADD CONSTRAINT FK_KhuyenMaiSanPham_KhuyenMai
-    FOREIGN KEY (MaKM) REFERENCES KhuyenMai(MaKM)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE KhuyenMaiSanPham ADD CONSTRAINT FK_KhuyenMaiSanPham_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng KhuyenMaiKhachHang
-ALTER TABLE KhuyenMaiKhachHang ADD CONSTRAINT FK_KhuyenMaiKhachHang_KhuyenMai
-    FOREIGN KEY (MaKM) REFERENCES KhuyenMai(MaKM)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE KhuyenMaiKhachHang ADD CONSTRAINT FK_KhuyenMaiKhachHang_KhachHang
-    FOREIGN KEY (MaKH) REFERENCES KhachHang(MaKH)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng ThanhToan
-ALTER TABLE ThanhToan ADD CONSTRAINT FK_ThanhToan_HoaDon
-    FOREIGN KEY (MaHD) REFERENCES HoaDon(MaHD)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE ThanhToan ADD CONSTRAINT FK_ThanhToan_PhuongThucThanhToan
-    FOREIGN KEY (MaPTTT) REFERENCES PhuongThucThanhToan(MaPTTT)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng GioHang
-ALTER TABLE GioHang ADD CONSTRAINT FK_GioHang_KhachHang
-    FOREIGN KEY (MaKH) REFERENCES KhachHang(MaKH)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE GioHang ADD CONSTRAINT FK_GioHang_NhanVien
-    FOREIGN KEY (MaNV) REFERENCES NhanVien(MaNV)
-        ON DELETE SET NULL ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng ChiTietGioHang
-ALTER TABLE ChiTietGioHang ADD CONSTRAINT FK_ChiTietGioHang_GioHang
-    FOREIGN KEY (MaGH) REFERENCES GioHang(MaGH)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE ChiTietGioHang ADD CONSTRAINT FK_ChiTietGioHang_SanPham
-    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
--- Khóa ngoại cho bảng ThongKeBaoCao
-ALTER TABLE ThongKeBaoCao ADD CONSTRAINT FK_ThongKeBaoCao_CuaHang
-    FOREIGN KEY (MaCH) REFERENCES CuaHang(MaCH)
-        ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE ThongKeBaoCao ADD CONSTRAINT FK_ThongKeBaoCao_NhanVien
-    FOREIGN KEY (MaNV) REFERENCES NhanVien(MaNV)
-        ON DELETE RESTRICT ON UPDATE CASCADE;
-
+-- Trigger for giohang_chitiet to update ngaycapnhat
+CREATE TRIGGER trg_giohang_chitiet_updatedate
+BEFORE UPDATE ON giohang_chitiet
+FOR EACH ROW
+EXECUTE FUNCTION fn_update_timestamp();
