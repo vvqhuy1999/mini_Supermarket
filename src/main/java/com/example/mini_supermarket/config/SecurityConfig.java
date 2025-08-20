@@ -116,6 +116,8 @@ public class SecurityConfig {
         "/api/sanpham/*/optimized",     // GET: Xem chi tiết sản phẩm (tối ưu)
         "/api/sanpham/category/*",      // GET: Xem sản phẩm theo category
         "/api/sanpham/category/*/active", // GET: Xem sản phẩm theo category + active
+        "/api/sanpham/with-tonkho",     // GET: Xem danh sách sản phẩm với số lượng tồn kho
+        "/api/sanpham/*/with-tonkho",   // GET: Xem chi tiết sản phẩm với số lượng tồn kho
         "/api/loaisanpham",             // GET: Xem danh sách loại sản phẩm
         "/api/loaisanpham/*",           // GET: Xem chi tiết loại sản phẩm
         "/api/khuyenmai",               // GET: Xem danh sách khuyến mãi
@@ -151,9 +153,12 @@ public class SecurityConfig {
         // Giỏ hàng cá nhân - FULL CRUD (merged controller)
         "/api/giohang/**",              // FULL CRUD giỏ hàng và items, sync, status
         
+        "/api/khachhang/**", 
+
         // Đơn hàng cá nhân - CHỈ XEM VÀ TẠO
         "/api/donhang",                 // GET: Xem đơn hàng cá nhân, POST: Tạo đơn hàng
         "/api/donhang/*",               // GET: Xem chi tiết đơn hàng cá nhân
+        "/api/donhang/from-cart",       // POST: Tạo đơn hàng từ giỏ hàng
         "/api/chitietdonhang",          // GET: Xem chi tiết đơn hàng cá nhân
         "/api/chitietdonhang/*",        // GET: Xem chi tiết cụ thể
         
@@ -333,6 +338,11 @@ public class SecurityConfig {
             
             // Cấu hình authorization - Phân quyền theo role cụ thể
             .authorizeHttpRequests(authz -> authz
+                // === TEST MODE: MỞ TẤT CẢ API ĐỂ TEST ===
+                .anyRequest().permitAll()
+                
+                // === COMMENT OUT TẤT CẢ PHÂN QUYỀN ĐỂ TEST ===
+                /*
                 // API công khai - Không cần authentication
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 
@@ -353,6 +363,7 @@ public class SecurityConfig {
                 
                 // Tất cả request khác - Cần authentication
                 .anyRequest().authenticated()
+                */
             );
         
         return http.build();

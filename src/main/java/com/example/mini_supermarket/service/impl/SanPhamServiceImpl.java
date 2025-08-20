@@ -170,4 +170,60 @@ public class SanPhamServiceImpl implements SanPhamService {
         }
         return list;
     }
+    
+    // === IMPLEMENTATION CHO METHODS MỚI - VỚI SỐ LƯỢNG TỒN KHO ===
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SanPhamOptimizedDto> findAllActiveWithTonKho() {
+        List<SanPhamOptimizedDto> list = sanPhamRepository.findAllActiveWithTonKho();
+        if (list != null) {
+            for (SanPhamOptimizedDto dto : list) {
+                dto.setGiaHienTai(getCurrentPrice(dto.getMaSP()));
+            }
+        }
+        return list;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public SanPhamOptimizedDto findActiveByIdWithTonKho(String id) {
+        Optional<SanPhamOptimizedDto> result = sanPhamRepository.findActiveByIdWithTonKho(id);
+        SanPhamOptimizedDto theSanPham = null;
+
+        if (result.isPresent()) {
+            theSanPham = result.get();
+            theSanPham.setGiaHienTai(getCurrentPrice(theSanPham.getMaSP()));
+        } else {
+            throw new RuntimeException("Did not find active SanPham id - " + id);
+        }
+        return theSanPham;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SanPhamOptimizedDto> findAllActiveWithTonKhoByKho(String maKho) {
+        List<SanPhamOptimizedDto> list = sanPhamRepository.findAllActiveWithTonKhoByKho(maKho);
+        if (list != null) {
+            for (SanPhamOptimizedDto dto : list) {
+                dto.setGiaHienTai(getCurrentPrice(dto.getMaSP()));
+            }
+        }
+        return list;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SanPhamOptimizedDto findActiveByIdWithTonKhoByKho(String id, String maKho) {
+        Optional<SanPhamOptimizedDto> result = sanPhamRepository.findActiveByIdWithTonKhoByKho(id, maKho);
+        SanPhamOptimizedDto theSanPham = null;
+
+        if (result.isPresent()) {
+            theSanPham = result.get();
+            theSanPham.setGiaHienTai(getCurrentPrice(theSanPham.getMaSP()));
+        } else {
+            throw new RuntimeException("Did not find active SanPham id - " + id);
+        }
+        return theSanPham;
+    }
 } 

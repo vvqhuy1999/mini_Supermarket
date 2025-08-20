@@ -54,4 +54,44 @@ public interface SanPhamRepository extends JpaRepository<SanPham, String> {
            "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung) " +
            "FROM SanPham s WHERE s.loaiSanPham.maLoaiSP = :maLoaiSP AND s.isDeleted = false AND s.trangThai = 1")
     List<SanPhamOptimizedDto> findByCategoryAndActiveOptimized(@Param("maLoaiSP") String maLoaiSP);
+
+    // Lấy sản phẩm với số lượng tồn kho tổng từ tất cả các kho
+    @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
+           "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung, " +
+           "COALESCE(SUM(CASE WHEN t.isDeleted = false THEN t.soLuongTon ELSE 0 END), 0L)) " +
+           "FROM SanPham s LEFT JOIN s.tonKhoChiTiets t " +
+           "WHERE s.isDeleted = false " +
+           "GROUP BY s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung")
+    List<SanPhamOptimizedDto> findAllActiveWithTonKho();
+
+    // Lấy sản phẩm theo ID với số lượng tồn kho
+    @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
+           "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung, " +
+           "COALESCE(SUM(CASE WHEN t.isDeleted = false THEN t.soLuongTon ELSE 0 END), 0L)) " +
+           "FROM SanPham s LEFT JOIN s.tonKhoChiTiets t " +
+           "WHERE s.maSP = :id AND s.isDeleted = false " +
+           "GROUP BY s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung")
+    Optional<SanPhamOptimizedDto> findActiveByIdWithTonKho(@Param("id") String id);
+
+    // Lấy sản phẩm với số lượng tồn kho theo mã kho (lọc theo kho)
+    @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
+           "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung, " +
+           "COALESCE(SUM(CASE WHEN t.isDeleted = false AND t.kho.maKho = :maKho THEN t.soLuongTon ELSE 0 END), 0L)) " +
+           "FROM SanPham s LEFT JOIN s.tonKhoChiTiets t " +
+           "WHERE s.isDeleted = false " +
+           "GROUP BY s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung")
+    List<SanPhamOptimizedDto> findAllActiveWithTonKhoByKho(@Param("maKho") String maKho);
+
+    // Lấy sản phẩm theo ID với số lượng tồn kho theo mã kho
+    @Query("SELECT new com.example.mini_supermarket.dto.SanPhamOptimizedDto(" +
+           "s.maSP, s.loaiSanPham, s.tenSP, s.moTa, " +
+           "s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung, " +
+           "COALESCE(SUM(CASE WHEN t.isDeleted = false AND t.kho.maKho = :maKho THEN t.soLuongTon ELSE 0 END), 0L)) " +
+           "FROM SanPham s LEFT JOIN s.tonKhoChiTiets t " +
+           "WHERE s.maSP = :id AND s.isDeleted = false " +
+           "GROUP BY s.maSP, s.loaiSanPham, s.tenSP, s.moTa, s.donViTinh, s.trongLuong, s.kichThuoc, s.hanSuDung")
+    Optional<SanPhamOptimizedDto> findActiveByIdWithTonKhoByKho(@Param("id") String id, @Param("maKho") String maKho);
 } 

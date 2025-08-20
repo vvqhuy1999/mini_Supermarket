@@ -172,6 +172,75 @@ public class SanPhamRestController {
         }
     }
 
+    @Operation(summary = "Lấy sản phẩm theo category và trạng thái kinh doanh (tối ưu)", description = "Trả về danh sách sản phẩm theo category với ít trường hơn và chỉ lấy sản phẩm đang kinh doanh")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/optimized/category/{maLoaiSP}/active")
+    public ResponseEntity<List<SanPhamOptimizedDto>> getSanPhamByCategoryAndActiveOptimized(
+            @Parameter(description = "Mã loại sản phẩm", required = true) @PathVariable String maLoaiSP) {
+        try {
+            List<SanPhamOptimizedDto> sanPhams = sanPhamService.findByCategoryAndActiveOptimized(maLoaiSP);
+            return new ResponseEntity<>(sanPhams, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    // === ENDPOINTS MỚI - VỚI SỐ LƯỢNG TỒN KHO ===
+    
+    @Operation(summary = "Lấy tất cả sản phẩm với số lượng tồn kho", description = "Trả về danh sách sản phẩm kèm số lượng tồn kho tổng từ tất cả các kho hoặc theo mã kho nếu truyền vào")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/with-tonkho")
+    public ResponseEntity<List<SanPhamOptimizedDto>> getAllSanPhamWithTonKho(
+            @Parameter(description = "Mã kho cần lọc (tùy chọn)", required = false)
+            @RequestParam(value = "maKho", required = false) String maKho
+    ) {
+        try {
+            List<SanPhamOptimizedDto> sanPhams = (maKho == null || maKho.isEmpty())
+                    ? sanPhamService.findAllActiveWithTonKho()
+                    : sanPhamService.findAllActiveWithTonKhoByKho(maKho);
+            return new ResponseEntity<>(sanPhams, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @Operation(summary = "Lấy sản phẩm theo ID với số lượng tồn kho", description = "Trả về thông tin sản phẩm kèm số lượng tồn kho tổng từ tất cả các kho hoặc theo mã kho nếu truyền vào")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy sản phẩm"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/{id}/with-tonkho")
+    public ResponseEntity<SanPhamOptimizedDto> getSanPhamByIdWithTonKho(
+            @Parameter(description = "ID của sản phẩm", required = true) @PathVariable String id,
+            @Parameter(description = "Mã kho cần lọc (tùy chọn)", required = false)
+            @RequestParam(value = "maKho", required = false) String maKho
+    ) {
+        try {
+            SanPhamOptimizedDto sanPham = (maKho == null || maKho.isEmpty())
+                    ? sanPhamService.findActiveByIdWithTonKho(id)
+                    : sanPhamService.findActiveByIdWithTonKhoByKho(id, maKho);
+            return new ResponseEntity<>(sanPham, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // === ENDPOINTS QUẢN LÝ - FULL CRUD ===
 
     // Thêm sản phẩm mới

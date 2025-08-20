@@ -1,6 +1,8 @@
 package com.example.mini_supermarket.service;
 
 import com.example.mini_supermarket.entity.DonHang;
+import com.example.mini_supermarket.dto.CreateOrderFromCartRequest;
+import com.example.mini_supermarket.dto.OrderCreatedResponse;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -49,4 +51,9 @@ public interface DonHangService {
     
     // Soft delete đơn hàng (đánh dấu xóa thay vì xóa thật)
     void softDeleteById(String maDH);
+    
+    // === METHODS MỚI - TẠO ĐƠN HÀNG TỪ GIỎ HÀNG ===
+    
+    // Tạo đơn hàng từ các item trong giỏ hàng được chọn
+    OrderCreatedResponse createOrderFromCart(CreateOrderFromCartRequest request);
 }

@@ -42,4 +42,18 @@ public interface SanPhamService {
     
     // Lấy sản phẩm theo category và trạng thái kinh doanh - tối ưu
     List<SanPhamOptimizedDto> findByCategoryAndActiveOptimized(String maLoaiSP);
+    
+    // === METHODS MỚI - VỚI SỐ LƯỢNG TỒN KHO ===
+    
+    // Lấy tất cả sản phẩm active với số lượng tồn kho
+    List<SanPhamOptimizedDto> findAllActiveWithTonKho();
+    
+    // Lấy sản phẩm theo ID với số lượng tồn kho
+    SanPhamOptimizedDto findActiveByIdWithTonKho(String id);
+
+    // Lấy tất cả sản phẩm active với số lượng tồn kho theo mã kho
+    List<SanPhamOptimizedDto> findAllActiveWithTonKhoByKho(String maKho);
+
+    // Lấy sản phẩm theo ID với số lượng tồn kho theo mã kho
+    SanPhamOptimizedDto findActiveByIdWithTonKhoByKho(String id, String maKho);
 } 

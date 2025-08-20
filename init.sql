@@ -320,12 +320,12 @@ CREATE TABLE chitietphieuxuat (
 -- Orders Table
 CREATE TABLE donhang (
     madh VARCHAR(50) PRIMARY KEY,
-    makh VARCHAR(50) NOT NULL,
+    makh VARCHAR(50),
     manv VARCHAR(50),
     ngaydathang TIMESTAMP NOT NULL,
     ngaygiaohang TIMESTAMP,
     diachigiaohang VARCHAR(255) NOT NULL,
-    trangthai VARCHAR(50) NOT NULL, -- e.g., Pending, Shipping, Completed, Canceled
+    trangthai INT NOT NULL, -- 0=Pending, 1=Shipping, 2=Completed, 3=Canceled
     isdeleted BOOLEAN DEFAULT FALSE
 );
 
@@ -420,9 +420,7 @@ CREATE TABLE giohang_chitiet (
     thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
     ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
     ngaycapnhat TIMESTAMP, -- Last update time
-    trangthai INT DEFAULT 0, -- 0=Shopping, 1=Paid, 2=Canceled
-
-
+    trangthai INT DEFAULT 0, 
 
     -- Constraints
     CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),

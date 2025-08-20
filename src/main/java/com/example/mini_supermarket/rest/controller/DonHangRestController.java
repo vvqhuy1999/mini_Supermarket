@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import com.example.mini_supermarket.dto.OrderCreatedResponse;
+import com.example.mini_supermarket.dto.CreateOrderFromCartRequest;
 
 @RestController
 @RequestMapping("/api/donhang")
@@ -343,6 +345,34 @@ public class DonHangRestController {
                     .body(ApiResponse.<Long>builder()
                             .success(false)
                             .error("Lỗi khi đếm đơn hàng: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    // Tạo đơn hàng từ giỏ hàng
+    @PostMapping("/from-cart")
+    @Operation(summary = "Tạo đơn hàng từ giỏ hàng", description = "Tạo đơn hàng từ các item được chọn trong giỏ hàng")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Tạo đơn hàng thành công"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    public ResponseEntity<ApiResponse<OrderCreatedResponse>> createOrderFromCart(
+            @Parameter(description = "Thông tin tạo đơn hàng từ giỏ hàng", required = true) 
+            @RequestBody CreateOrderFromCartRequest request) {
+        try {
+            OrderCreatedResponse orderResponse = donHangService.createOrderFromCart(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.<OrderCreatedResponse>builder()
+                            .success(true)
+                            .message("Tạo đơn hàng từ giỏ hàng thành công")
+                            .result(orderResponse)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<OrderCreatedResponse>builder()
+                            .success(false)
+                            .error("Lỗi khi tạo đơn hàng từ giỏ hàng: " + e.getMessage())
                             .build());
         }
     }
