@@ -120,7 +120,12 @@ public class SecurityConfig {
         "/api/loaisanpham/*",           // GET: Xem chi tiết loại sản phẩm
         "/api/khuyenmai",               // GET: Xem danh sách khuyến mãi
         "/api/khuyenmai/*",             // GET: Xem chi tiết khuyến mãi
-        
+        "/api/giasanpham",              // GET: Xem giá sản phẩm
+        "/api/giasanpham/*",            // GET: Xem chi tiết giá sản phẩm
+        "/api/tonkhochitiet",           // GET: Xem tồn kho
+        "/api/tonkhochitiet/*",         // GET: Xem chi tiết tồn kho
+
+
         // Media & Images
         "/api/hinhanh/**",              // Xem hình ảnh
         "/api/upload/serve-image/**",   // Serve ảnh trực tiếp từ server
