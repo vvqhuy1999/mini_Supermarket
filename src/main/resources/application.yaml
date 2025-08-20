@@ -16,6 +16,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+vnpay:
+  tmnCode: "8J9HNEKM"
+  hash-secret: "RC55NF6I7773TC1TYE6F6HCZ6T9Q24GV"  # Thay bằng giá trị thực từ VNPay
+  payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  returnUrl: http://localhost:8080/api/thanhtoan/vnpay/return
 
 # Swagger/OpenAPI Configuration
 springdoc:

@@ -14,7 +14,7 @@ public interface PhuongThucThanhToanService {
     PhuongThucThanhToan findById(String id);
 
     PhuongThucThanhToan findActiveById(String id); // Chỉ lấy record chưa bị xóa
-
+    PhuongThucThanhToan findActiveBytenPTTT(String id);
     PhuongThucThanhToan save(PhuongThucThanhToan phuongThucThanhToan);
 
     void deleteById(String id); // Hard delete (giữ lại cho tương thích)

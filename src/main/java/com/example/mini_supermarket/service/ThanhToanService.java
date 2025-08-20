@@ -1,25 +1,26 @@
 package com.example.mini_supermarket.service;
 
 import com.example.mini_supermarket.entity.ThanhToan;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
-@Service
 public interface ThanhToanService {
     List<ThanhToan> findAll();
 
-    List<ThanhToan> findAllActive(); // Chỉ lấy các record chưa bị xóa
+    List<ThanhToan> findAllActive();
 
     ThanhToan findById(Integer id);
 
-    ThanhToan findActiveById(Integer id); // Chỉ lấy record chưa bị xóa
+    ThanhToan findActiveById(Integer id);
 
     ThanhToan save(ThanhToan thanhToan);
 
-    void deleteById(Integer id); // Hard delete (giữ lại cho tương thích)
+    void deleteById(Integer id);
 
-    void softDeleteById(Integer id); // Soft delete - set isDeleted = true
+    void softDeleteById(Integer id);
 
     ThanhToan update(ThanhToan thanhToan);
-} 
+
+    ThanhToan createVNPayPayment(ThanhToan thanhToan, Map<String, String> vnpayParams);
+}

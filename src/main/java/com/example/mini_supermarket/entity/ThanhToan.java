@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ThanhToan", indexes = {
-    @Index(name = "idx_thanhtoan_hoadon", columnList = "MaHD"),
-    @Index(name = "idx_thanhtoan_trangthai", columnList = "TrangThaiTT"),
-    @Index(name = "idx_thanhtoan_ngay", columnList = "NgayGioTT")
+        @Index(name = "idx_thanhtoan_hoadon", columnList = "MaHD"),
+        @Index(name = "idx_thanhtoan_trangthai", columnList = "TrangThaiTT"),
+        @Index(name = "idx_thanhtoan_ngay", columnList = "NgayGioTT")
 })
 @Data
 @NoArgsConstructor
@@ -42,12 +42,11 @@ public class ThanhToan implements Serializable {
     private Integer trangThaiTT = 0; // 0=Chờ xử lý, 1=Thành công, 2=Thất bại, 3=Hủy, 4=Hoàn tiền
 
     @Column(name = "MaGiaoDichNganHang", length = 100)
-    private String maGiaoDichNganHang; // Mã giao dịch từ ngân hàng
+    private String maGiaoDichNganHang;
 
     @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
     private String ghiChu;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
-
 }

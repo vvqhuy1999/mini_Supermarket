@@ -61,6 +61,12 @@ public class PhuongThucThanhToanServiceImpl implements PhuongThucThanhToanServic
     }
 
     @Override
+    public PhuongThucThanhToan findActiveBytenPTTT(String id) {
+        Optional<PhuongThucThanhToan> result = phuongThucThanhToanRepository.findActiveByTenPTTT(id);
+        return result.orElse(null);
+    }
+
+    @Override
     public void softDeleteById(String id) {
         Optional<PhuongThucThanhToan> phuongThucThanhToanOpt = phuongThucThanhToanRepository.findActiveById(id);
         if (phuongThucThanhToanOpt.isPresent()) {

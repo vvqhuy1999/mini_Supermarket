@@ -1,60 +1,25 @@
 package com.example.mini_supermarket.service.impl;
 
-import com.example.mini_supermarket.repository.ThanhToanRepository;
+
 import com.example.mini_supermarket.entity.ThanhToan;
+import com.example.mini_supermarket.repository.ThanhToanRepository;
 import com.example.mini_supermarket.service.ThanhToanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class ThanhToanServiceImpl implements ThanhToanService {
-    private ThanhToanRepository thanhToanRepository;
 
     @Autowired
-    public ThanhToanServiceImpl(ThanhToanRepository thanhToanRepository) {
-        this.thanhToanRepository = thanhToanRepository;
-    }
+    private ThanhToanRepository thanhToanRepository;
 
     @Override
     public List<ThanhToan> findAll() {
         return thanhToanRepository.findAll();
-    }
-
-    @Override
-    public ThanhToan findById(Integer theId) {
-        Optional<ThanhToan> result = thanhToanRepository.findById(theId);
-        ThanhToan theThanhToan = null;
-
-        if (result.isPresent()) {
-            theThanhToan = result.get();
-        } else {
-            throw new RuntimeException("Did not find ThanhToan id - " + theId);
-        }
-        return theThanhToan;
-    }
-
-    @Override
-    public ThanhToan save(ThanhToan theThanhToan) {
-        return thanhToanRepository.save(theThanhToan);
-    }
-
-    @Override
-    public void deleteById(Integer theId) {
-        thanhToanRepository.deleteById(theId);
-    }
-
-    @Override
-    public ThanhToan update(ThanhToan thanhToan) {
-        Optional<ThanhToan> existingThanhToan = thanhToanRepository.findById(thanhToan.getMaTT());
-
-        if (!existingThanhToan.isPresent()) {
-            throw new RuntimeException("Không tìm thấy thanh toán với ID - " + thanhToan.getMaTT());
-        }
-
-        return thanhToanRepository.save(thanhToan);
     }
 
     @Override
@@ -63,18 +28,44 @@ public class ThanhToanServiceImpl implements ThanhToanService {
     }
 
     @Override
+    public ThanhToan findById(Integer id) {
+        return thanhToanRepository.findByIdIncludeDeleted(id).orElse(null);
+    }
+
+    @Override
     public ThanhToan findActiveById(Integer id) {
-        Optional<ThanhToan> result = thanhToanRepository.findActiveById(id);
-        return result.orElse(null);
+        return thanhToanRepository.findActiveById(id).orElse(null);
+    }
+
+    @Override
+    public ThanhToan save(ThanhToan thanhToan) {
+        return thanhToanRepository.save(thanhToan);
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        thanhToanRepository.deleteById(id);
     }
 
     @Override
     public void softDeleteById(Integer id) {
-        Optional<ThanhToan> thanhToanOpt = thanhToanRepository.findActiveById(id);
-        if (thanhToanOpt.isPresent()) {
-            ThanhToan thanhToan = thanhToanOpt.get();
-            thanhToan.setIsDeleted(true);
-            thanhToanRepository.save(thanhToan);
+        Optional<ThanhToan> thanhToan = thanhToanRepository.findByIdIncludeDeleted(id);
+        if (thanhToan.isPresent()) {
+            ThanhToan tt = thanhToan.get();
+            tt.setIsDeleted(true);
+            thanhToanRepository.save(tt);
         }
     }
-} 
+
+    @Override
+    public ThanhToan update(ThanhToan thanhToan) {
+        return thanhToanRepository.save(thanhToan);
+    }
+
+    @Override
+    public ThanhToan createVNPayPayment(ThanhToan thanhToan, Map<String, String> vnpayParams) {
+        thanhToan.setMaGiaoDichNganHang(vnpayParams.get("vnp_TxnRef"));
+        thanhToan.setTrangThaiTT(0); // Chờ xử lý
+        return thanhToanRepository.save(thanhToan);
+    }
+}

@@ -19,7 +19,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Mini Supermarket API")
                         .version("1.0.0")
-                        .description("API documentation for Mini Supermarket Management System")
+                        .description("API documentation for Mini Supermarket Management System, including VNPay integration")
                         .contact(new Contact()
                                 .name("Mini Supermarket Team")
                                 .email("vvqhuy1999@gmail.com")
@@ -32,4 +32,4 @@ public class OpenApiConfig {
                         new Server().url("https://api.minisupermarket.com").description("Production Server")
                 ));
     }
-} 
+}

@@ -21,4 +21,6 @@ public interface ThanhToanRepository extends JpaRepository<ThanhToan, Integer> {
     // Tìm thanh toán theo ID (bao gồm cả đã xóa)
     @Query("SELECT t FROM ThanhToan t WHERE t.maTT = :id")
     Optional<ThanhToan> findByIdIncludeDeleted(@Param("id") Integer id);
+
+
 } 
