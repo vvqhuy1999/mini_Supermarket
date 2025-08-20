@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import com.example.mini_supermarket.dto.ThongKeKhachHangDTO;
 import com.example.mini_supermarket.dto.ThongKeSanPhamDTO;
 import com.example.mini_supermarket.entity.BaoCaoDoanhThu;
@@ -130,7 +129,6 @@ public class BaoCaoDoanhThuController {
             return ResponseEntity.internalServerError().build();
         }
     }
-
 
     @GetMapping("/search/date-range")
     public ResponseEntity<List<BaoCaoDoanhThu>> getBaoCaoByDateRange(
@@ -298,10 +296,9 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<List<ThongKeSanPhamDTO>> getThongKeSanPhamBanChay(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH,
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            List<ThongKeSanPhamDTO> thongKe = baoCaoDoanhThuService.thongKeSanPhamBanChay(tuNgay, denNgay, maCH, limit);
+            List<ThongKeSanPhamDTO> thongKe = baoCaoDoanhThuService.thongKeSanPhamBanChay(tuNgay, denNgay, limit);
             return ResponseEntity.ok(thongKe);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -312,10 +309,9 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<List<ThongKeSanPhamDTO>> getThongKeSanPhamTangTruong(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH,
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            List<ThongKeSanPhamDTO> thongKe = baoCaoDoanhThuService.thongKeSanPhamTangTruong(tuNgay, denNgay, maCH, limit);
+            List<ThongKeSanPhamDTO> thongKe = baoCaoDoanhThuService.thongKeSanPhamTangTruong(tuNgay, denNgay, limit);
             return ResponseEntity.ok(thongKe);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -326,10 +322,9 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<List<ThongKeKhachHangDTO>> getThongKeKhachHangTiemNang(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH,
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            List<ThongKeKhachHangDTO> thongKe = baoCaoDoanhThuService.thongKeKhachHangTiemNang(tuNgay, denNgay, maCH, limit);
+            List<ThongKeKhachHangDTO> thongKe = baoCaoDoanhThuService.thongKeKhachHangTiemNang(tuNgay, denNgay, limit);
             return ResponseEntity.ok(thongKe);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -340,10 +335,9 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<List<ThongKeKhachHangDTO>> getThongKeKhachHangTangTruong(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH,
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            List<ThongKeKhachHangDTO> thongKe = baoCaoDoanhThuService.thongKeKhachHangTangTruong(tuNgay, denNgay, maCH, limit);
+            List<ThongKeKhachHangDTO> thongKe = baoCaoDoanhThuService.thongKeKhachHangTangTruong(tuNgay, denNgay, limit);
             return ResponseEntity.ok(thongKe);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -355,11 +349,10 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<Map<String, Object>> checkBaoCaoExists(
             @RequestParam String loai,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay) {
         Map<String, Object> response = new HashMap<>();
         try {
-            boolean exists = baoCaoDoanhThuService.kiemTraBaoCaoTonTai(loai, tuNgay, denNgay, maCH);
+            boolean exists = baoCaoDoanhThuService.kiemTraBaoCaoTonTai(loai, tuNgay, denNgay);
             response.put("exists", exists);
             response.put("message", exists ? "Báo cáo đã tồn tại" : "Báo cáo chưa tồn tại");
             return ResponseEntity.ok(response);
@@ -372,10 +365,9 @@ public class BaoCaoDoanhThuController {
     @GetMapping("/previous-period")
     public ResponseEntity<BaoCaoDoanhThu> getPreviousPeriodReport(
             @RequestParam String loai,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
-            @RequestParam(required = false) String maCH) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay) {
         try {
-            BaoCaoDoanhThu baoCaoKyTruoc = baoCaoDoanhThuService.layBaoCaoKyTruoc(loai, tuNgay, maCH);
+            BaoCaoDoanhThu baoCaoKyTruoc = baoCaoDoanhThuService.layBaoCaoKyTruoc(loai, tuNgay);
             if (baoCaoKyTruoc != null) {
                 return ResponseEntity.ok(baoCaoKyTruoc);
             } else {

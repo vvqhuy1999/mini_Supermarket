@@ -6,7 +6,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,7 +40,7 @@ public class BaoCaoDoanhThu implements Serializable {
 
 
     @ManyToOne
-    @JoinColumn(name = "MaNVLap")
+    @JoinColumn(name = "MaNVLap", referencedColumnName = "MaNV", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private NhanVien nhanVienLap;
 
     @Column(name = "LoaiBaoCao", length = 50, nullable = false)
@@ -92,31 +94,31 @@ public class BaoCaoDoanhThu implements Serializable {
     // CHI TIẾT DƯỚI DẠNG JSON
     // ===================================
     
-    @Column(name = "TopSanPhamBanChay", columnDefinition = "jsonb")
+    @Column(name = "TopSanPhamBanChay", columnDefinition = "JSON")
     private String topSanPhamBanChay;
     // JSON: [{"maSP": "SP001", "tenSP": "...", "soLuongBan": 100, "doanhThu": 1000000, "tyLeDongGop": 15.5, "tangTruong": 10.5, "thuTuXepHang": 1, "giaTriTrungBinh": 50000}]
 
-    @Column(name = "TopKhachHangTiemNang", columnDefinition = "jsonb")
+    @Column(name = "TopKhachHangTiemNang", columnDefinition = "JSON")
     private String topKhachHangTiemNang;
     // JSON: [{"maKH": "KH001", "tenKH": "...", "soHoaDon": 10, "tongChiTieu": 5000000, "tyLeDongGop": 25.0, "tangTruong": 15.2, "thuTuXepHang": 1, "giaTriTrungBinh": 500000}]
 
-    @Column(name = "ThongKeLoaiSanPham", columnDefinition = "jsonb")
+    @Column(name = "ThongKeLoaiSanPham", columnDefinition = "JSON")
     private String thongKeLoaiSanPham;
     // JSON: [{"maLoaiSP": "LSP001", "tenLoaiSP": "...", "soLuongBan": 500, "doanhThu": 10000000, "tyLeDongGop": 30.0, "tangTruong": 8.5, "thuTuXepHang": 1}]
 
-    @Column(name = "PhanTichTangTruong", columnDefinition = "jsonb")
+    @Column(name = "PhanTichTangTruong", columnDefinition = "JSON")
     private String phanTichTangTruong;
     // JSON: {"doanhThuKyTruoc": 8000000, "tangTruongSoLuong": 15.5, "sanPhamTangTruongNhanh": [...], "khachHangTangTruongManh": [...]}
 
-    @Column(name = "ChiTietSanPham", columnDefinition = "jsonb")
+    @Column(name = "ChiTietSanPham", columnDefinition = "JSON")
     private String chiTietSanPham;
     // JSON: [{"maSP": "SP001", "tenSP": "...", "loaiChiTiet": "SAN_PHAM", "soLuongBan": 100, "doanhThu": 1000000, "soHoaDon": 50, "tangTruong": 10.5, "thuTuXepHang": 1, "tyLeDongGop": 15.5, "giaTriTrungBinh": 50000, "thongTinBosung": "..."}]
 
-    @Column(name = "ChiTietKhachHang", columnDefinition = "jsonb")
+    @Column(name = "ChiTietKhachHang", columnDefinition = "JSON")
     private String chiTietKhachHang;
     // JSON: [{"maKH": "KH001", "tenKH": "...", "loaiChiTiet": "KHACH_HANG", "soHoaDon": 10, "doanhThu": 5000000, "tangTruong": 15.2, "thuTuXepHang": 1, "tyLeDongGop": 25.0, "giaTriTrungBinh": 500000, "thongTinBosung": "..."}]
 
-    @Column(name = "ChiTietLoaiSanPham", columnDefinition = "jsonb")
+    @Column(name = "ChiTietLoaiSanPham", columnDefinition = "JSON")
     private String chiTietLoaiSanPham;
     // JSON: [{"maLoaiSP": "LSP001", "tenLoaiSP": "...", "loaiChiTiet": "LOAI_SAN_PHAM", "soLuongBan": 500, "doanhThu": 10000000, "tangTruong": 8.5, "thuTuXepHang": 1, "tyLeDongGop": 30.0, "thongTinBosung": "..."}]
 

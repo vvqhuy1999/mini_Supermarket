@@ -28,7 +28,9 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     @Query("SELECT " +
            "COALESCE(SUM(h.tongTien), 0) as tongDoanhThu, " +
            "COUNT(h) as soLuongHoaDon, " +
-           "COUNT(DISTINCT h.khachHang.maKH) as soLuongKhachHang " +
+           "COUNT(DISTINCT h.khachHang.maKH) as soLuongKhachHang, " +
+           "COALESCE(AVG(h.tongTien), 0) as doanhThuTrungBinh, " +
+           "COALESCE(AVG(h.tongTien), 0) as hoaDonTrungBinh " +
            "FROM HoaDon h " +
            "WHERE h.ngayLap BETWEEN :tuNgay AND :denNgay " +
            "AND h.isDeleted = false " +
@@ -52,7 +54,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     // Thống kê khách hàng tiềm năng
     @Query("SELECT " +
            "h.khachHang.maKH as maKH, " +
-           "h.khachHang.tenKH as tenKH, " +
+           "h.khachHang.hoTen as tenKH, " +
            "COUNT(h) as soLanMua, " +
            "SUM(h.tongTien) as tongChiTieu, " +
            "AVG(h.tongTien) as chiTieuTrungBinh, " +
@@ -63,7 +65,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
            "AND h.trangThai = 1 " +
            "AND h.khachHang IS NOT NULL " +
            "AND (:maCH IS NULL OR h.nhanVienLap.cuaHang.maCH = :maCH) " +
-           "GROUP BY h.khachHang.maKH, h.khachHang.tenKH " +
+           "GROUP BY h.khachHang.maKH, h.khachHang.hoTen " +
            "ORDER BY tongChiTieu DESC " +
            "LIMIT :limit")
     List<Object[]> thongKeKhachHangTiemNang(@Param("tuNgay") LocalDateTime tuNgay,

@@ -140,8 +140,12 @@ BEGIN
       AND (p_ma_ch IS NULL OR nv.mach = p_ma_ch);
     
     -- Tính top sản phẩm bán chạy
-    SELECT COALESCE(jsonb_agg(
-        jsonb_build_object(
+    SELECT COALESCE(-- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_agg(
+        -- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_build_object(
             'maSP', sp.masp,
             'tenSP', sp.tensp,
             'tenLoaiSP', lsp.tenloai,
@@ -154,7 +158,9 @@ BEGIN
             ELSE 0 END,
             'thuTuXepHang', ROW_NUMBER() OVER (ORDER BY sub.so_luong_ban DESC)
         ) ORDER BY sub.so_luong_ban DESC
-    ), '[]'::jsonb)
+    ), '[]'::-- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+)
     INTO v_top_san_pham
     FROM (
         SELECT 
@@ -180,8 +186,12 @@ BEGIN
     LEFT JOIN loaisanpham lsp ON sp.maloaisp = lsp.maloaisp;
     
     -- Tính top khách hàng tiềm năng
-    SELECT COALESCE(jsonb_agg(
-        jsonb_build_object(
+    SELECT COALESCE(-- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_agg(
+        -- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_build_object(
             'maKH', kh.makh,
             'tenKH', kh.hoten,
             'sdt', kh.sdt,
@@ -195,7 +205,9 @@ BEGIN
             ELSE 0 END,
             'thuTuXepHang', ROW_NUMBER() OVER (ORDER BY sub.tong_chi_tieu DESC)
         ) ORDER BY sub.tong_chi_tieu DESC
-    ), '[]'::jsonb)
+    ), '[]'::-- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+)
     INTO v_top_khach_hang
     FROM (
         SELECT 
@@ -219,8 +231,12 @@ BEGIN
     JOIN khachhang kh ON sub.makh = kh.makh;
     
     -- Thống kê theo loại sản phẩm
-    SELECT COALESCE(jsonb_agg(
-        jsonb_build_object(
+    SELECT COALESCE(-- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_agg(
+        -- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_build_object(
             'maLoaiSP', lsp.maloaisp,
             'tenLoaiSP', lsp.tenloai,
             'soLuongBan', sub.so_luong_ban,
@@ -230,7 +246,9 @@ BEGIN
                 ROUND((sub.doanh_thu / v_tong_doanh_thu * 100)::numeric, 2) 
             ELSE 0 END
         ) ORDER BY sub.doanh_thu DESC
-    ), '[]'::jsonb)
+    ), '[]'::-- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+)
     INTO v_thong_ke_loai_sp
     FROM (
         SELECT 
@@ -255,7 +273,9 @@ BEGIN
     -- Tính tăng trưởng (so với kỳ trước)
     -- TODO: Implement logic tính tăng trưởng
     v_tang_truong := 0;
-    v_phan_tich_tang_truong := jsonb_build_object(
+    v_phan_tich_tang_truong := -- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_build_object(
         'doanhThuKyTruoc', 0,
         'tangTruongPhanTram', 0,
         'nhanXet', 'Chưa có dữ liệu kỳ trước để so sánh'
@@ -323,7 +343,9 @@ BEGIN
         (elem->>'doanhThu')::DECIMAL(18,2),
         (elem->>'tyLeDongGop')::DECIMAL(5,2)
     FROM BaoCaoDoanhThuTongHop bc,
-         jsonb_array_elements(bc.TopSanPhamBanChay) elem
+         -- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_array_elements(bc.TopSanPhamBanChay) elem
     WHERE bc.MaBaoCao = p_ma_bao_cao
       AND bc.IsDeleted = FALSE
     ORDER BY (elem->>'soLuongBan')::INTEGER DESC
@@ -352,7 +374,9 @@ BEGIN
         (elem->>'tongChiTieu')::DECIMAL(18,2),
         (elem->>'tyLeDongGop')::DECIMAL(5,2)
     FROM BaoCaoDoanhThuTongHop bc,
-         jsonb_array_elements(bc.TopKhachHangTiemNang) elem
+         -- Sửa kiểu dữ liệu của cột trong bảng từ JSONB sang JSON
+ALTER TABLE BaoCaoDoanhThuGop MODIFY COLUMN ten_cot JSON;
+_array_elements(bc.TopKhachHangTiemNang) elem
     WHERE bc.MaBaoCao = p_ma_bao_cao
       AND bc.IsDeleted = FALSE
     ORDER BY (elem->>'tongChiTieu')::DECIMAL(18,2) DESC

@@ -301,7 +301,9 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
             dto.setGiaTriTrungBinh((BigDecimal) row[4]);
             dto.setThuTuXepHang(thuTu++);
             
-            // Tính tăng trưởng (có thể implement sau)
+            // Set default values for missing fields
+            dto.setLoaiKhachHang("Thường");
+            dto.setDiemTichLuy(0);
             dto.setTangTruong(BigDecimal.ZERO);
             
             dtoList.add(dto);

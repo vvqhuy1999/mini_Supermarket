@@ -27,12 +27,14 @@ public interface ChiTietHoaDonRepository extends JpaRepository<ChiTietHoaDon, In
     @Query("SELECT " +
            "sp.maSP as maSP, " +
            "sp.tenSP as tenSP, " +
+           "COALESCE(lsp.tenLoai, 'Chưa phân loại') as tenLoaiSP, " +
            "SUM(c.soLuong) as soLuongBan, " +
            "SUM(c.soLuong * c.donGiaBan) as doanhThu, " +
            "COUNT(DISTINCT c.hoaDon.maHD) as soLanBan, " +
            "AVG(c.soLuong * c.donGiaBan) as giaTriTrungBinh " +
            "FROM ChiTietHoaDon c " +
            "JOIN c.sanPham sp " +
+           "LEFT JOIN sp.loaiSanPham lsp " +
            "JOIN c.hoaDon h " +
            "WHERE h.ngayLap BETWEEN :tuNgay AND :denNgay " +
            "AND c.isDeleted = false " +
@@ -40,7 +42,7 @@ public interface ChiTietHoaDonRepository extends JpaRepository<ChiTietHoaDon, In
            "AND h.trangThai = 1 " +
            "AND sp.trangThai = 1 " +
            "AND (:maCH IS NULL OR h.nhanVienLap.cuaHang.maCH = :maCH) " +
-           "GROUP BY sp.maSP, sp.tenSP " +
+           "GROUP BY sp.maSP, sp.tenSP, lsp.tenLoai " +
            "ORDER BY doanhThu DESC " +
            "LIMIT :limit")
     List<Object[]> thongKeSanPhamBanChay(@Param("tuNgay") LocalDateTime tuNgay,

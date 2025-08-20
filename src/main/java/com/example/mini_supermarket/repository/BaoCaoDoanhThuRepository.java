@@ -118,7 +118,7 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     
     @Query(value = """
         SELECT * FROM BaoCaoDoanhThu b
-        WHERE b.TopSanPhamBanChay::jsonb @> '[{"maSP": ?1}]'::jsonb
+        WHERE JSON_CONTAINS(b.TopSanPhamBanChay, JSON_OBJECT('maSP', ?1))
           AND b.IsDeleted = false
         ORDER BY b.NgayBaoCao DESC
     """, nativeQuery = true)
@@ -126,7 +126,7 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     
     @Query(value = """
         SELECT * FROM BaoCaoDoanhThu b
-        WHERE b.TopKhachHangTiemNang::jsonb @> '[{"maKH": ?1}]'::jsonb
+        WHERE JSON_CONTAINS(b.TopKhachHangTiemNang, JSON_OBJECT('maKH', ?1))
           AND b.IsDeleted = false
         ORDER BY b.NgayBaoCao DESC
     """, nativeQuery = true)
@@ -134,7 +134,7 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
 
     @Query(value = """
         SELECT * FROM BaoCaoDoanhThu b
-        WHERE b.ChiTietSanPham::jsonb @> '[{"maSP": ?1}]'::jsonb
+        WHERE JSON_CONTAINS(b.ChiTietSanPham, JSON_OBJECT('maSP', ?1))
           AND b.IsDeleted = false
         ORDER BY b.NgayBaoCao DESC
     """, nativeQuery = true)
@@ -142,7 +142,7 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
 
     @Query(value = """
         SELECT * FROM BaoCaoDoanhThu b
-        WHERE b.ChiTietKhachHang::jsonb @> '[{"maKH": ?1}]'::jsonb
+        WHERE JSON_CONTAINS(b.ChiTietKhachHang, JSON_OBJECT('maKH', ?1))
           AND b.IsDeleted = false
         ORDER BY b.NgayBaoCao DESC
     """, nativeQuery = true)
@@ -150,7 +150,7 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
 
     @Query(value = """
         SELECT * FROM BaoCaoDoanhThu b
-        WHERE b.ThongKeLoaiSanPham::jsonb @> '[{"maLoaiSP": ?1}]'::jsonb
+        WHERE JSON_CONTAINS(b.ThongKeLoaiSanPham, JSON_OBJECT('maLoaiSP', ?1))
           AND b.IsDeleted = false
         ORDER BY b.NgayBaoCao DESC
     """, nativeQuery = true)
