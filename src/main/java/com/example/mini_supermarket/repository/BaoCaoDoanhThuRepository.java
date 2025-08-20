@@ -30,9 +30,6 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.loaiBaoCao = :loai AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
     List<BaoCaoDoanhThu> findByLoaiBaoCao(@Param("loai") String loai);
     
-    @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.cuaHang.maCH = :maCH AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
-    List<BaoCaoDoanhThu> findByCuaHang(@Param("maCH") String maCH);
-    
     @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.ngayBaoCao BETWEEN :tuNgay AND :denNgay AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
     List<BaoCaoDoanhThu> findByDateRange(@Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay);
     
@@ -42,9 +39,6 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.loaiBaoCao = :loai AND b.ngayBaoCao BETWEEN :tuNgay AND :denNgay AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
     List<BaoCaoDoanhThu> findByLoaiAndDateRange(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay);
     
-    @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.cuaHang.maCH = :maCH AND b.ngayBaoCao BETWEEN :tuNgay AND :denNgay AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
-    List<BaoCaoDoanhThu> findByCuaHangAndDateRange(@Param("maCH") String maCH, @Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay);
-    
     // ===================================
     // ADVANCED SEARCH
     // ===================================
@@ -52,14 +46,12 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     @Query("""
         SELECT b FROM BaoCaoDoanhThu b 
         WHERE (:loai IS NULL OR b.loaiBaoCao = :loai)
-          AND (:maCH IS NULL OR b.cuaHang.maCH = :maCH OR (:maCH IS NULL AND b.cuaHang IS NULL))
           AND b.ngayBaoCao BETWEEN :tuNgay AND :denNgay
           AND b.isDeleted = false
         ORDER BY b.ngayBaoCao DESC
     """)
     List<BaoCaoDoanhThu> findByAdvancedCriteria(
         @Param("loai") String loai, 
-        @Param("maCH") String maCH, 
         @Param("tuNgay") LocalDate tuNgay, 
         @Param("denNgay") LocalDate denNgay
     );
@@ -73,10 +65,9 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
         WHERE b.loaiBaoCao = :loai 
           AND b.tuNgay = :tuNgay 
           AND b.denNgay = :denNgay 
-          AND (:maCH IS NULL OR b.cuaHang.maCH = :maCH OR (:maCH IS NULL AND b.cuaHang IS NULL))
           AND b.isDeleted = false
     """)
-    boolean existsByLoaiAndDateRangeAndCuaHang(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay, @Param("maCH") String maCH);
+    boolean existsByLoaiAndDateRange(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay);
     
     // ===================================
     // STATISTICAL QUERIES
@@ -89,12 +80,11 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
         SELECT b FROM BaoCaoDoanhThu b 
         WHERE b.loaiBaoCao = :loai 
           AND b.denNgay < :tuNgay 
-          AND (:maCH IS NULL OR b.cuaHang.maCH = :maCH OR (:maCH IS NULL AND b.cuaHang IS NULL))
           AND b.isDeleted = false 
         ORDER BY b.denNgay DESC 
         LIMIT 1
     """)
-    Optional<BaoCaoDoanhThu> findPreviousPeriod(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay, @Param("maCH") String maCH);
+    Optional<BaoCaoDoanhThu> findPreviousPeriod(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay);
     
     @Query("""
         SELECT 
@@ -105,10 +95,9 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
         FROM BaoCaoDoanhThu b 
         WHERE b.loaiBaoCao = :loai 
           AND b.ngayBaoCao BETWEEN :tuNgay AND :denNgay
-          AND (:maCH IS NULL OR b.cuaHang.maCH = :maCH)
           AND b.isDeleted = false
     """)
-    Object[] getThongKeTongHop(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay, @Param("maCH") String maCH);
+    Object[] getThongKeTongHop(@Param("loai") String loai, @Param("tuNgay") LocalDate tuNgay, @Param("denNgay") LocalDate denNgay);
     
     // ===================================
     // TOP PERFORMING REPORTS

@@ -22,22 +22,20 @@ public interface BaoCaoDoanhThuService {
     
     // Tìm kiếm báo cáo
     List<BaoCaoDoanhThu> findByLoaiBaoCao(String loai);
-    List<BaoCaoDoanhThu> findByCuaHang(String maCH);
     List<BaoCaoDoanhThu> findByDateRange(LocalDate tuNgay, LocalDate denNgay);
     List<BaoCaoDoanhThu> findByLoaiAndDateRange(String loai, LocalDate tuNgay, LocalDate denNgay);
-    List<BaoCaoDoanhThu> findByCuaHangAndDateRange(String maCH, LocalDate tuNgay, LocalDate denNgay);
     
     // Tạo báo cáo tự động
-    BaoCaoDoanhThu taoBaoCaoDoanhThu(String loaiBaoCao, LocalDate tuNgay, LocalDate denNgay, String maCH);
-    BaoCaoDoanhThu taoOrCapNhatBaoCao(String loaiBaoCao, LocalDate tuNgay, LocalDate denNgay, String maCH);
+    BaoCaoDoanhThu taoBaoCaoDoanhThu(String loaiBaoCao, LocalDate tuNgay, LocalDate denNgay);
+    BaoCaoDoanhThu taoOrCapNhatBaoCao(String loaiBaoCao, LocalDate tuNgay, LocalDate denNgay);
     
     // Thống kê sản phẩm
-    List<ThongKeSanPhamDTO> thongKeSanPhamBanChay(LocalDate tuNgay, LocalDate denNgay, String maCH, int limit);
-    List<ThongKeSanPhamDTO> thongKeSanPhamTangTruong(LocalDate tuNgay, LocalDate denNgay, String maCH, int limit);
+    List<ThongKeSanPhamDTO> thongKeSanPhamBanChay(LocalDate tuNgay, LocalDate denNgay, int limit);
+    List<ThongKeSanPhamDTO> thongKeSanPhamTangTruong(LocalDate tuNgay, LocalDate denNgay, int limit);
     
     // Thống kê khách hàng
-    List<ThongKeKhachHangDTO> thongKeKhachHangTiemNang(LocalDate tuNgay, LocalDate denNgay, String maCH, int limit);
-    List<ThongKeKhachHangDTO> thongKeKhachHangTangTruong(LocalDate tuNgay, LocalDate denNgay, String maCH, int limit);
+    List<ThongKeKhachHangDTO> thongKeKhachHangTiemNang(LocalDate tuNgay, LocalDate denNgay, int limit);
+    List<ThongKeKhachHangDTO> thongKeKhachHangTangTruong(LocalDate tuNgay, LocalDate denNgay, int limit);
     
     // Truy xuất JSON data
     List<Map<String, Object>> getTopSanPhamFromJson(Long maBaoCao);
@@ -56,6 +54,6 @@ public interface BaoCaoDoanhThuService {
     List<BaoCaoDoanhThu> findByLoaiSanPhamContains(String maLoaiSP);
     
     // Utility methods
-    boolean kiemTraBaoCaoTonTai(String loai, LocalDate tuNgay, LocalDate denNgay, String maCH);
-    BaoCaoDoanhThu layBaoCaoKyTruoc(String loai, LocalDate tuNgay, String maCH);
+    boolean kiemTraBaoCaoTonTai(String loai, LocalDate tuNgay, LocalDate denNgay);
+    BaoCaoDoanhThu layBaoCaoKyTruoc(String loai, LocalDate tuNgay);
 }

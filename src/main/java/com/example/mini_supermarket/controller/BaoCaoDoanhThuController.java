@@ -131,15 +131,6 @@ public class BaoCaoDoanhThuController {
         }
     }
 
-    @GetMapping("/search/cuahang/{maCH}")
-    public ResponseEntity<List<BaoCaoDoanhThu>> getBaoCaoByCuaHang(@PathVariable String maCH) {
-        try {
-            List<BaoCaoDoanhThu> baoCaoList = baoCaoDoanhThuService.findByCuaHang(maCH);
-            return ResponseEntity.ok(baoCaoList);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
 
     @GetMapping("/search/date-range")
     public ResponseEntity<List<BaoCaoDoanhThu>> getBaoCaoByDateRange(
@@ -156,22 +147,13 @@ public class BaoCaoDoanhThuController {
     @GetMapping("/search/advanced")
     public ResponseEntity<List<BaoCaoDoanhThu>> getBaoCaoAdvanced(
             @RequestParam(required = false) String loai,
-            @RequestParam(required = false) String maCH,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay) {
         try {
             List<BaoCaoDoanhThu> baoCaoList;
             
-            if (loai != null && maCH != null) {
-                // Tìm theo cả loại và cửa hàng
-                baoCaoList = baoCaoDoanhThuService.findByLoaiAndDateRange(loai, tuNgay, denNgay)
-                    .stream()
-                    .filter(bc -> bc.getCuaHang() != null && bc.getCuaHang().getMaCH().equals(maCH))
-                    .toList();
-            } else if (loai != null) {
+            if (loai != null) {
                 baoCaoList = baoCaoDoanhThuService.findByLoaiAndDateRange(loai, tuNgay, denNgay);
-            } else if (maCH != null) {
-                baoCaoList = baoCaoDoanhThuService.findByCuaHangAndDateRange(maCH, tuNgay, denNgay);
             } else {
                 baoCaoList = baoCaoDoanhThuService.findByDateRange(tuNgay, denNgay);
             }
@@ -187,12 +169,11 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<Map<String, Object>> generateBaoCao(
             @RequestParam String loaiBaoCao,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay) {
         Map<String, Object> response = new HashMap<>();
         try {
             // Kiểm tra báo cáo đã tồn tại
-            boolean exists = baoCaoDoanhThuService.kiemTraBaoCaoTonTai(loaiBaoCao, tuNgay, denNgay, maCH);
+            boolean exists = baoCaoDoanhThuService.kiemTraBaoCaoTonTai(loaiBaoCao, tuNgay, denNgay);
             
             if (exists) {
                 response.put("success", false);
@@ -200,7 +181,7 @@ public class BaoCaoDoanhThuController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            BaoCaoDoanhThu baoCao = baoCaoDoanhThuService.taoBaoCaoDoanhThu(loaiBaoCao, tuNgay, denNgay, maCH);
+            BaoCaoDoanhThu baoCao = baoCaoDoanhThuService.taoBaoCaoDoanhThu(loaiBaoCao, tuNgay, denNgay);
             response.put("success", true);
             response.put("message", "Tạo báo cáo doanh thu thành công");
             response.put("data", baoCao);
@@ -216,11 +197,10 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<Map<String, Object>> regenerateBaoCao(
             @RequestParam String loaiBaoCao,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
-            @RequestParam(required = false) String maCH) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay) {
         Map<String, Object> response = new HashMap<>();
         try {
-            BaoCaoDoanhThu baoCao = baoCaoDoanhThuService.taoOrCapNhatBaoCao(loaiBaoCao, tuNgay, denNgay, maCH);
+            BaoCaoDoanhThu baoCao = baoCaoDoanhThuService.taoOrCapNhatBaoCao(loaiBaoCao, tuNgay, denNgay);
             response.put("success", true);
             response.put("message", "Tạo lại báo cáo doanh thu thành công");
             response.put("data", baoCao);

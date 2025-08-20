@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "BaoCaoDoanhThu", indexes = {
         @Index(name = "idx_baocaodoanhthu_ngay", columnList = "NgayBaoCao"),
         @Index(name = "idx_baocaodoanhthu_loai", columnList = "LoaiBaoCao"),
-        @Index(name = "idx_baocaodoanhthu_cuahang", columnList = "MaCH"),
         @Index(name = "idx_baocaodoanhthu_khoangthoi", columnList = "TuNgay, DenNgay")
 })
 @Data
@@ -37,9 +36,6 @@ public class BaoCaoDoanhThu implements Serializable {
     @Column(name = "MaBaoCao")
     private Long maBaoCao;
 
-    @ManyToOne
-    @JoinColumn(name = "MaCH")
-    private CuaHang cuaHang;
 
     @ManyToOne
     @JoinColumn(name = "MaNVLap")
@@ -179,12 +175,10 @@ public class BaoCaoDoanhThu implements Serializable {
             return this.tenBaoCao;
         }
         
-        String tenCuaHang = (this.cuaHang != null) ? this.cuaHang.getTenCH() : "Toàn hệ thống";
-        return String.format("Báo cáo %s (%s - %s) - %s", 
+        return String.format("Báo cáo %s (%s - %s) - Toàn hệ thống", 
                             this.loaiBaoCao,
                             this.tuNgay.toString(),
-                            this.denNgay.toString(),
-                            tenCuaHang);
+                            this.denNgay.toString());
     }
 
     public long getSoNgayBaoCao() {
