@@ -317,28 +317,6 @@ CREATE TABLE chitietphieuxuat (
     CONSTRAINT chk_chitietphieuxuat_dongiaxuat CHECK (dongiaxuat > 0)
 );
 
--- Orders Table
-CREATE TABLE donhang (
-    madh VARCHAR(50) PRIMARY KEY,
-    makh VARCHAR(50),
-    manv VARCHAR(50),
-    ngaydathang TIMESTAMP NOT NULL,
-    ngaygiaohang TIMESTAMP,
-    diachigiaohang VARCHAR(255) NOT NULL,
-    trangthai INT NOT NULL, -- 0=Pending, 1=Shipping, 2=Completed, 3=Canceled
-    isdeleted BOOLEAN DEFAULT FALSE
-);
-
--- Order Details Table
-CREATE TABLE chitietdonhang (
-    macthd SERIAL PRIMARY KEY,
-    madh VARCHAR(50) NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluong INT NOT NULL,
-    dongia DECIMAL(15,2) NOT NULL,
-    giamgia DECIMAL(5,2) DEFAULT 0,
-    isdeleted BOOLEAN DEFAULT FALSE
-);
 
 -- Table for sales invoices
 CREATE TABLE hoadon (
@@ -513,14 +491,6 @@ ALTER TABLE phieuxuatkho ADD CONSTRAINT fk_phieuxuatkho_nhanvien FOREIGN KEY (ma
 -- Foreign keys for chitietphieuxuat
 ALTER TABLE chitietphieuxuat ADD CONSTRAINT fk_chitietphieuxuat_phieuxuat FOREIGN KEY (mapxk) REFERENCES phieuxuatkho(mapxk) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE chitietphieuxuat ADD CONSTRAINT fk_chitietphieuxuat_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE NO ACTION ON UPDATE CASCADE;
-
--- Foreign keys for donhang
-ALTER TABLE donhang ADD CONSTRAINT fk_donhang_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE NO ACTION ON UPDATE NO ACTION;
-ALTER TABLE donhang ADD CONSTRAINT fk_donhang_nhanvien FOREIGN KEY (manv) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
--- Foreign keys for chitietdonhang
-ALTER TABLE chitietdonhang ADD CONSTRAINT fk_chitietdonhang_donhang FOREIGN KEY (madh) REFERENCES donhang(madh) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE chitietdonhang ADD CONSTRAINT fk_chitietdonhang_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- Foreign keys for hoadon
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1231,18 +1201,6 @@ INSERT INTO chitietphieuxuat (mapxk, masp, soluongxuat, dongiaxuat) VALUES
 (3, 'SP001', 50, 15000),
 (3, 'SP002', 40, 18000),
 (3, 'SP003', 50, 12000);
-
-INSERT INTO donhang (madh, makh, manv, ngaydathang, ngaygiaohang, diachigiaohang, trangthai) VALUES
-('DH001', 'KH001', 'NV003', '2025-07-15 10:00:00', NULL, '123 Q1', 0),
-('DH002', 'KH002', 'NV003', '2025-07-16 11:30:00', '2025-07-17 15:00:00', '456 Q3', 2),
-('DH003', 'KH005', 'NV010', '2025-07-16 14:00:00', NULL, '222 Tân Bình', 1);
-
-INSERT INTO chitietdonhang (madh, masp, soluong, dongia) VALUES
-('DH001', 'SP001', 2, 15000),
-('DH001', 'SP021', 1, 120000),
-('DH002', 'SP061', 10, 6000),
-('DH002', 'SP121', 2, 28000),
-('DH003', 'SP081', 1, 245000);
 
 
 INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, mapttt, trangthai, diemtichluy, ghichu, nguoitao) VALUES

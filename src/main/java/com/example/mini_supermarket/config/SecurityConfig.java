@@ -155,12 +155,7 @@ public class SecurityConfig {
         
         "/api/khachhang/**", 
 
-        // Đơn hàng cá nhân - CHỈ XEM VÀ TẠO
-        "/api/donhang",                 // GET: Xem đơn hàng cá nhân, POST: Tạo đơn hàng
-        "/api/donhang/*",               // GET: Xem chi tiết đơn hàng cá nhân
-        "/api/donhang/from-cart",       // POST: Tạo đơn hàng từ giỏ hàng
-        "/api/chitietdonhang",          // GET: Xem chi tiết đơn hàng cá nhân
-        "/api/chitietdonhang/*",        // GET: Xem chi tiết cụ thể
+        // Đơn hàng đã loại bỏ
         
         // Hóa đơn cá nhân - CHỈ XEM
         "/api/hoadon",                  // GET: Xem hóa đơn cá nhân
@@ -204,9 +199,7 @@ public class SecurityConfig {
         "/api/giasanpham",              // GET: Xem giá sản phẩm
         "/api/giasanpham/*",            // GET: Xem chi tiết giá
         
-        // Quản lý đơn hàng - FULL CRUD
-        "/api/donhang/**",     // Quản lý đơn hàng (nhân viên)
-        "/api/chitietdonhang/**", // Quản lý chi tiết đơn hàng (nhân viên)
+        // Đơn hàng đã loại bỏ
         
         // Quản lý hóa đơn - FULL CRUD
         "/api/hoadon/**",      // Quản lý hóa đơn (nhân viên)
@@ -269,9 +262,7 @@ public class SecurityConfig {
         "/api/hoadon/**",       // Quản lý hóa đơn (quản lý)
         "/api/chitiethoadon/**", // Quản lý chi tiết hóa đơn (quản lý)
         
-        // Quản lý đơn hàng nâng cao - FULL CRUD
-        "/api/donhang/**",      // Quản lý đơn hàng (quản lý)
-        "/api/chitietdonhang/**", // Quản lý chi tiết đơn hàng (quản lý)
+        // Đơn hàng đã loại bỏ
         
         // Upload & Media management - FULL CRUD
         "/api/upload/**",               // API upload ảnh sản phẩm
@@ -338,11 +329,6 @@ public class SecurityConfig {
             
             // Cấu hình authorization - Phân quyền theo role cụ thể
             .authorizeHttpRequests(authz -> authz
-                // === TEST MODE: MỞ TẤT CẢ API ĐỂ TEST ===
-                .anyRequest().permitAll()
-                
-                // === COMMENT OUT TẤT CẢ PHÂN QUYỀN ĐỂ TEST ===
-                /*
                 // API công khai - Không cần authentication
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 
@@ -363,7 +349,6 @@ public class SecurityConfig {
                 
                 // Tất cả request khác - Cần authentication
                 .anyRequest().authenticated()
-                */
             );
         
         return http.build();
@@ -392,4 +377,3 @@ public class SecurityConfig {
         return source;
     }
 } 
-

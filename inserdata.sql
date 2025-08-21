@@ -577,18 +577,6 @@ INSERT INTO chitietphieuxuat (mapxk, masp, soluongxuat, dongiaxuat) VALUES
 (3, 'SP002', 40, 18000),
 (3, 'SP003', 50, 12000);
 
-INSERT INTO donhang (madh, makh, manv, ngaydathang, ngaygiaohang, diachigiaohang, trangthai) VALUES
-('DH001', 'KH001', 'NV003', '2025-07-15 10:00:00', NULL, '123 Q1', 0),
-('DH002', 'KH002', 'NV003', '2025-07-16 11:30:00', '2025-07-17 15:00:00', '456 Q3', 2),
-('DH003', 'KH005', 'NV010', '2025-07-16 14:00:00', NULL, '222 Tân Bình', 1);
-
-INSERT INTO chitietdonhang (madh, masp, soluong, dongia) VALUES
-('DH001', 'SP001', 2, 15000),
-('DH001', 'SP021', 1, 120000),
-('DH002', 'SP061', 10, 6000),
-('DH002', 'SP121', 2, 28000),
-('DH003', 'SP081', 1, 245000);
-
 
 INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, mapttt, trangthai, diemtichluy, ghichu, nguoitao) VALUES
 ('KH001', 'NV002', 'KMSP001', '2025-07-11 14:00:00', 500000, 50000, 'PTTT001', 1, 50, 'Hóa đơn tháng 7', 'NV002'),

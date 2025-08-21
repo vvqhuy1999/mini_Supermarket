@@ -98,8 +98,4 @@ public class SanPham implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<KhuyenMaiSanPham> khuyenMaiSanPhams;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ChiTietDonHang> chiTietDonHangs;
 } 

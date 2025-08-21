@@ -115,8 +115,4 @@ public class NhanVien implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "nguoiSua", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<HoaDon> hoaDonsSua;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DonHang> donHangs;
 } 
