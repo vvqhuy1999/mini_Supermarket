@@ -1,6 +1,7 @@
 package com.example.mini_supermarket.controller;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,12 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.mini_supermarket.dto.ThongKeKhachHangDTO;
 import com.example.mini_supermarket.dto.ThongKeSanPhamDTO;
 import com.example.mini_supermarket.entity.BaoCaoDoanhThu;
+import com.example.mini_supermarket.entity.HoaDon;
 import com.example.mini_supermarket.service.BaoCaoDoanhThuService;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/baocao-doanhthu")
+@RequestMapping("/api/baocaodoanhthu")
 @CrossOrigin(origins = "*")
 public class BaoCaoDoanhThuController {
 
@@ -46,14 +48,12 @@ public class BaoCaoDoanhThuController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BaoCaoDoanhThu> getBaoCaoById(@PathVariable Long id) {
+    public ResponseEntity<BaoCaoDoanhThu> getBaoCaoById(@PathVariable String id) {
         try {
             BaoCaoDoanhThu baoCao = baoCaoDoanhThuService.findActiveById(id);
             return ResponseEntity.ok(baoCao);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -79,7 +79,7 @@ public class BaoCaoDoanhThuController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateBaoCao(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody BaoCaoDoanhThu baoCao) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -101,7 +101,7 @@ public class BaoCaoDoanhThuController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteBaoCao(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteBaoCao(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
         try {
             baoCaoDoanhThuService.softDeleteById(id);
@@ -212,7 +212,7 @@ public class BaoCaoDoanhThuController {
 
     // Detail Operations
     @GetMapping("/{id}/chitiet")
-    public ResponseEntity<Map<String, Object>> getChiTietBaoCao(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getChiTietBaoCao(@PathVariable String id) {
         try {
             Map<String, Object> result = new HashMap<>();
             result.put("sanPham", baoCaoDoanhThuService.getChiTietSanPhamFromJson(id));
@@ -226,7 +226,7 @@ public class BaoCaoDoanhThuController {
 
     @GetMapping("/{id}/chitiet/{loai}")
     public ResponseEntity<List<Map<String, Object>>> getChiTietBaoCaoByLoai(
-            @PathVariable Long id,
+            @PathVariable String id,
             @PathVariable String loai) {
         try {
             List<Map<String, Object>> chiTietList;
@@ -251,7 +251,7 @@ public class BaoCaoDoanhThuController {
 
     @GetMapping("/{id}/top-sanpham")
     public ResponseEntity<List<Map<String, Object>>> getTopSanPham(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestParam(defaultValue = "10") int limit) {
         try {
             List<Map<String, Object>> topSanPham = baoCaoDoanhThuService.getTopSanPhamFromJson(id);
@@ -267,7 +267,7 @@ public class BaoCaoDoanhThuController {
 
     @GetMapping("/{id}/top-khachhang")
     public ResponseEntity<List<Map<String, Object>>> getTopKhachHang(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestParam(defaultValue = "10") int limit) {
         try {
             List<Map<String, Object>> topKhachHang = baoCaoDoanhThuService.getTopKhachHangFromJson(id);
@@ -282,7 +282,7 @@ public class BaoCaoDoanhThuController {
     }
 
     @GetMapping("/{id}/phan-tich-tang-truong")
-    public ResponseEntity<Map<String, Object>> getPhanTichTangTruong(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getPhanTichTangTruong(@PathVariable String id) {
         try {
             Map<String, Object> phanTich = baoCaoDoanhThuService.getPhanTichTangTruongFromJson(id);
             return ResponseEntity.ok(phanTich);
@@ -405,6 +405,100 @@ public class BaoCaoDoanhThuController {
     public ResponseEntity<List<BaoCaoDoanhThu>> findByLoaiSanPham(@PathVariable String maLoaiSP) {
         try {
             List<BaoCaoDoanhThu> results = baoCaoDoanhThuService.findByLoaiSanPhamContains(maLoaiSP);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // ===================================
+    // HOADON RELATIONSHIP ENDPOINTS
+    // ===================================
+
+    @GetMapping("/search/hoadon/{maHD}")
+    public ResponseEntity<List<BaoCaoDoanhThu>> findByHoaDon(@PathVariable Integer maHD) {
+        try {
+            List<BaoCaoDoanhThu> results = baoCaoDoanhThuService.findByHoaDonId(maHD);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{id}/hoadons")
+    public ResponseEntity<List<HoaDon>> getHoaDonsByBaoCao(@PathVariable String id) {
+        try {
+            List<HoaDon> hoaDons = baoCaoDoanhThuService.findHoaDonsByBaoCaoId(id);
+            return ResponseEntity.ok(hoaDons);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{id}/count-hoadons")
+    public ResponseEntity<Map<String, Object>> countHoaDonsByBaoCaoId(@PathVariable String id) {
+        try {
+            Long count = baoCaoDoanhThuService.countHoaDonsByBaoCaoId(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("count", count);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{id}/doanhthu-from-hoadons")
+    public ResponseEntity<Map<String, Object>> getDoanhThuFromHoaDons(@PathVariable String id) {
+        try {
+            java.math.BigDecimal doanhThu = baoCaoDoanhThuService.sumDoanhThuFromHoaDons(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("doanhThu", doanhThu);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/{id}/link-hoadons")
+    public ResponseEntity<Map<String, Object>> linkHoaDonsToBaoCao(
+            @PathVariable String id,
+            @RequestBody List<Integer> hoaDonIds) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            baoCaoDoanhThuService.linkHoaDonsToBaoCao(id, hoaDonIds);
+            response.put("success", true);
+            response.put("message", "Liên kết hóa đơn thành công");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi liên kết hóa đơn: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @PostMapping("/{id}/unlink-hoadons")
+    public ResponseEntity<Map<String, Object>> unlinkHoaDonsFromBaoCao(
+            @PathVariable String id,
+            @RequestBody List<Integer> hoaDonIds) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            baoCaoDoanhThuService.unlinkHoaDonsFromBaoCao(id, hoaDonIds);
+            response.put("success", true);
+            response.put("message", "Hủy liên kết hóa đơn thành công");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi hủy liên kết hóa đơn: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @GetMapping("/search/hoadon-daterange")
+    public ResponseEntity<List<BaoCaoDoanhThu>> findByHoaDonDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime tuNgay,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime denNgay) {
+        try {
+            List<BaoCaoDoanhThu> results = baoCaoDoanhThuService.findByHoaDonDateRange(tuNgay, denNgay);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();

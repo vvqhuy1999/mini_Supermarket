@@ -1,17 +1,22 @@
 package com.example.mini_supermarket.repository;
 
 import com.example.mini_supermarket.entity.BaoCaoDoanhThu;
+import com.example.mini_supermarket.entity.HoaDon;
+import com.example.mini_supermarket.entity.PhieuNhapHang;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, Long> {
+public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, String> {
     
     // ===================================
     // BASIC QUERIES
@@ -21,7 +26,7 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     List<BaoCaoDoanhThu> findAllActive();
     
     @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.maBaoCao = :id AND b.isDeleted = false")
-    Optional<BaoCaoDoanhThu> findActiveById(@Param("id") Long id);
+    Optional<BaoCaoDoanhThu> findActiveById(@Param("id") String id);
     
     // ===================================
     // SEARCH BY CRITERIA
@@ -171,4 +176,97 @@ public interface BaoCaoDoanhThuRepository extends JpaRepository<BaoCaoDoanhThu, 
     
     @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.ngayTao < :cutoffDate AND b.isDeleted = false")
     List<BaoCaoDoanhThu> findOldReports(@Param("cutoffDate") LocalDate cutoffDate);
+    
+    // ===================================
+    // HOADON RELATIONSHIP QUERIES
+    // ===================================
+    
+    @Query("SELECT b FROM BaoCaoDoanhThu b JOIN b.hoaDons h WHERE h.maHD = :maHD AND b.isDeleted = false")
+    List<BaoCaoDoanhThu> findByHoaDonId(@Param("maHD") Integer maHD);
+    
+    @Query("SELECT h FROM BaoCaoDoanhThu b JOIN b.hoaDons h WHERE b.maBaoCao = :maBaoCao AND h.isDeleted = false ORDER BY h.ngayLap DESC")
+    List<HoaDon> findHoaDonsByBaoCaoId(@Param("maBaoCao") String maBaoCao);
+    
+    @Query("SELECT COUNT(h) FROM BaoCaoDoanhThu b JOIN b.hoaDons h WHERE b.maBaoCao = :maBaoCao AND h.isDeleted = false")
+    Long countHoaDonsByBaoCaoId(@Param("maBaoCao") String maBaoCao);
+    
+    @Query("SELECT SUM(h.tongTien) FROM BaoCaoDoanhThu b JOIN b.hoaDons h WHERE b.maBaoCao = :maBaoCao AND h.isDeleted = false AND h.trangThai = 1")
+    BigDecimal sumDoanhThuFromHoaDons(@Param("maBaoCao") String maBaoCao);
+    
+    @Query("""
+        SELECT b FROM BaoCaoDoanhThu b 
+        WHERE b.isDeleted = false 
+        AND EXISTS (
+            SELECT 1 FROM b.hoaDons h 
+            WHERE h.ngayLap BETWEEN :tuNgay AND :denNgay 
+            AND h.isDeleted = false 
+            AND h.trangThai = 1
+        )
+        ORDER BY b.ngayBaoCao DESC
+    """)
+    List<BaoCaoDoanhThu> findByHoaDonDateRange(@Param("tuNgay") LocalDateTime tuNgay, @Param("denNgay") LocalDateTime denNgay);
+
+    // ===================================
+    // QUERIES FOR NEW RELATIONSHIPS
+    // ===================================
+
+    // Queries for NhanVien relationship
+    @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.nhanVienTao.maNV = :maNV AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
+    List<BaoCaoDoanhThu> findByNhanVienTao(@Param("maNV") String maNV);
+
+    @Query("SELECT COUNT(b) FROM BaoCaoDoanhThu b WHERE b.nhanVienTao.maNV = :maNV AND b.isDeleted = false")
+    long countByNhanVienTao(@Param("maNV") String maNV);
+
+    // Queries for CuaHang relationship
+    @Query("SELECT b FROM BaoCaoDoanhThu b WHERE b.cuaHang.maCH = :maCH AND b.isDeleted = false ORDER BY b.ngayBaoCao DESC")
+    List<BaoCaoDoanhThu> findByCuaHang(@Param("maCH") String maCH);
+
+    @Query("SELECT COUNT(b) FROM BaoCaoDoanhThu b WHERE b.cuaHang.maCH = :maCH AND b.isDeleted = false")
+    long countByCuaHang(@Param("maCH") String maCH);
+
+    @Query("SELECT SUM(b.tongDoanhThu) FROM BaoCaoDoanhThu b WHERE b.cuaHang.maCH = :maCH AND b.isDeleted = false")
+    BigDecimal sumDoanhThuByCuaHang(@Param("maCH") String maCH);
+
+    // Queries for PhieuNhapHang relationship
+    @Query("SELECT b FROM BaoCaoDoanhThu b JOIN b.phieuNhapHangs p WHERE p.maPN = :maPN AND b.isDeleted = false")
+    List<BaoCaoDoanhThu> findByPhieuNhapHang(@Param("maPN") Integer maPN);
+
+    @Query("SELECT p FROM BaoCaoDoanhThu b JOIN b.phieuNhapHangs p WHERE b.maBaoCao = :maBaoCao AND p.isDeleted = false")
+    List<PhieuNhapHang> findPhieuNhapHangsByBaoCaoId(@Param("maBaoCao") String maBaoCao);
+
+    @Query("SELECT COUNT(p) FROM BaoCaoDoanhThu b JOIN b.phieuNhapHangs p WHERE b.maBaoCao = :maBaoCao AND p.isDeleted = false")
+    long countPhieuNhapHangsByBaoCaoId(@Param("maBaoCao") String maBaoCao);
+
+    @Query("SELECT SUM(p.tongTienNhap) FROM BaoCaoDoanhThu b JOIN b.phieuNhapHangs p WHERE b.maBaoCao = :maBaoCao AND p.isDeleted = false")
+    BigDecimal sumChiPhiFromPhieuNhapHangs(@Param("maBaoCao") String maBaoCao);
+
+    // Combined queries for comprehensive reporting
+    @Query("""
+        SELECT b FROM BaoCaoDoanhThu b 
+        WHERE b.cuaHang.maCH = :maCH 
+        AND b.nhanVienTao.maNV = :maNV 
+        AND b.ngayBaoCao BETWEEN :tuNgay AND :denNgay 
+        AND b.isDeleted = false 
+        ORDER BY b.ngayBaoCao DESC
+    """)
+    List<BaoCaoDoanhThu> findByCuaHangAndNhanVienAndDateRange(
+        @Param("maCH") String maCH,
+        @Param("maNV") String maNV,
+        @Param("tuNgay") LocalDate tuNgay,
+        @Param("denNgay") LocalDate denNgay
+    );
+
+    @Query("""
+        SELECT b FROM BaoCaoDoanhThu b 
+        WHERE b.cuaHang.maCH = :maCH 
+        AND b.ngayBaoCao BETWEEN :tuNgay AND :denNgay 
+        AND b.isDeleted = false 
+        ORDER BY b.tongDoanhThu DESC
+    """)
+    List<BaoCaoDoanhThu> findTopPerformingReportsByCuaHang(
+        @Param("maCH") String maCH,
+        @Param("tuNgay") LocalDate tuNgay,
+        @Param("denNgay") LocalDate denNgay,
+        Pageable pageable
+    );
 }

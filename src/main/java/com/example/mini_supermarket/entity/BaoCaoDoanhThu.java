@@ -4,16 +4,18 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -34,14 +36,8 @@ import lombok.NoArgsConstructor;
 public class BaoCaoDoanhThu implements Serializable {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaBaoCao")
-    private Long maBaoCao;
-
-
-    @ManyToOne
-    @JoinColumn(name = "MaNVLap", referencedColumnName = "MaNV", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    private NhanVien nhanVienLap;
+    @Column(name = "MaBaoCao", length = 20)
+    private String maBaoCao; // Changed to String for consistency with junction tables
 
     @Column(name = "LoaiBaoCao", length = 50, nullable = false)
     private String loaiBaoCao; // NGAY, TUAN, THANG, NAM
@@ -65,8 +61,14 @@ public class BaoCaoDoanhThu implements Serializable {
     @Column(name = "TongDoanhThu", precision = 18, scale = 2)
     private BigDecimal tongDoanhThu = BigDecimal.ZERO;
 
+    @Column(name = "TongChiPhi", precision = 18, scale = 2)
+    private BigDecimal tongChiPhi = BigDecimal.ZERO;
+
     @Column(name = "TongSoHoaDon")
     private Integer tongSoHoaDon = 0;
+
+    @Column(name = "SoLuongHoaDon")
+    private Integer soLuongHoaDon = 0;
 
     @Column(name = "TongSoSanPham")
     private Integer tongSoSanPham = 0;
@@ -141,6 +143,46 @@ public class BaoCaoDoanhThu implements Serializable {
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
 
+    // Quan hệ ManyToOne với NhanVien (người tạo báo cáo) - Consolidated single relationship
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "MaNVTao")
+    private NhanVien nhanVienTao;
+
+    // Quan hệ ManyToOne với CuaHang (cửa hàng)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "MaCH")
+    private CuaHang cuaHang;
+
+    // ===================================
+    // RELATIONSHIPS
+    // ===================================
+    
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "BaoCaoDoanhThu_HoaDon",
+        joinColumns = @JoinColumn(name = "MaBaoCao"),
+        inverseJoinColumns = @JoinColumn(name = "MaHD"),
+        indexes = {
+            @Index(name = "idx_baocao_hoadon_baocao", columnList = "MaBaoCao"),
+            @Index(name = "idx_baocao_hoadon_hoadon", columnList = "MaHD")
+        }
+    )
+    private List<HoaDon> hoaDons;
+
+    // Quan hệ ManyToMany với PhieuNhapHang (để tính chi phí)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "BaoCaoDoanhThu_PhieuNhap",
+        joinColumns = @JoinColumn(name = "MaBaoCao"),
+        inverseJoinColumns = @JoinColumn(name = "MaPN"),
+        indexes = {
+            @Index(name = "idx_baocao_phieunhap_baocao", columnList = "MaBaoCao"),
+            @Index(name = "idx_baocao_phieunhap_phieunhap", columnList = "MaPN")
+        }
+    )
+    private List<PhieuNhapHang> phieuNhapHangs;
+
     // ===================================
     // LIFECYCLE CALLBACKS
     // ===================================
@@ -172,6 +214,85 @@ public class BaoCaoDoanhThu implements Serializable {
                !this.loaiBaoCao.trim().isEmpty();
     }
 
+    // Business logic methods
+    public BigDecimal tinhLoiNhuan() {
+        BigDecimal doanhThu = this.tongDoanhThu != null ? this.tongDoanhThu : BigDecimal.ZERO;
+        BigDecimal chiPhi = this.tongChiPhi != null ? this.tongChiPhi : BigDecimal.ZERO;
+        return doanhThu.subtract(chiPhi);
+    }
+
+    public void capNhatThongKeTuHoaDon() {
+        if (this.hoaDons != null && !this.hoaDons.isEmpty()) {
+            // Filter valid invoices within report date range
+            var validHoaDons = this.hoaDons.stream()
+                .filter(hd -> hd != null)
+                .filter(hd -> !Boolean.TRUE.equals(hd.getIsDeleted()))
+                .filter(hd -> hd.getTrangThai() != null && hd.getTrangThai() == 1) // Only completed invoices
+                .filter(hd -> isWithinDateRange(hd.getNgayLap()))
+                .toList();
+            
+            BigDecimal tongDoanhThuMoi = validHoaDons.stream()
+                .map(hd -> hd.getTongTien() != null ? hd.getTongTien() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            this.tongDoanhThu = tongDoanhThuMoi;
+            this.soLuongHoaDon = validHoaDons.size();
+            this.tongSoHoaDon = validHoaDons.size(); // Update total count as well
+            
+            // Calculate averages with null safety
+            if (this.soLuongHoaDon > 0 && this.tongDoanhThu != null && this.tongDoanhThu.compareTo(BigDecimal.ZERO) > 0) {
+                this.hoaDonTrungBinh = this.tongDoanhThu.divide(
+                    BigDecimal.valueOf(this.soLuongHoaDon), 2, java.math.RoundingMode.HALF_UP);
+            } else {
+                this.hoaDonTrungBinh = BigDecimal.ZERO;
+            }
+            
+            long soNgay = getSoNgayBaoCao();
+            if (soNgay > 0 && this.tongDoanhThu != null && this.tongDoanhThu.compareTo(BigDecimal.ZERO) > 0) {
+                this.doanhThuTrungBinh = this.tongDoanhThu.divide(
+                    BigDecimal.valueOf(soNgay), 2, java.math.RoundingMode.HALF_UP);
+            } else {
+                this.doanhThuTrungBinh = BigDecimal.ZERO;
+            }
+        } else {
+            // Reset values when no invoices
+            this.tongDoanhThu = BigDecimal.ZERO;
+            this.soLuongHoaDon = 0;
+            this.tongSoHoaDon = 0;
+            this.hoaDonTrungBinh = BigDecimal.ZERO;
+            this.doanhThuTrungBinh = BigDecimal.ZERO;
+        }
+    }
+    
+    private boolean isWithinDateRange(java.time.LocalDateTime dateTime) {
+        if (dateTime == null || this.tuNgay == null || this.denNgay == null) {
+            return false;
+        }
+        LocalDate date = dateTime.toLocalDate();
+        return !date.isBefore(this.tuNgay) && !date.isAfter(this.denNgay);
+    }
+
+    public void capNhatChiPhiTuPhieuNhap() {
+        if (this.phieuNhapHangs != null && !this.phieuNhapHangs.isEmpty()) {
+            // Filter valid import receipts within report date range
+            var validPhieuNhaps = this.phieuNhapHangs.stream()
+                .filter(pn -> pn != null)
+                .filter(pn -> !Boolean.TRUE.equals(pn.getIsDeleted()))
+                .filter(pn -> pn.getTrangThai() != null && pn.getTrangThai() == 1) // Only completed imports
+                .filter(pn -> isWithinDateRange(pn.getNgayNhap()))
+                .toList();
+            
+            BigDecimal tongChiPhiMoi = validPhieuNhaps.stream()
+                .map(pn -> pn.getTongTienNhap() != null ? pn.getTongTienNhap() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            this.tongChiPhi = tongChiPhiMoi;
+        } else {
+            // Reset cost when no import receipts
+            this.tongChiPhi = BigDecimal.ZERO;
+        }
+    }
+
     public String getTenHienThi() {
         if (this.tenBaoCao != null && !this.tenBaoCao.trim().isEmpty()) {
             return this.tenBaoCao;
@@ -192,8 +313,8 @@ public class BaoCaoDoanhThu implements Serializable {
 
     public BigDecimal getDoanhThuTrungBinhTheoNgay() {
         long soNgay = getSoNgayBaoCao();
-        if (soNgay > 0 && this.tongDoanhThu != null) {
-            return this.tongDoanhThu.divide(BigDecimal.valueOf(soNgay), 2, BigDecimal.ROUND_HALF_UP);
+        if (soNgay > 0 && this.tongDoanhThu != null && this.tongDoanhThu.compareTo(BigDecimal.ZERO) > 0) {
+            return this.tongDoanhThu.divide(BigDecimal.valueOf(soNgay), 2, java.math.RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }

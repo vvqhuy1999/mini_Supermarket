@@ -2,19 +2,27 @@ package com.example.mini_supermarket.service.impl;
 
 import com.example.mini_supermarket.dto.ThongKeKhachHangDTO;
 import com.example.mini_supermarket.dto.ThongKeSanPhamDTO;
-import com.example.mini_supermarket.entity.*;
-import com.example.mini_supermarket.repository.*;
+import com.example.mini_supermarket.entity.BaoCaoDoanhThu;
+import com.example.mini_supermarket.entity.HoaDon;
+import com.example.mini_supermarket.entity.PhieuNhapHang;
+import com.example.mini_supermarket.repository.BaoCaoDoanhThuRepository;
+import com.example.mini_supermarket.repository.ChiTietHoaDonRepository;
+import com.example.mini_supermarket.repository.HoaDonRepository;
+import com.example.mini_supermarket.repository.PhieuNhapHangRepository;
 import com.example.mini_supermarket.service.BaoCaoDoanhThuService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -26,20 +34,13 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
     private BaoCaoDoanhThuRepository baoCaoDoanhThuRepository;
     
     @Autowired
-    private HoaDonRepository hoaDonRepository;
-    
-    @Autowired
     private ChiTietHoaDonRepository chiTietHoaDonRepository;
     
     @Autowired
-    private KhachHangRepository khachHangRepository;
+    private HoaDonRepository hoaDonRepository;
     
     @Autowired
-    private SanPhamRepository sanPhamRepository;
-    
-    
-    @Autowired
-    private NhanVienRepository nhanVienRepository;
+    private PhieuNhapHangRepository phieuNhapHangRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -58,15 +59,13 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
     }
 
     @Override
-    public BaoCaoDoanhThu findById(Long id) {
-        return baoCaoDoanhThuRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy báo cáo với ID: " + id));
+    public BaoCaoDoanhThu findById(String id) {
+        return baoCaoDoanhThuRepository.findById(id).orElse(null);
     }
 
     @Override
-    public BaoCaoDoanhThu findActiveById(Long id) {
-        return baoCaoDoanhThuRepository.findActiveById(id)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy báo cáo hoạt động với ID: " + id));
+    public BaoCaoDoanhThu findActiveById(String id) {
+        return baoCaoDoanhThuRepository.findActiveById(id).orElse(null);
     }
 
     @Override
@@ -83,12 +82,12 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(String id) {
         baoCaoDoanhThuRepository.deleteById(id);
     }
 
     @Override
-    public void softDeleteById(Long id) {
+    public void softDeleteById(String id) {
         BaoCaoDoanhThu baoCao = findById(id);
         baoCao.setIsDeleted(true);
         baoCaoDoanhThuRepository.save(baoCao);
@@ -150,8 +149,13 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
         // Tạo JSON data cho các phần chi tiết
         taoJsonData(baoCao, tuNgay, denNgay);
         
-        // Lưu báo cáo
-        return baoCaoDoanhThuRepository.save(baoCao);
+        // Lưu báo cáo trước
+        baoCao = baoCaoDoanhThuRepository.save(baoCao);
+        
+        // Tự động liên kết các hóa đơn trong khoảng thời gian
+        linkHoaDonsAutomatically(baoCao, tuNgay, denNgay);
+        
+        return baoCao;
     }
 
     private String taoTenBaoCao(String loaiBaoCao, LocalDate tuNgay, LocalDate denNgay) {
@@ -234,7 +238,25 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
             baoCao.setPhanTichTangTruong(objectMapper.writeValueAsString(phanTichTangTruong));
             
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Lỗi tạo JSON data: " + e.getMessage(), e);
+            // Log error and set default values instead of throwing exception
+            System.err.println("Lỗi tạo JSON data: " + e.getMessage());
+            baoCao.setTopSanPhamBanChay("[]");
+            baoCao.setTopKhachHangTiemNang("[]");
+            baoCao.setChiTietSanPham("[]");
+            baoCao.setChiTietKhachHang("[]");
+            baoCao.setThongKeLoaiSanPham("[]");
+            baoCao.setChiTietLoaiSanPham("[]");
+            baoCao.setPhanTichTangTruong("{}");
+        } catch (Exception e) {
+            // Handle any other unexpected errors
+            System.err.println("Lỗi không mong đợi khi cập nhật JSON: " + e.getMessage());
+            baoCao.setTopSanPhamBanChay("[]");
+            baoCao.setTopKhachHangTiemNang("[]");
+            baoCao.setChiTietSanPham("[]");
+            baoCao.setChiTietKhachHang("[]");
+            baoCao.setThongKeLoaiSanPham("[]");
+            baoCao.setChiTietLoaiSanPham("[]");
+            baoCao.setPhanTichTangTruong("{}");
         }
     }
 
@@ -323,43 +345,43 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
     // ===================================
 
     @Override
-    public List<Map<String, Object>> getTopSanPhamFromJson(Long maBaoCao) {
+    public List<Map<String, Object>> getTopSanPhamFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToList(baoCao.getTopSanPhamBanChay());
     }
 
     @Override
-    public List<Map<String, Object>> getTopKhachHangFromJson(Long maBaoCao) {
+    public List<Map<String, Object>> getTopKhachHangFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToList(baoCao.getTopKhachHangTiemNang());
     }
 
     @Override
-    public List<Map<String, Object>> getThongKeLoaiSanPhamFromJson(Long maBaoCao) {
+    public List<Map<String, Object>> getThongKeLoaiSanPhamFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToList(baoCao.getThongKeLoaiSanPham());
     }
 
     @Override
-    public Map<String, Object> getPhanTichTangTruongFromJson(Long maBaoCao) {
+    public Map<String, Object> getPhanTichTangTruongFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToMap(baoCao.getPhanTichTangTruong());
     }
 
     @Override
-    public List<Map<String, Object>> getChiTietSanPhamFromJson(Long maBaoCao) {
+    public List<Map<String, Object>> getChiTietSanPhamFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToList(baoCao.getChiTietSanPham());
     }
 
     @Override
-    public List<Map<String, Object>> getChiTietKhachHangFromJson(Long maBaoCao) {
+    public List<Map<String, Object>> getChiTietKhachHangFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToList(baoCao.getChiTietKhachHang());
     }
 
     @Override
-    public List<Map<String, Object>> getChiTietLoaiSanPhamFromJson(Long maBaoCao) {
+    public List<Map<String, Object>> getChiTietLoaiSanPhamFromJson(String maBaoCao) {
         BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
         return parseJsonToList(baoCao.getChiTietLoaiSanPham());
     }
@@ -465,5 +487,240 @@ public class BaoCaoDoanhThuServiceImpl implements BaoCaoDoanhThuService {
         }
         
         return phanTich;
+    }
+
+    // ===================================
+    // HOADON RELATIONSHIP METHODS
+    // ===================================
+
+    @Override
+    public List<BaoCaoDoanhThu> findByHoaDonId(Integer maHD) {
+        return baoCaoDoanhThuRepository.findByHoaDonId(maHD);
+    }
+
+    @Override
+    public List<HoaDon> findHoaDonsByBaoCaoId(String maBaoCao) {
+        return baoCaoDoanhThuRepository.findHoaDonsByBaoCaoId(maBaoCao);
+    }
+
+    @Override
+    public Long countHoaDonsByBaoCaoId(String maBaoCao) {
+        return baoCaoDoanhThuRepository.countHoaDonsByBaoCaoId(maBaoCao);
+    }
+
+    @Override
+    public BigDecimal sumDoanhThuFromHoaDons(String maBaoCao) {
+        BigDecimal result = baoCaoDoanhThuRepository.sumDoanhThuFromHoaDons(maBaoCao);
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+    @Override
+    public void linkHoaDonsToBaoCao(String maBaoCao, List<Integer> hoaDonIds) {
+        BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
+        
+        // Lấy danh sách hóa đơn cần liên kết
+        List<HoaDon> hoaDonsToLink = new ArrayList<>();
+        for (Integer hoaDonId : hoaDonIds) {
+            Optional<HoaDon> hoaDonOpt = hoaDonRepository.findActiveById(hoaDonId);
+            if (hoaDonOpt.isPresent()) {
+                hoaDonsToLink.add(hoaDonOpt.get());
+            }
+        }
+        
+        // Thêm vào danh sách hiện tại (nếu chưa có)
+        if (baoCao.getHoaDons() == null) {
+            baoCao.setHoaDons(new ArrayList<>());
+        }
+        
+        for (HoaDon hoaDon : hoaDonsToLink) {
+            if (!baoCao.getHoaDons().contains(hoaDon)) {
+                baoCao.getHoaDons().add(hoaDon);
+            }
+        }
+        
+        baoCaoDoanhThuRepository.save(baoCao);
+    }
+
+    @Override
+    @Transactional
+    public void unlinkHoaDonsFromBaoCao(String maBaoCao, List<Integer> hoaDonIds) {
+        BaoCaoDoanhThu baoCao = findActiveById(maBaoCao);
+        
+        if (baoCao.getHoaDons() != null) {
+            // Xóa các hóa đơn khỏi danh sách
+            baoCao.getHoaDons().removeIf(hoaDon -> hoaDonIds.contains(hoaDon.getMaHD()));
+        }
+        
+        baoCaoDoanhThuRepository.save(baoCao);
+    }
+
+    /**
+     * Tự động liên kết các hóa đơn trong khoảng thời gian với báo cáo
+     */
+    private void linkHoaDonsAutomatically(BaoCaoDoanhThu baoCao, LocalDate tuNgay, LocalDate denNgay) {
+        try {
+            // Lấy tất cả hóa đơn trong khoảng thời gian
+            List<HoaDon> hoaDonsInRange = hoaDonRepository.findByDateRangeAndStore(
+                tuNgay.atStartOfDay(),
+                denNgay.plusDays(1).atStartOfDay(),
+                null // Tất cả cửa hàng
+            );
+            
+            // Khởi tạo danh sách nếu chưa có
+            if (baoCao.getHoaDons() == null) {
+                baoCao.setHoaDons(new ArrayList<>());
+            }
+            
+            // Thêm các hóa đơn vào báo cáo (tránh trùng lặp)
+            for (HoaDon hoaDon : hoaDonsInRange) {
+                if (!baoCao.getHoaDons().contains(hoaDon)) {
+                    baoCao.getHoaDons().add(hoaDon);
+                }
+            }
+            
+            // Lưu lại báo cáo với các hóa đơn đã liên kết
+            baoCaoDoanhThuRepository.save(baoCao);
+            
+        } catch (Exception e) {
+            // Log error nhưng không throw exception để không ảnh hưởng việc tạo báo cáo
+            System.err.println("Lỗi khi tự động liên kết hóa đơn: " + e.getMessage());
+        }
+    }
+
+    // ===================================
+    // NEW RELATIONSHIP METHODS IMPLEMENTATION
+    // ===================================
+
+    @Override
+    public List<BaoCaoDoanhThu> findByNhanVienTao(String maNV) {
+        return baoCaoDoanhThuRepository.findByNhanVienTao(maNV);
+    }
+
+    @Override
+    public long countByNhanVienTao(String maNV) {
+        return baoCaoDoanhThuRepository.countByNhanVienTao(maNV);
+    }
+
+    @Override
+    public List<BaoCaoDoanhThu> findByCuaHang(String maCH) {
+        return baoCaoDoanhThuRepository.findByCuaHang(maCH);
+    }
+
+    @Override
+    public long countByCuaHang(String maCH) {
+        return baoCaoDoanhThuRepository.countByCuaHang(maCH);
+    }
+
+    @Override
+    public BigDecimal sumDoanhThuByCuaHang(String maCH) {
+        BigDecimal result = baoCaoDoanhThuRepository.sumDoanhThuByCuaHang(maCH);
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+    @Override
+    public List<BaoCaoDoanhThu> findByPhieuNhapHang(Integer maPN) {
+        return baoCaoDoanhThuRepository.findByPhieuNhapHang(maPN);
+    }
+
+    @Override
+    public List<PhieuNhapHang> findPhieuNhapHangsByBaoCaoId(Long maBaoCao) {
+        return baoCaoDoanhThuRepository.findPhieuNhapHangsByBaoCaoId(maBaoCao.toString());
+    }
+
+    @Override
+    public long countPhieuNhapHangsByBaoCaoId(Long maBaoCao) {
+        return baoCaoDoanhThuRepository.countPhieuNhapHangsByBaoCaoId(maBaoCao.toString());
+    }
+
+    @Override
+    public BigDecimal sumChiPhiFromPhieuNhapHangs(Long maBaoCao) {
+        BigDecimal result = baoCaoDoanhThuRepository.sumChiPhiFromPhieuNhapHangs(maBaoCao.toString());
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+    @Override
+    @Transactional
+    public BaoCaoDoanhThu linkPhieuNhapHangsToBaoCao(String maBaoCao, List<Integer> phieuNhapIds) {
+        BaoCaoDoanhThu baoCao = findById(maBaoCao);
+        if (baoCao == null) {
+            throw new RuntimeException("Không tìm thấy báo cáo với ID: " + maBaoCao);
+        }
+
+        for (Integer phieuNhapId : phieuNhapIds) {
+            PhieuNhapHang phieuNhap = phieuNhapHangRepository.findById(phieuNhapId).orElse(null);
+            if (phieuNhap != null && !Boolean.TRUE.equals(phieuNhap.getIsDeleted())) {
+                if (baoCao.getPhieuNhapHangs() == null) {
+                    baoCao.setPhieuNhapHangs(new ArrayList<>());
+                }
+                if (!baoCao.getPhieuNhapHangs().contains(phieuNhap)) {
+                    baoCao.getPhieuNhapHangs().add(phieuNhap);
+                }
+            }
+        }
+
+        // Cập nhật chi phí sau khi liên kết
+        baoCao.capNhatChiPhiTuPhieuNhap();
+        return baoCaoDoanhThuRepository.save(baoCao);
+    }
+
+    @Override
+    @Transactional
+    public BaoCaoDoanhThu unlinkPhieuNhapHangsFromBaoCao(String maBaoCao, List<Integer> phieuNhapIds) {
+        BaoCaoDoanhThu baoCao = findById(maBaoCao);
+        if (baoCao == null) {
+            throw new RuntimeException("Không tìm thấy báo cáo với ID: " + maBaoCao);
+        }
+
+        if (baoCao.getPhieuNhapHangs() != null) {
+            baoCao.getPhieuNhapHangs().removeIf(phieuNhap -> 
+                phieuNhapIds.contains(phieuNhap.getMaPN())
+            );
+        }
+
+        // Cập nhật chi phí sau khi bỏ liên kết
+        baoCao.capNhatChiPhiTuPhieuNhap();
+        return baoCaoDoanhThuRepository.save(baoCao);
+    }
+
+    @Override
+    public List<BaoCaoDoanhThu> findByCuaHangAndNhanVienAndDateRange(String maCH, String maNV, LocalDate tuNgay, LocalDate denNgay) {
+        return baoCaoDoanhThuRepository.findByCuaHangAndNhanVienAndDateRange(maCH, maNV, tuNgay, denNgay);
+    }
+
+    @Override
+    public List<BaoCaoDoanhThu> findTopPerformingReportsByCuaHang(String maCH, LocalDate tuNgay, LocalDate denNgay, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return baoCaoDoanhThuRepository.findTopPerformingReportsByCuaHang(maCH, tuNgay, denNgay, pageable);
+    }
+
+    @Override
+    @Transactional
+    public BaoCaoDoanhThu capNhatThongKeToanDien(Long maBaoCao) {
+        BaoCaoDoanhThu baoCao = findById(String.valueOf(maBaoCao));
+        if (baoCao == null) {
+            throw new RuntimeException("Không tìm thấy báo cáo với ID: " + maBaoCao);
+        }
+
+        // Cập nhật thống kê từ hóa đơn
+        baoCao.capNhatThongKeTuHoaDon();
+        
+        // Cập nhật chi phí từ phiếu nhập
+        baoCao.capNhatChiPhiTuPhieuNhap();
+
+        return baoCaoDoanhThuRepository.save(baoCao);
+    }
+
+    @Override
+    public BigDecimal tinhLoiNhuan(Long maBaoCao) {
+        BaoCaoDoanhThu baoCao = findById(String.valueOf(maBaoCao));
+        if (baoCao == null) {
+            return BigDecimal.ZERO;
+        }
+        return baoCao.tinhLoiNhuan();
+    }
+
+    @Override
+    public List<BaoCaoDoanhThu> findByHoaDonDateRange(LocalDateTime tuNgay, LocalDateTime denNgay) {
+        return baoCaoDoanhThuRepository.findByHoaDonDateRange(tuNgay, denNgay);
     }
 }

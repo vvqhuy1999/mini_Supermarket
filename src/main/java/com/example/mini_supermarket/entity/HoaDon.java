@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -101,4 +102,8 @@ public class HoaDon implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ThanhToan> thanhToans;
-} 
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "hoaDons", fetch = FetchType.LAZY)
+    private List<BaoCaoDoanhThu> baoCaoDoanhThus;
+}
