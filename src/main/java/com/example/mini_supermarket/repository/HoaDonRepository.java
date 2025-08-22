@@ -21,4 +21,8 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     // Tìm hóa đơn theo ID (bao gồm cả đã xóa)
     @Query("SELECT h FROM HoaDon h WHERE h.maHD = :id")
     Optional<HoaDon> findByIdIncludeDeleted(@Param("id") Integer id);
+
+    // Tìm hóa đơn theo mã khách hàng và chưa bị xóa
+    @Query("SELECT h FROM HoaDon h WHERE h.khachHang.maKH = :maKH AND h.isDeleted = false ORDER BY h.ngayLap DESC")
+    List<HoaDon> findActiveByCustomer(@Param("maKH") String maKH);
 } 

@@ -328,7 +328,6 @@ CREATE TABLE hoadon (
     tongtienhang DECIMAL(15,2) DEFAULT 0,
     tiengiamgia DECIMAL(15,2) DEFAULT 0,
     tongtien DECIMAL(15,2) GENERATED ALWAYS AS (tongtienhang - tiengiamgia) STORED,
-    mapttt VARCHAR(50),
     trangthai INT DEFAULT 0, -- 0=Pending, 1=Paid, 2=Processing, 3=Canceled, 4=Returned
     diemtichluy INT DEFAULT 0, -- Points earned from this invoice
     ghichu TEXT,
@@ -496,7 +495,6 @@ ALTER TABLE chitietphieuxuat ADD CONSTRAINT fk_chitietphieuxuat_sanpham FOREIGN 
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nhanvien FOREIGN KEY (manvlap) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khuyenmai FOREIGN KEY (makm) REFERENCES khuyenmai(makm) ON DELETE NO ACTION ON UPDATE NO ACTION;
-ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_phuongthucthanhtoan FOREIGN KEY (mapttt) REFERENCES phuongthucthanhtoan(mapttt) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nguoitao FOREIGN KEY (nguoitao) REFERENCES nhanvien(manv) ON DELETE SET NULL ON UPDATE NO ACTION;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nguoisua FOREIGN KEY (nguoisua) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 

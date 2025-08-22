@@ -40,9 +40,5 @@ public class PhuongThucThanhToan implements Serializable {
     // Quan hệ OneToMany
     @JsonIgnore
     @OneToMany(mappedBy = "phuongThucThanhToan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<HoaDon> hoaDons;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "phuongThucThanhToan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ThanhToan> thanhToans;
 } 

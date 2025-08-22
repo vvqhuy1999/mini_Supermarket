@@ -578,12 +578,12 @@ INSERT INTO chitietphieuxuat (mapxk, masp, soluongxuat, dongiaxuat) VALUES
 (3, 'SP003', 50, 12000);
 
 
-INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, mapttt, trangthai, diemtichluy, ghichu, nguoitao) VALUES
-('KH001', 'NV002', 'KMSP001', '2025-07-11 14:00:00', 500000, 50000, 'PTTT001', 1, 50, 'Hóa đơn tháng 7', 'NV002'),
-('KH002', 'NV003', 'KMSP002', '2025-07-11 15:00:00', 750000, 0, 'PTTT002', 1, 75, 'Hóa đơn tháng 7', 'NV003'),
-('KH003', 'NV005', NULL, '2025-07-11 16:00:00', 900000, 0, 'PTTT001', 2, 90, 'Hóa đơn tháng 7', 'NV005'),
-('KH004', 'NV006', NULL, '2025-07-12 08:30:00', 200000, 0, 'PTTT002', 3, 20, 'Hóa đơn tháng 7', 'NV006'),
-('KH005', 'NV001', 'KMSP003', '2025-07-12 09:45:00', 300000, 0, 'PTTT001', 1, 30, 'Hóa đơn tháng 7', 'NV001');
+INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, trangthai, diemtichluy, ghichu, nguoitao) VALUES
+('KH001', 'NV002', 'KMSP001', '2025-07-11 14:00:00', 500000, 50000, 1, 50, 'Hóa đơn tháng 7', 'NV002'),
+('KH002', 'NV003', 'KMSP002', '2025-07-11 15:00:00', 750000, 0, 1, 75, 'Hóa đơn tháng 7', 'NV003'),
+('KH003', 'NV005', NULL, '2025-07-11 16:00:00', 900000, 0, 2, 90, 'Hóa đơn tháng 7', 'NV005'),
+('KH004', 'NV006', NULL, '2025-07-12 08:30:00', 200000, 0, 3, 20, 'Hóa đơn tháng 7', 'NV006'),
+('KH005', 'NV001', 'KMSP003', '2025-07-12 09:45:00', 300000, 0, 1, 30, 'Hóa đơn tháng 7', 'NV001');
 
 INSERT INTO chitiethoadon (mahd, masp, soluong, dongiaban, giamgia) VALUES
 (1, 'SP001', 2, 15000, 0),

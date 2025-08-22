@@ -49,15 +49,11 @@ public class HoaDon implements Serializable {
     @Column(name = "TienGiamGia", precision = 15, scale = 2)
     private BigDecimal tienGiamGia = BigDecimal.ZERO;
 
-    @Column(name = "TongTien", precision = 15, scale = 2)
+    @Column(name = "TongTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal tongTien;
 
-    @ManyToOne
-    @JoinColumn(name = "MaPTTT")
-    private PhuongThucThanhToan phuongThucThanhToan;
-
     @Column(name = "TrangThai")
-    private Integer trangThai = 0; // 0=Chờ xử lý, 1=Đã thanh toán, 2=Đang xử lý, 3=Hủy, 4=Hoàn trả
+    private Integer trangThai = 0; // 0=Chờ thanh toán, 1=Đã thanh toán, 3=Hủy, 4=Hoàn trả
 
     @Column(name = "DiemTichLuy")
     private Integer diemTichLuy = 0; // Điểm tích lũy từ hóa đơn này
