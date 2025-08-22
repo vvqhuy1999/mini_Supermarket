@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service;
 import com.example.mini_supermarket.entity.HoaDon;
 import com.example.mini_supermarket.dto.CreateInvoiceFromCartRequest;
 import com.example.mini_supermarket.dto.InvoiceCreatedResponse;
+import com.example.mini_supermarket.dto.HoaDonFullDetailsDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -57,4 +58,35 @@ public interface HoaDonService {
     
     // Đếm số lượng hóa đơn của khách hàng
     Long countByCustomer(String maKH);
+    
+    // ===== ENHANCED METHODS =====
+    
+    // Tìm hóa đơn theo trạng thái
+    List<HoaDon> findByTrangThai(Integer trangThai);
+    
+    // Tìm hóa đơn theo khách hàng và trạng thái
+    List<HoaDon> findByCustomerAndStatus(String maKH, Integer trangThai);
+    
+    // Tìm hóa đơn theo khoảng ngày
+    List<HoaDon> findByDateRange(String fromDate, String toDate);
+    
+    // Tìm hóa đơn theo khách hàng và khoảng ngày
+    List<HoaDon> findByCustomerAndDateRange(String maKH, String fromDate, String toDate);
+    
+    // Hủy hóa đơn
+    HoaDon cancelHoaDon(Integer maHD, String lyDoHuy);
+    
+    // Thống kê hóa đơn theo khách hàng
+    Object getStatisticsByCustomer(String maKH);
+    
+    // Đếm hóa đơn theo khách hàng và trạng thái
+    Object countByCustomerAndStatus(String maKH);
+    
+    // ===== FULL DETAILS METHODS =====
+    
+    // Lấy hóa đơn với chi tiết đầy đủ
+    HoaDonFullDetailsDTO getHoaDonFullDetails(Integer maHD);
+    
+    // Lấy danh sách hóa đơn của khách hàng với chi tiết đầy đủ
+    List<HoaDonFullDetailsDTO> getHoaDonFullDetailsByCustomer(String maKH);
 } 

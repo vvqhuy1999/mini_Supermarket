@@ -3,6 +3,7 @@ package com.example.mini_supermarket.rest.controller;
 import com.example.mini_supermarket.dto.ApiResponse;
 import com.example.mini_supermarket.dto.CreateInvoiceFromCartRequest;
 import com.example.mini_supermarket.dto.InvoiceCreatedResponse;
+import com.example.mini_supermarket.dto.HoaDonFullDetailsDTO;
 import com.example.mini_supermarket.entity.HoaDon;
 import com.example.mini_supermarket.service.HoaDonService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/hoadon")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE}, allowedHeaders = "*")
 @Tag(name = "Hóa Đơn", description = "Quản lý hóa đơn")
 public class HoaDonRestController {
 
@@ -377,6 +378,303 @@ public class HoaDonRestController {
                     .body(ApiResponse.<Long>builder()
                             .success(false)
                             .error("Lỗi khi đếm hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // ===== ENHANCED APIs - Tìm kiếm và lọc =====
+    
+    // API lấy hóa đơn theo trạng thái
+    @GetMapping("/status/{trangThai}")
+    @Operation(summary = "Lấy hóa đơn theo trạng thái", description = "Lấy danh sách hóa đơn theo trạng thái cụ thể")
+    public ResponseEntity<ApiResponse<List<HoaDon>>> getHoaDonByStatus(
+            @Parameter(description = "Trạng thái hóa đơn", required = true) @PathVariable Integer trangThai) {
+        try {
+            List<HoaDon> danhSachHoaDon = hoaDonService.findByTrangThai(trangThai);
+            return ResponseEntity.ok(ApiResponse.<List<HoaDon>>builder()
+                    .success(true)
+                    .message("Lấy hóa đơn theo trạng thái thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<List<HoaDon>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy hóa đơn theo trạng thái: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API lấy hóa đơn theo khách hàng và trạng thái
+    @GetMapping("/by-khachhang/{maKH}/status/{trangThai}")
+    @Operation(summary = "Lấy hóa đơn theo khách hàng và trạng thái", description = "Lấy hóa đơn của khách hàng theo trạng thái cụ thể")
+    public ResponseEntity<ApiResponse<List<HoaDon>>> getHoaDonByCustomerAndStatus(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH,
+            @Parameter(description = "Trạng thái hóa đơn", required = true) @PathVariable Integer trangThai) {
+        try {
+            List<HoaDon> danhSachHoaDon = hoaDonService.findByCustomerAndStatus(maKH, trangThai);
+            return ResponseEntity.ok(ApiResponse.<List<HoaDon>>builder()
+                    .success(true)
+                    .message("Lấy hóa đơn theo khách hàng và trạng thái thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<List<HoaDon>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API lấy hóa đơn theo khoảng ngày
+    @GetMapping("/date-range")
+    @Operation(summary = "Lấy hóa đơn theo khoảng ngày", description = "Lấy hóa đơn trong khoảng thời gian từ ngày đến ngày")
+    public ResponseEntity<ApiResponse<List<HoaDon>>> getHoaDonByDateRange(
+            @Parameter(description = "Ngày bắt đầu (yyyy-MM-dd)", required = true) @RequestParam String fromDate,
+            @Parameter(description = "Ngày kết thúc (yyyy-MM-dd)", required = true) @RequestParam String toDate) {
+        try {
+            List<HoaDon> danhSachHoaDon = hoaDonService.findByDateRange(fromDate, toDate);
+            return ResponseEntity.ok(ApiResponse.<List<HoaDon>>builder()
+                    .success(true)
+                    .message("Lấy hóa đơn theo khoảng ngày thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<List<HoaDon>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy hóa đơn theo ngày: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API lấy hóa đơn theo khách hàng và khoảng ngày
+    @GetMapping("/by-khachhang/{maKH}/date-range")
+    @Operation(summary = "Lấy hóa đơn theo khách hàng và khoảng ngày", description = "Lấy hóa đơn của khách hàng trong khoảng thời gian")
+    public ResponseEntity<ApiResponse<List<HoaDon>>> getHoaDonByCustomerAndDateRange(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH,
+            @Parameter(description = "Ngày bắt đầu (yyyy-MM-dd)", required = true) @RequestParam String fromDate,
+            @Parameter(description = "Ngày kết thúc (yyyy-MM-dd)", required = true) @RequestParam String toDate) {
+        try {
+            List<HoaDon> danhSachHoaDon = hoaDonService.findByCustomerAndDateRange(maKH, fromDate, toDate);
+            return ResponseEntity.ok(ApiResponse.<List<HoaDon>>builder()
+                    .success(true)
+                    .message("Lấy hóa đơn theo khách hàng và khoảng ngày thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<List<HoaDon>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API hủy hóa đơn - PATCH method
+    @PatchMapping("/{maHD}/cancel")
+    @Operation(summary = "Hủy hóa đơn", description = "Hủy hóa đơn (chuyển trạng thái thành 3)")
+    @CrossOrigin(origins = "*", methods = {RequestMethod.PATCH}, allowedHeaders = "*")
+    public ResponseEntity<ApiResponse<HoaDon>> cancelHoaDon(
+            @Parameter(description = "Mã hóa đơn", required = true) @PathVariable Integer maHD,
+            @Parameter(description = "Lý do hủy", required = false) @RequestParam(required = false) String lyDoHuy) {
+        try {
+            HoaDon hoaDon = hoaDonService.cancelHoaDon(maHD, lyDoHuy);
+            return ResponseEntity.ok(ApiResponse.<HoaDon>builder()
+                    .success(true)
+                    .message("Hủy hóa đơn thành công")
+                    .result(hoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<HoaDon>builder()
+                            .success(false)
+                            .error("Lỗi khi hủy hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // ===== FALLBACK API - Cập nhật trạng thái (POST method cho CORS compatibility) =====
+    
+    @PostMapping("/{maHD}/status")
+    @Operation(summary = "Cập nhật trạng thái hóa đơn", description = "Cập nhật trạng thái hóa đơn (0=Chờ thanh toán, 1=Đã thanh toán, 2=Đang xử lý, 3=Đã hủy, 4=Hoàn trả)")
+    @CrossOrigin(origins = "*", methods = {RequestMethod.POST}, allowedHeaders = "*")
+    public ResponseEntity<ApiResponse<HoaDon>> updateHoaDonStatus(
+            @Parameter(description = "Mã hóa đơn", required = true) @PathVariable Integer maHD,
+            @Parameter(description = "Trạng thái mới", required = true) @RequestParam Integer trangThai,
+            @Parameter(description = "Lý do thay đổi", required = false) @RequestParam(required = false) String lyDo) {
+        try {
+            // Kiểm tra trạng thái hợp lệ
+            if (trangThai < 0 || trangThai > 4) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.<HoaDon>builder()
+                                .success(false)
+                                .error("Trạng thái không hợp lệ. Phải từ 0-4")
+                                .build());
+            }
+            
+            HoaDon hoaDon;
+            
+            // Nếu là hủy đơn (trạng thái = 3), sử dụng method hủy chuyên dụng
+            if (trangThai == 3) {
+                hoaDon = hoaDonService.cancelHoaDon(maHD, lyDo);
+            } else {
+                // Sử dụng method cập nhật trạng thái thông thường
+                hoaDon = hoaDonService.updateTrangThai(maHD, trangThai);
+                
+                // Thêm ghi chú nếu có lý do
+                if (lyDo != null && !lyDo.trim().isEmpty()) {
+                    String ghiChuMoi = hoaDon.getGhiChu() != null ? 
+                        hoaDon.getGhiChu() + "\n[Cập nhật trạng thái]: " + lyDo : 
+                        "[Cập nhật trạng thái]: " + lyDo;
+                    hoaDon.setGhiChu(ghiChuMoi);
+                    hoaDon.setNgaySua(java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+                    hoaDon = hoaDonService.save(hoaDon);
+                }
+            }
+            
+            // Tạo message phù hợp với trạng thái
+            String message = switch (trangThai) {
+                case 0 -> "Chuyển trạng thái thành 'Chờ thanh toán' thành công";
+                case 1 -> "Chuyển trạng thái thành 'Đã thanh toán' thành công";
+                case 2 -> "Chuyển trạng thái thành 'Đang xử lý' thành công";
+                case 3 -> "Hủy hóa đơn thành công";
+                case 4 -> "Chuyển trạng thái thành 'Hoàn trả' thành công";
+                default -> "Cập nhật trạng thái thành công";
+            };
+            
+            return ResponseEntity.ok(ApiResponse.<HoaDon>builder()
+                    .success(true)
+                    .message(message)
+                    .result(hoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<HoaDon>builder()
+                            .success(false)
+                            .error("Lỗi khi cập nhật trạng thái: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API cập nhật trạng thái - PUT method (alternative)
+    @PutMapping("/{maHD}/trangthai/{trangThai}")
+    @Operation(summary = "Cập nhật trạng thái hóa đơn (PUT)", description = "Cập nhật trạng thái hóa đơn qua URL path")
+    @CrossOrigin(origins = "*", methods = {RequestMethod.PUT}, allowedHeaders = "*")
+    public ResponseEntity<ApiResponse<HoaDon>> updateTrangThaiByPath(
+            @Parameter(description = "Mã hóa đơn", required = true) @PathVariable Integer maHD,
+            @Parameter(description = "Trạng thái mới", required = true) @PathVariable Integer trangThai,
+            @Parameter(description = "Lý do thay đổi", required = false) @RequestParam(required = false) String lyDo) {
+        try {
+            HoaDon hoaDon = hoaDonService.updateTrangThai(maHD, trangThai);
+            
+            // Thêm ghi chú nếu có lý do
+            if (lyDo != null && !lyDo.trim().isEmpty()) {
+                String ghiChuMoi = hoaDon.getGhiChu() != null ? 
+                    hoaDon.getGhiChu() + "\n[Cập nhật trạng thái]: " + lyDo : 
+                    "[Cập nhật trạng thái]: " + lyDo;
+                hoaDon.setGhiChu(ghiChuMoi);
+                hoaDon.setNgaySua(java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+                hoaDon = hoaDonService.save(hoaDon);
+            }
+            
+            return ResponseEntity.ok(ApiResponse.<HoaDon>builder()
+                    .success(true)
+                    .message("Cập nhật trạng thái hóa đơn thành công")
+                    .result(hoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<HoaDon>builder()
+                            .success(false)
+                            .error("Lỗi khi cập nhật trạng thái: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API thống kê hóa đơn theo khách hàng
+    @GetMapping("/by-khachhang/{maKH}/statistics")
+    @Operation(summary = "Thống kê hóa đơn theo khách hàng", description = "Thống kê tổng quan hóa đơn của khách hàng")
+    public ResponseEntity<ApiResponse<Object>> getHoaDonStatisticsByCustomer(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH) {
+        try {
+            Object statistics = hoaDonService.getStatisticsByCustomer(maKH);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Lấy thống kê hóa đơn theo khách hàng thành công")
+                    .result(statistics)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .error("Lỗi khi lấy thống kê: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API đếm hóa đơn theo khách hàng và trạng thái
+    @GetMapping("/by-khachhang/{maKH}/count-by-status")
+    @Operation(summary = "Đếm hóa đơn theo khách hàng và trạng thái", description = "Đếm số lượng hóa đơn của khách hàng theo từng trạng thái")
+    public ResponseEntity<ApiResponse<Object>> countByCustomerAndStatus(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH) {
+        try {
+            Object countByStatus = hoaDonService.countByCustomerAndStatus(maKH);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Đếm hóa đơn theo trạng thái thành công")
+                    .result(countByStatus)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .error("Lỗi khi đếm hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // ===== FULL DETAILS APIs =====
+    
+    // API lấy hóa đơn với chi tiết đầy đủ
+    @GetMapping("/{maHD}/full-details")
+    @Operation(summary = "Lấy hóa đơn với chi tiết đầy đủ", description = "Lấy hóa đơn kèm theo tất cả chi tiết sản phẩm và thông tin liên quan")
+    public ResponseEntity<ApiResponse<HoaDonFullDetailsDTO>> getHoaDonFullDetails(
+            @Parameter(description = "Mã hóa đơn", required = true) @PathVariable Integer maHD) {
+        try {
+            HoaDonFullDetailsDTO hoaDonDetails = hoaDonService.getHoaDonFullDetails(maHD);
+            return ResponseEntity.ok(ApiResponse.<HoaDonFullDetailsDTO>builder()
+                    .success(true)
+                    .message("Lấy chi tiết hóa đơn thành công")
+                    .result(hoaDonDetails)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<HoaDonFullDetailsDTO>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy chi tiết hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API lấy danh sách hóa đơn của khách hàng với chi tiết đầy đủ
+    @GetMapping("/by-khachhang/{maKH}/full-details")
+    @Operation(summary = "Lấy hóa đơn khách hàng với chi tiết đầy đủ", description = "Lấy danh sách hóa đơn của khách hàng kèm theo chi tiết sản phẩm")
+    public ResponseEntity<ApiResponse<List<HoaDonFullDetailsDTO>>> getHoaDonFullDetailsByCustomer(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH) {
+        try {
+            List<HoaDonFullDetailsDTO> hoaDonDetailsList = hoaDonService.getHoaDonFullDetailsByCustomer(maKH);
+            return ResponseEntity.ok(ApiResponse.<List<HoaDonFullDetailsDTO>>builder()
+                    .success(true)
+                    .message("Lấy danh sách hóa đơn với chi tiết thành công")
+                    .result(hoaDonDetailsList)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<List<HoaDonFullDetailsDTO>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy danh sách hóa đơn: " + e.getMessage())
                             .build());
         }
     }

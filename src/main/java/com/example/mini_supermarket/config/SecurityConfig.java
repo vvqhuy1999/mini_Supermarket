@@ -160,15 +160,23 @@ public class SecurityConfig {
         // Tạo hóa đơn từ giỏ hàng - thay thế đơn hàng
         "/api/hoadon/from-cart",       // POST: Tạo hóa đơn từ giỏ hàng
         
-        // Hóa đơn cá nhân - CHỈ XEM
+        // Hóa đơn cá nhân - CHỈ XEM VÀ HỦY
         "/api/hoadon",                  // GET: Xem hóa đơn cá nhân
         "/api/hoadon/*",                // GET: Xem chi tiết hóa đơn cá nhân
-        "/api/hoadon/by-khachhang/*",   // GET: Xem hóa đơn theo khách hàng cụ thể
+        "/api/hoadon/by-khachhang/**",  // GET: Xem hóa đơn theo khách hàng (tất cả sub-paths)
+        "/api/hoadon/*/full-details",   // GET: Xem hóa đơn với chi tiết đầy đủ
+        "/api/hoadon/status/*",         // GET: Xem hóa đơn theo trạng thái (chỉ của mình)
+        "/api/hoadon/date-range",       // GET: Xem hóa đơn theo ngày (chỉ của mình)
         "/api/hoadon/optimized",        // GET: Xem hóa đơn tối ưu với pagination
         "/api/hoadon/count/**",         // GET: Đếm hóa đơn
+        "/api/hoadon/*/cancel",         // PATCH: Hủy hóa đơn của mình
+        "/api/hoadon/{maHD}/cancel",    // PATCH: Hủy hóa đơn cụ thể (explicit pattern)
+        "/api/hoadon/*/status",         // POST: Cập nhật trạng thái hóa đơn
+        "/api/hoadon/*/trangthai/*",    // PUT: Cập nhật trạng thái hóa đơn (alternative)
         "/api/chitiethoadon",           // GET: Xem chi tiết hóa đơn cá nhân
         "/api/chitiethoadon/*",         // GET: Xem chi tiết cụ thể
-        
+        "/api/chitiethoadon/hoadon/*",  // GET: Xem chi tiết theo mã hóa đơn
+
         // Thanh toán cá nhân
         "/api/thanhtoan",               // POST: Tạo thanh toán
         "/api/thanhtoan/*",             // GET: Xem trạng thái thanh toán
@@ -309,6 +317,9 @@ public class SecurityConfig {
             // Tắt CSRF cho API REST
             .csrf(AbstractHttpConfigurer::disable)
             
+            // Cấu hình CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
             // Tắt HTTP Basic Authentication
             .httpBasic(AbstractHttpConfigurer::disable)
             
@@ -322,9 +333,6 @@ public class SecurityConfig {
             
             // Không cần cấu hình logout ở đây
             // AuthenticationController sẽ xử lý logout thông qua endpoint /api/auth/log-out
-            
-            // Cấu hình CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // Thêm JWT filter để xử lý JWT token từ header Authorization
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -375,7 +383,7 @@ public class SecurityConfig {
             frontendBaseUrl             // Dynamic frontend URL từ config
         ));
         
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

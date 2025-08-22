@@ -14,4 +14,9 @@ public interface ChiTietHoaDonService {
     ChiTietHoaDon save(ChiTietHoaDon chiTietHoaDon);
     void deleteById(Integer id);
     void softDeleteById(Integer id);
+    
+    // ===== ENHANCED METHODS =====
+    
+    // Lấy chi tiết hóa đơn theo mã hóa đơn
+    List<ChiTietHoaDon> findByHoaDonId(Integer maHD);
 } 

@@ -9,8 +9,10 @@ import com.example.mini_supermarket.entity.NhanVien;
 import com.example.mini_supermarket.entity.SanPham;
 import com.example.mini_supermarket.entity.KhuyenMai;
 import com.example.mini_supermarket.service.HoaDonService;
+import com.example.mini_supermarket.dto.HoaDonFullDetailsDTO;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CacheConfig;
 import com.example.mini_supermarket.service.ChiTietHoaDonService;
 import com.example.mini_supermarket.service.GioHangChiTietService;
 import com.example.mini_supermarket.service.KhachHangService;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@CacheConfig(cacheNames = {"hoadon-summary", "hoadon-by-customer", "hoadon-count", "hoadon-by-status", "hoadon-full-details", "hoadon-statistics"})
 public class HoaDonServiceImpl implements HoaDonService {
     private HoaDonRepository hoaDonRepository;
     
@@ -45,7 +48,6 @@ public class HoaDonServiceImpl implements HoaDonService {
     
     @Autowired
     private NhanVienService nhanVienService;
-    
     
     @Autowired
     private KhuyenMaiService khuyenMaiService;
@@ -77,7 +79,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"hoadon-summary", "hoadon-by-customer", "hoadon-count"}, allEntries = true)
+    @CacheEvict(allEntries = true)
     public HoaDon save(HoaDon theHoaDon) {
         return hoaDonRepository.save(theHoaDon);
     }
@@ -126,6 +128,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public InvoiceCreatedResponse createInvoiceFromCart(CreateInvoiceFromCartRequest request) {
         // 1. Validate request
         if (request.getMaKH() == null || request.getMaKH().trim().isEmpty()) {
@@ -330,6 +333,7 @@ public class HoaDonServiceImpl implements HoaDonService {
     
     @Override
     @Transactional
+    @CacheEvict(allEntries = true)
     public HoaDon updateTrangThai(Integer maHD, Integer trangThaiMoi) {
         Optional<HoaDon> hoaDonOpt = hoaDonRepository.findById(maHD);
         if (hoaDonOpt.isPresent()) {
@@ -395,5 +399,200 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Mã khách hàng không được để trống");
         }
         return hoaDonRepository.countByCustomer(maKH.trim());
+    }
+    
+    // ===== ENHANCED METHODS IMPLEMENTATION =====
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-by-status", key = "'status_' + #trangThai")
+    public List<HoaDon> findByTrangThai(Integer trangThai) {
+        return hoaDonRepository.findByTrangThai(trangThai);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-by-customer", key = "#maKH + '_status_' + #trangThai")
+    public List<HoaDon> findByCustomerAndStatus(String maKH, Integer trangThai) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        return hoaDonRepository.findByCustomerAndStatus(maKH.trim(), trangThai);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<HoaDon> findByDateRange(String fromDate, String toDate) {
+        if (fromDate == null || toDate == null) {
+            throw new RuntimeException("Ngày bắt đầu và ngày kết thúc không được để trống");
+        }
+        return hoaDonRepository.findByDateRange(fromDate, toDate);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<HoaDon> findByCustomerAndDateRange(String maKH, String fromDate, String toDate) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        if (fromDate == null || toDate == null) {
+            throw new RuntimeException("Ngày bắt đầu và ngày kết thúc không được để trống");
+        }
+        return hoaDonRepository.findByCustomerAndDateRange(maKH.trim(), fromDate, toDate);
+    }
+    
+    @Override
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public HoaDon cancelHoaDon(Integer maHD, String lyDoHuy) {
+        HoaDon hoaDon = findActiveById(maHD);
+        if (hoaDon == null) {
+            throw new RuntimeException("Không tìm thấy hóa đơn với mã: " + maHD);
+        }
+        
+        // Kiểm tra trạng thái hiện tại
+        if (hoaDon.getTrangThai() == 3) {
+            throw new RuntimeException("Hóa đơn đã được hủy trước đó");
+        }
+        if (hoaDon.getTrangThai() == 1) {
+            throw new RuntimeException("Không thể hủy hóa đơn đã thanh toán");
+        }
+        
+        // Cập nhật trạng thái và lý do hủy
+        hoaDon.setTrangThai(3); // 3 = Hủy
+        if (lyDoHuy != null && !lyDoHuy.trim().isEmpty()) {
+            hoaDon.setGhiChu(hoaDon.getGhiChu() != null ? 
+                hoaDon.getGhiChu() + "\n[Lý do hủy]: " + lyDoHuy : 
+                "[Lý do hủy]: " + lyDoHuy);
+        }
+        hoaDon.setNgaySua(java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+        
+        return hoaDonRepository.save(hoaDon);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-statistics", key = "'customer_stats_' + #maKH")
+    public Object getStatisticsByCustomer(String maKH) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        
+        List<HoaDon> hoaDons = hoaDonRepository.findActiveByCustomer(maKH.trim());
+        
+        java.util.Map<String, Object> statistics = new java.util.HashMap<>();
+        statistics.put("totalInvoices", hoaDons.size());
+        statistics.put("totalAmount", hoaDons.stream()
+            .filter(h -> h.getTongTien() != null)
+            .map(HoaDon::getTongTien)
+            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add));
+        statistics.put("totalDiscount", hoaDons.stream()
+            .filter(h -> h.getTienGiamGia() != null)
+            .map(HoaDon::getTienGiamGia)
+            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add));
+        statistics.put("totalPoints", hoaDons.stream()
+            .filter(h -> h.getDiemTichLuy() != null)
+            .mapToInt(HoaDon::getDiemTichLuy)
+            .sum());
+        
+        return statistics;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-count", key = "'customer_status_count_' + #maKH")
+    public Object countByCustomerAndStatus(String maKH) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        
+        java.util.Map<String, Object> countByStatus = new java.util.HashMap<>();
+        countByStatus.put("pending", hoaDonRepository.findByCustomerAndStatus(maKH.trim(), 0).size()); // Chờ thanh toán
+        countByStatus.put("paid", hoaDonRepository.findByCustomerAndStatus(maKH.trim(), 1).size()); // Đã thanh toán
+        countByStatus.put("processing", hoaDonRepository.findByCustomerAndStatus(maKH.trim(), 2).size()); // Đang xử lý
+        countByStatus.put("cancelled", hoaDonRepository.findByCustomerAndStatus(maKH.trim(), 3).size()); // Hủy
+        countByStatus.put("returned", hoaDonRepository.findByCustomerAndStatus(maKH.trim(), 4).size()); // Hoàn trả
+        
+        return countByStatus;
+    }
+    
+    // ===== FULL DETAILS METHODS IMPLEMENTATION =====
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-full-details", key = "'full_' + #maHD")
+    public HoaDonFullDetailsDTO getHoaDonFullDetails(Integer maHD) {
+        HoaDon hoaDon = findActiveById(maHD);
+        if (hoaDon == null) {
+            throw new RuntimeException("Không tìm thấy hóa đơn với mã: " + maHD);
+        }
+        
+        // Lấy chi tiết hóa đơn
+        List<com.example.mini_supermarket.entity.ChiTietHoaDon> chiTietList = 
+            chiTietHoaDonService.findByHoaDonId(maHD);
+        
+        // Convert chi tiết hóa đơn sang DTO
+        List<HoaDonFullDetailsDTO.ChiTietHoaDonDTO> chiTietDTOList = chiTietList.stream()
+            .map(ct -> HoaDonFullDetailsDTO.ChiTietHoaDonDTO.builder()
+                .maCTHD(ct.getMaCTHD())
+                .maSP(ct.getSanPham().getMaSP())
+                .tenSP(ct.getSanPham().getTenSP())
+                .soLuong(ct.getSoLuong())
+                .donGiaBan(ct.getDonGiaBan())
+                .thanhTien(ct.getThanhTien())
+                .giamGia(ct.getGiamGia())
+                .thanhTienSauGiam(ct.getThanhTienSauGiam())
+                .build())
+            .collect(java.util.stream.Collectors.toList());
+        
+        // Tính thống kê
+        Integer soLuongSanPham = chiTietList.stream()
+            .mapToInt(com.example.mini_supermarket.entity.ChiTietHoaDon::getSoLuong)
+            .sum();
+        
+        java.math.BigDecimal trungBinhGiaTriSanPham = soLuongSanPham > 0 ? 
+            hoaDon.getTongTienHang().divide(java.math.BigDecimal.valueOf(soLuongSanPham), 
+                2, java.math.RoundingMode.HALF_UP) : java.math.BigDecimal.ZERO;
+        
+        // Tạo DTO
+        HoaDonFullDetailsDTO dto = HoaDonFullDetailsDTO.builder()
+            .maHD(hoaDon.getMaHD())
+            .maKH(hoaDon.getKhachHang() != null ? hoaDon.getKhachHang().getMaKH() : null)
+            .tenKH(hoaDon.getKhachHang() != null ? hoaDon.getKhachHang().getHoTen() : null)
+            .maNV(hoaDon.getNhanVienLap() != null ? hoaDon.getNhanVienLap().getMaNV() : null)
+            .tenNV(hoaDon.getNhanVienLap() != null ? hoaDon.getNhanVienLap().getHoTen() : null)
+            .maKM(hoaDon.getKhuyenMai() != null ? hoaDon.getKhuyenMai().getMaKM() : null)
+            .tenKM(hoaDon.getKhuyenMai() != null ? hoaDon.getKhuyenMai().getTenChuongTrinh() : null)
+            .ngayLap(hoaDon.getNgayLap())
+            .tongTienHang(hoaDon.getTongTienHang())
+            .tienGiamGia(hoaDon.getTienGiamGia())
+            .tongTien(hoaDon.getTongTien())
+            .trangThai(hoaDon.getTrangThai())
+            .diemTichLuy(hoaDon.getDiemTichLuy())
+            .ghiChu(hoaDon.getGhiChu())
+            .chiTietList(chiTietDTOList)
+            .soLuongSanPham(soLuongSanPham)
+            .trungBinhGiaTriSanPham(trungBinhGiaTriSanPham)
+            .build();
+        
+        // Set tên trạng thái
+        dto.setTrangThai(hoaDon.getTrangThai());
+        
+        return dto;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-full-details", key = "'customer_full_' + #maKH")
+    public List<HoaDonFullDetailsDTO> getHoaDonFullDetailsByCustomer(String maKH) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        
+        List<HoaDon> hoaDons = hoaDonRepository.findActiveByCustomer(maKH.trim());
+        
+        return hoaDons.stream()
+            .map(hoaDon -> getHoaDonFullDetails(hoaDon.getMaHD()))
+            .collect(java.util.stream.Collectors.toList());
     }
 } 

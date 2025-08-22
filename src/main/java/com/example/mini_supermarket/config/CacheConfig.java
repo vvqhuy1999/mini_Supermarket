@@ -18,7 +18,10 @@ public class CacheConfig {
         cacheManager.setCacheNames(java.util.Arrays.asList(
             "hoadon-summary",           // Cache cho danh sách hóa đơn summary
             "hoadon-by-customer",       // Cache cho hóa đơn theo khách hàng
+            "hoadon-by-status",         // Cache cho hóa đơn theo trạng thái
             "hoadon-count",             // Cache cho số lượng hóa đơn
+            "hoadon-statistics",        // Cache cho thống kê hóa đơn
+            "hoadon-full-details",      // Cache cho hóa đơn chi tiết đầy đủ
             "sanpham-list",             // Cache cho danh sách sản phẩm
             "khachhang-info",           // Cache cho thông tin khách hàng
             "nhanvien-info"             // Cache cho thông tin nhân viên

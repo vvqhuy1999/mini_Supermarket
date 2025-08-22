@@ -60,4 +60,12 @@ public class ChiTietHoaDonServiceImpl implements ChiTietHoaDonService {
             chiTietHoaDonRepository.save(chiTietHoaDon);
         }
     }
+    
+    // ===== ENHANCED METHODS IMPLEMENTATION =====
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChiTietHoaDon> findByHoaDonId(Integer maHD) {
+        return chiTietHoaDonRepository.findByHoaDonId(maHD);
+    }
 } 

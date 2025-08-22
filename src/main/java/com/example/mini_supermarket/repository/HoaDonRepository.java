@@ -49,4 +49,22 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     // Đếm số lượng hóa đơn của khách hàng
     @Query("SELECT COUNT(h) FROM HoaDon h WHERE h.khachHang.maKH = :maKH AND h.isDeleted = false")
     Long countByCustomer(@Param("maKH") String maKH);
+    
+    // ===== ENHANCED QUERIES =====
+    
+    // Tìm hóa đơn theo trạng thái
+    @Query("SELECT h FROM HoaDon h WHERE h.trangThai = :trangThai AND h.isDeleted = false ORDER BY h.ngayLap DESC")
+    List<HoaDon> findByTrangThai(@Param("trangThai") Integer trangThai);
+    
+    // Tìm hóa đơn theo khách hàng và trạng thái
+    @Query("SELECT h FROM HoaDon h WHERE h.khachHang.maKH = :maKH AND h.trangThai = :trangThai AND h.isDeleted = false ORDER BY h.ngayLap DESC")
+    List<HoaDon> findByCustomerAndStatus(@Param("maKH") String maKH, @Param("trangThai") Integer trangThai);
+    
+    // Tìm hóa đơn theo khoảng ngày
+    @Query("SELECT h FROM HoaDon h WHERE DATE(h.ngayLap) BETWEEN :fromDate AND :toDate AND h.isDeleted = false ORDER BY h.ngayLap DESC")
+    List<HoaDon> findByDateRange(@Param("fromDate") String fromDate, @Param("toDate") String toDate);
+    
+    // Tìm hóa đơn theo khách hàng và khoảng ngày
+    @Query("SELECT h FROM HoaDon h WHERE h.khachHang.maKH = :maKH AND DATE(h.ngayLap) BETWEEN :fromDate AND :toDate AND h.isDeleted = false ORDER BY h.ngayLap DESC")
+    List<HoaDon> findByCustomerAndDateRange(@Param("maKH") String maKH, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 } 
