@@ -78,4 +78,13 @@ public class NguoiDungServiceImpl implements NguoiDungService {
             nguoiDungRepository.save(nguoiDung);
         }
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public NguoiDung findByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email không được để trống");
+        }
+        return nguoiDungRepository.findByEmail(email.trim()).orElse(null);
+    }
 } 

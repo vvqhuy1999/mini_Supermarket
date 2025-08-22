@@ -48,4 +48,11 @@ public interface KhachHangService {
      * @return KhachHang nếu tìm thấy, null nếu không tìm thấy
      */
     KhachHang findByMaNguoiDung(String maNguoiDung);
+    
+    /**
+     * Tìm khách hàng theo email
+     * @param email Email cần tìm
+     * @return KhachHang nếu tìm thấy, null nếu không tìm thấy
+     */
+    KhachHang findByEmail(String email);
 } 

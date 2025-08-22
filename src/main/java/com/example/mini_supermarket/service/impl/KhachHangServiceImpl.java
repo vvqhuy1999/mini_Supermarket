@@ -5,6 +5,7 @@ import com.example.mini_supermarket.entity.KhachHang;
 import com.example.mini_supermarket.entity.NguoiDung;
 import com.example.mini_supermarket.service.KhachHangService;
 import com.example.mini_supermarket.service.UserService;
+import com.example.mini_supermarket.service.NguoiDungService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +19,12 @@ import java.util.UUID;
 public class KhachHangServiceImpl implements KhachHangService {
     private final KhachHangRepository khachHangRepository;
     private final UserService userService;
+    private final NguoiDungService nguoiDungService;
 
-    public KhachHangServiceImpl(KhachHangRepository khachHangRepository, UserService userService) {
+    public KhachHangServiceImpl(KhachHangRepository khachHangRepository, UserService userService, NguoiDungService nguoiDungService) {
         this.khachHangRepository = khachHangRepository;
         this.userService = userService;
+        this.nguoiDungService = nguoiDungService;
     }
 
     @Override
@@ -216,6 +219,42 @@ public class KhachHangServiceImpl implements KhachHangService {
             return null; // Không tìm thấy
         } catch (Exception e) {
             System.err.println("❌ Lỗi tìm khách hàng theo maNguoiDung: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public KhachHang findByEmail(String email) {
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                throw new RuntimeException("Email không được để trống");
+            }
+            
+            // 1. Tìm NguoiDung theo email
+            NguoiDung nguoiDung = nguoiDungService.findByEmail(email.trim());
+            if (nguoiDung == null) {
+                System.out.println("❌ Không tìm thấy NguoiDung với email: " + email);
+                return null;
+            }
+            
+            // 2. Tìm KhachHang theo maNguoiDung
+            KhachHang khachHang = findByMaNguoiDung(nguoiDung.getMaNguoiDung());
+            if (khachHang == null) {
+                System.out.println("❌ Không tìm thấy KhachHang cho NguoiDung: " + nguoiDung.getMaNguoiDung());
+                return null;
+            }
+            
+            System.out.println("✅ Tìm thấy khách hàng theo email: " + email);
+            System.out.println("   - Mã KH: " + khachHang.getMaKH());
+            System.out.println("   - Họ tên: " + khachHang.getHoTen());
+            System.out.println("   - Email: " + email);
+            
+            return khachHang;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi tìm khách hàng theo email: " + e.getMessage());
             e.printStackTrace();
             return null;
         }

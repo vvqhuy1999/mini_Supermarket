@@ -13,6 +13,7 @@ import com.example.mini_supermarket.dto.HoaDonFullDetailsDTO;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.CacheManager;
 import com.example.mini_supermarket.service.ChiTietHoaDonService;
 import com.example.mini_supermarket.service.GioHangChiTietService;
 import com.example.mini_supermarket.service.KhachHangService;
@@ -33,7 +34,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@CacheConfig(cacheNames = {"hoadon-summary", "hoadon-by-customer", "hoadon-count", "hoadon-by-status", "hoadon-full-details", "hoadon-statistics"})
 public class HoaDonServiceImpl implements HoaDonService {
     private HoaDonRepository hoaDonRepository;
     
@@ -51,6 +51,9 @@ public class HoaDonServiceImpl implements HoaDonService {
     
     @Autowired
     private KhuyenMaiService khuyenMaiService;
+    
+    @Autowired
+    private CacheManager cacheManager;
     
     @Autowired
     public HoaDonServiceImpl(HoaDonRepository hoaDonRepository) {
@@ -79,9 +82,10 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public HoaDon save(HoaDon theHoaDon) {
-        return hoaDonRepository.save(theHoaDon);
+        HoaDon savedHoaDon = hoaDonRepository.save(theHoaDon);
+        clearAllRelatedCaches(); // Clear cache sau khi save
+        return savedHoaDon;
     }
 
     @Override
@@ -99,7 +103,9 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Không tìm thấy hóa đơn với ID - " + hoaDon.getMaHD());
         }
 
-        return hoaDonRepository.save(hoaDon);
+        HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
+        clearAllRelatedCaches(); // Clear cache sau khi cập nhật
+        return savedHoaDon;
     }
 
     @Override
@@ -123,12 +129,12 @@ public class HoaDonServiceImpl implements HoaDonService {
             HoaDon hoaDon = hoaDonOpt.get();
             hoaDon.setIsDeleted(true);
             hoaDonRepository.save(hoaDon);
+            clearAllRelatedCaches(); // Clear cache sau khi soft delete
         }
     }
     
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public InvoiceCreatedResponse createInvoiceFromCart(CreateInvoiceFromCartRequest request) {
         // 1. Validate request
         if (request.getMaKH() == null || request.getMaKH().trim().isEmpty()) {
@@ -312,7 +318,31 @@ public class HoaDonServiceImpl implements HoaDonService {
                 .items(invoiceItems)
                 .build();
         
+        // 11. Clear cache sau khi tạo hóa đơn
+        clearAllRelatedCaches();
+        
         return response;
+    }
+    
+    // ===== HELPER METHOD - Clear all related caches =====
+    private void clearAllRelatedCaches() {
+        try {
+            // Clear hóa đơn caches
+            cacheManager.getCache("hoadon-summary").clear();
+            cacheManager.getCache("hoadon-by-customer").clear();
+            cacheManager.getCache("hoadon-count").clear();
+            cacheManager.getCache("hoadon-by-status").clear();
+            cacheManager.getCache("hoadon-full-details").clear();
+            cacheManager.getCache("hoadon-statistics").clear();
+            
+            // Clear giỏ hàng caches
+            cacheManager.getCache("giohang-by-customer").clear();
+            cacheManager.getCache("giohang-items").clear();
+            
+            System.out.println("✅ Đã clear tất cả cache liên quan đến hóa đơn và giỏ hàng");
+        } catch (Exception e) {
+            System.out.println("⚠️ Lỗi khi clear cache: " + e.getMessage());
+        }
     }
     
     @Override
@@ -333,13 +363,14 @@ public class HoaDonServiceImpl implements HoaDonService {
     
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public HoaDon updateTrangThai(Integer maHD, Integer trangThaiMoi) {
         Optional<HoaDon> hoaDonOpt = hoaDonRepository.findById(maHD);
         if (hoaDonOpt.isPresent()) {
             HoaDon hoaDon = hoaDonOpt.get();
             hoaDon.setTrangThai(trangThaiMoi);
-            return hoaDonRepository.save(hoaDon);
+            HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
+            clearAllRelatedCaches(); // Clear cache sau khi cập nhật
+            return savedHoaDon;
         }
         throw new RuntimeException("Không tìm thấy hóa đơn với mã: " + maHD);
     }
@@ -443,7 +474,6 @@ public class HoaDonServiceImpl implements HoaDonService {
     
     @Override
     @Transactional
-    @CacheEvict(allEntries = true)
     public HoaDon cancelHoaDon(Integer maHD, String lyDoHuy) {
         HoaDon hoaDon = findActiveById(maHD);
         if (hoaDon == null) {
@@ -467,7 +497,9 @@ public class HoaDonServiceImpl implements HoaDonService {
         }
         hoaDon.setNgaySua(java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
         
-        return hoaDonRepository.save(hoaDon);
+        HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
+        clearAllRelatedCaches(); // Clear cache sau khi hủy
+        return savedHoaDon;
     }
     
     @Override

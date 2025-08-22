@@ -317,4 +317,98 @@ public class KhachHangRestController {
         
         return errors;
     }
+
+    // ===== API TÌM KIẾM THEO EMAIL =====
+    
+    @Operation(summary = "🔍 Tìm khách hàng theo email", description = """
+        **Chức năng:** Tìm kiếm thông tin khách hàng dựa trên địa chỉ email
+        
+        **Quy trình tìm kiếm:**
+        1. Tìm NguoiDung theo email
+        2. Tìm KhachHang theo maNguoiDung
+        3. Trả về thông tin đầy đủ khách hàng
+        
+        **Sử dụng:**
+        - Tìm kiếm khách hàng khi chỉ biết email
+        - Xác minh thông tin khách hàng
+        - Kiểm tra khách hàng có tồn tại không
+        
+        **Response:** Thông tin chi tiết khách hàng bao gồm:
+        - Mã khách hàng, họ tên, email, SĐT, địa chỉ
+        - Điểm tích lũy, loại khách hàng, ngày đăng ký
+        - Mã người dùng và vai trò trong hệ thống
+        """)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "✅ Tìm thấy khách hàng", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = KhachHang.class))),
+            @ApiResponse(responseCode = "404", description = "❌ Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "400", description = "❌ Email không hợp lệ"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    @GetMapping("/by-email/{email}")
+    public ResponseEntity<?> findKhachHangByEmail(
+            @Parameter(description = "Email cần tìm kiếm", required = true, example = "customer@example.com") 
+            @PathVariable String email) {
+        
+        try {
+            // Tìm khách hàng theo email
+            KhachHang khachHang = khachHangService.findByEmail(email);
+            
+            if (khachHang == null) {
+                Map<String, Object> notFoundResponse = new HashMap<>();
+                notFoundResponse.put("success", false);
+                notFoundResponse.put("message", "Không tìm thấy khách hàng với email: " + email);
+                notFoundResponse.put("email", email);
+                notFoundResponse.put("suggestion", "Kiểm tra lại email hoặc khách hàng chưa đăng ký");
+                
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(notFoundResponse);
+            }
+            
+            // Tạo response thành công với thông tin chi tiết
+            Map<String, Object> successResponse = new HashMap<>();
+            successResponse.put("success", true);
+            successResponse.put("message", "Tìm thấy khách hàng thành công");
+            
+            // Tạo customer info map
+            Map<String, Object> customerInfo = new HashMap<>();
+            customerInfo.put("maKH", khachHang.getMaKH());
+            customerInfo.put("hoTen", khachHang.getHoTen());
+            customerInfo.put("email", khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getEmail() : null);
+            customerInfo.put("sdt", khachHang.getSdt());
+            customerInfo.put("diaChi", khachHang.getDiaChi());
+            customerInfo.put("ngaySinh", khachHang.getNgaySinh());
+            customerInfo.put("diemTichLuy", khachHang.getDiemTichLuy());
+            customerInfo.put("loaiKhachHang", khachHang.getLoaiKhachHang());
+            customerInfo.put("ngayDangKy", khachHang.getNgayDangKy());
+            customerInfo.put("maNguoiDung", khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getMaNguoiDung() : null);
+            customerInfo.put("vaiTro", khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getVaiTro() : null);
+            customerInfo.put("isActive", !khachHang.getIsDeleted());
+            
+            successResponse.put("customer", customerInfo);
+            
+            return ResponseEntity.ok(successResponse);
+                    
+        } catch (IllegalArgumentException e) {
+            // Lỗi validation (email không hợp lệ)
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Email không hợp lệ: " + e.getMessage());
+            errorResponse.put("email", email);
+            errorResponse.put("error_type", "validation_error");
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+            
+        } catch (Exception e) {
+            // Lỗi server không mong muốn
+            e.printStackTrace();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi khi tìm kiếm khách hàng: " + e.getMessage());
+            errorResponse.put("email", email);
+            errorResponse.put("error_type", "server_error");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 } 

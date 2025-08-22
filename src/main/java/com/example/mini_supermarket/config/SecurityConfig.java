@@ -146,6 +146,9 @@ public class SecurityConfig {
         // Đăng ký tài khoản khách hàng mới
         "/api/khachhang/register",      // POST: Đăng ký tài khoản khách hàng mới
         
+        // Tìm kiếm khách hàng theo email (không cần authentication)
+        "/api/khachhang/by-email/*",    // GET: Tìm khách hàng theo email
+        
         // Profile khách hàng - Xem thông tin cá nhân (không cần authentication)
         "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
     };

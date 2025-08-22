@@ -4,423 +4,423 @@
 
 -- Bảng quản lý thông tin người dùng hệ thống
 CREATE TABLE nguoidung (
-    manguoidung VARCHAR(50) PRIMARY KEY,
-    email VARCHAR(50) UNIQUE NOT NULL,
-    matkhau VARCHAR(255) NOT NULL,
-    sub VARCHAR(255),
-    vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    
-    -- Các cột cho chức năng OTP và Reset Password
-    otp_code VARCHAR(6),
-    otp_generated_time TIMESTAMP,
-    otp_attempts INT DEFAULT 0,
-    reset_password_token VARCHAR(255),
-    reset_password_token_expiry TIMESTAMP,
+                           manguoidung VARCHAR(50) PRIMARY KEY,
+                           email VARCHAR(50) UNIQUE NOT NULL,
+                           matkhau VARCHAR(255) NOT NULL,
+                           sub VARCHAR(255),
+                           vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+                           ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
+    -- Các cột cho chức năng OTP và Reset Password
+                           otp_code VARCHAR(6),
+                           otp_generated_time TIMESTAMP,
+                           otp_attempts INT DEFAULT 0,
+                           reset_password_token VARCHAR(255),
+                           reset_password_token_expiry TIMESTAMP,
+
+                           CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
 );
 
 -- Table to manage store information
 CREATE TABLE cuahang (
-    mach VARCHAR(50) PRIMARY KEY,
-    tench VARCHAR(255) NOT NULL,
-    diachi VARCHAR(255),
-    sdt VARCHAR(15),
-    ngaythanhlap DATE,
-    trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                         mach VARCHAR(50) PRIMARY KEY,
+                         tench VARCHAR(255) NOT NULL,
+                         diachi VARCHAR(255),
+                         sdt VARCHAR(15),
+                         ngaythanhlap DATE,
+                         trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
+                         isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to manage supplier information
 CREATE TABLE nhacungcap (
-    mancc VARCHAR(50) PRIMARY KEY,
-    tenncc VARCHAR(255) NOT NULL,
-    diachi VARCHAR(255),
-    sdt VARCHAR(15),
-    email VARCHAR(100),
-    thongtinhopdong TEXT,
-    ngayhoptac DATE,
-    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                            mancc VARCHAR(50) PRIMARY KEY,
+                            tenncc VARCHAR(255) NOT NULL,
+                            diachi VARCHAR(255),
+                            sdt VARCHAR(15),
+                            email VARCHAR(100),
+                            thongtinhopdong TEXT,
+                            ngayhoptac DATE,
+                            trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+                            isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to manage employee information
 CREATE TABLE nhanvien (
-    manv VARCHAR(50) PRIMARY KEY,
-    manguoidung VARCHAR(50),
-    hoten VARCHAR(255) NOT NULL,
-    sdt VARCHAR(15),
-    diachi VARCHAR(255),
-    ngaysinh DATE,
-    ngayvaolam DATE,
-    chucvu VARCHAR(100),
-    maquanly VARCHAR(50), -- Direct manager's employee ID
-    mach VARCHAR(50), -- Store where the employee works
-    trangthai INT DEFAULT 1, -- 0=Resigned, 1=Working
-    isdeleted BOOLEAN DEFAULT FALSE,
+                          manv VARCHAR(50) PRIMARY KEY,
+                          manguoidung VARCHAR(50),
+                          hoten VARCHAR(255) NOT NULL,
+                          sdt VARCHAR(15),
+                          diachi VARCHAR(255),
+                          ngaysinh DATE,
+                          ngayvaolam DATE,
+                          chucvu VARCHAR(100),
+                          maquanly VARCHAR(50), -- Direct manager's employee ID
+                          mach VARCHAR(50), -- Store where the employee works
+                          trangthai INT DEFAULT 1, -- 0=Resigned, 1=Working
+                          isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_nhanvien_ngaysinh CHECK (ngaysinh < ngayvaolam)
+                          CONSTRAINT chk_nhanvien_ngaysinh CHECK (ngaysinh < ngayvaolam)
 );
 
 -- Table to manage customer information and loyalty points
 CREATE TABLE khachhang (
-    makh VARCHAR(50) PRIMARY KEY,
-    manguoidung VARCHAR(50),
-    hoten VARCHAR(255) NOT NULL,
-    sdt VARCHAR(15),
-    diachi VARCHAR(255),
-    ngaysinh DATE,
-    diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
-    loaikhachhang VARCHAR(50) DEFAULT 'Thường', -- Regular, VIP, Silver, Gold, Diamond
-    ngaydangky TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                           makh VARCHAR(50) PRIMARY KEY,
+                           manguoidung VARCHAR(50),
+                           hoten VARCHAR(255) NOT NULL,
+                           sdt VARCHAR(15),
+                           diachi VARCHAR(255),
+                           ngaysinh DATE,
+                           diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
+                           loaikhachhang VARCHAR(50) DEFAULT 'Thường', -- Regular, VIP, Silver, Gold, Diamond
+                           ngaydangky TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_khachhang_diemtichluy CHECK (diemtichluy >= 0)
+                           CONSTRAINT chk_khachhang_diemtichluy CHECK (diemtichluy >= 0)
 );
 
 -- Table for product categories
 CREATE TABLE loaisanpham (
-    maloaisp VARCHAR(50) PRIMARY KEY,
-    tenloai VARCHAR(255) NOT NULL,
-    mota TEXT,
-    maloaicha VARCHAR(50), -- For multi-level category tree
-    thutuhienthi INT DEFAULT 0,
-    isdeleted BOOLEAN DEFAULT FALSE
+                             maloaisp VARCHAR(50) PRIMARY KEY,
+                             tenloai VARCHAR(255) NOT NULL,
+                             mota TEXT,
+                             maloaicha VARCHAR(50), -- For multi-level category tree
+                             thutuhienthi INT DEFAULT 0,
+                             isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for detailed product information
 CREATE TABLE sanpham (
-    masp VARCHAR(50) PRIMARY KEY,
-    maloaisp VARCHAR(50) NOT NULL,
-    tensp VARCHAR(255) NOT NULL,
-    mota TEXT,
-    donvitinh VARCHAR(50) DEFAULT 'Cái',
-    trongluong DECIMAL(10,3), -- Product weight (kg)
-    kichthuoc VARCHAR(100), -- Product dimensions
-    hansudung INT, -- Shelf life in days
-    trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                         masp VARCHAR(50) PRIMARY KEY,
+                         maloaisp VARCHAR(50) NOT NULL,
+                         tensp VARCHAR(255) NOT NULL,
+                         mota TEXT,
+                         donvitinh VARCHAR(50) DEFAULT 'Cái',
+                         trongluong DECIMAL(10,3), -- Product weight (kg)
+                         kichthuoc VARCHAR(100), -- Product dimensions
+                         hansudung INT, -- Shelf life in days
+                         trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
+                         ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                         isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for promotion programs
 CREATE TABLE khuyenmai (
-    makm VARCHAR(50) PRIMARY KEY,
-    tenchuongtrinh VARCHAR(255) NOT NULL,
-    mota TEXT,
-    loaikm VARCHAR(50) NOT NULL, -- Percentage, Amount, Points, BuyXGetY
-    giatrikm DECIMAL(15,2) NOT NULL, -- Promotion value (% or amount)
-    dieukienapdung TEXT, -- Conditions for applying the promotion
-    ngaybatdau TIMESTAMP NOT NULL,
-    ngayketthuc TIMESTAMP NOT NULL,
-    soluongtoida INT, -- Maximum number of applications
-    dasudung INT DEFAULT 0, -- Number of times used
-    maquanly VARCHAR(50), -- Manager in charge of the promotion
-    trangthai INT DEFAULT 1, -- 0=Paused, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE,
+                           makm VARCHAR(50) PRIMARY KEY,
+                           tenchuongtrinh VARCHAR(255) NOT NULL,
+                           mota TEXT,
+                           loaikm VARCHAR(50) NOT NULL, -- Percentage, Amount, Points, BuyXGetY
+                           coupon_code VARCHAR(50) NOT NULL,
+                           giatrikm DECIMAL(15,2) NOT NULL, -- Promotion value (% or amount)
+                           dieukienapdung TEXT, -- Conditions for applying the promotion
+                           ngaybatdau TIMESTAMP NOT NULL,
+                           ngayketthuc TIMESTAMP NOT NULL,
+                           soluongtoida INT, -- Maximum number of applications
+                           dasudung INT DEFAULT 0, -- Number of times used
+                           maquanly VARCHAR(50), -- Manager in charge of the promotion
+                           trangthai INT DEFAULT 1, -- 0=Paused, 1=Active
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_khuyenmai_ngay CHECK (ngaybatdau < ngayketthuc),
-    CONSTRAINT chk_khuyenmai_soluongtoida CHECK (soluongtoida IS NULL OR soluongtoida > 0),
-    CONSTRAINT chk_khuyenmai_dasudung CHECK (dasudung >= 0)
+                           CONSTRAINT chk_khuyenmai_ngay CHECK (ngaybatdau < ngayketthuc),
+                           CONSTRAINT chk_khuyenmai_soluongtoida CHECK (soluongtoida IS NULL OR soluongtoida > 0),
+                           CONSTRAINT chk_khuyenmai_dasudung CHECK (dasudung >= 0)
 );
 
 -- Table for accepted payment methods
 CREATE TABLE phuongthucthanhtoan (
-    mapttt VARCHAR(50) PRIMARY KEY,
-    tenpttt VARCHAR(100) NOT NULL,
-    mota TEXT,
-    phigiaodich DECIMAL(10,4) DEFAULT 0, -- Transaction fee (%)
-    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                                     mapttt VARCHAR(50) PRIMARY KEY,
+                                     tenpttt VARCHAR(100) NOT NULL,
+                                     mota TEXT,
+                                     phigiaodich DECIMAL(10,4) DEFAULT 0, -- Transaction fee (%)
+                                     trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+                                     isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for warehouse information
 CREATE TABLE kho (
-    makho SERIAL PRIMARY KEY,
-    tenkho VARCHAR(255) NOT NULL,
-    diachi VARCHAR(255),
-    dientich DECIMAL(10,2), -- Warehouse area (m²)
-    succhua DECIMAL(15,2), -- Maximum capacity
-    mach VARCHAR(50), -- Store managing the warehouse
-    trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                     makho SERIAL PRIMARY KEY,
+                     tenkho VARCHAR(255) NOT NULL,
+                     diachi VARCHAR(255),
+                     dientich DECIMAL(10,2), -- Warehouse area (m²)
+                     succhua DECIMAL(15,2), -- Maximum capacity
+                     mach VARCHAR(50), -- Store managing the warehouse
+                     trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
+                     isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to define work shifts
 CREATE TABLE calamviec (
-    maca SERIAL PRIMARY KEY,
-    tenca VARCHAR(100) NOT NULL,
-    giobatdau TIME NOT NULL, -- Shift start time
-    gioketthuc TIME NOT NULL, -- Shift end time
-    sogiolam DECIMAL(4,2) GENERATED ALWAYS AS (
-        CAST(
-            EXTRACT(EPOCH FROM (
-                CASE
-                    WHEN gioketthuc < giobatdau THEN gioketthuc::time + interval '1 day'
+                           maca SERIAL PRIMARY KEY,
+                           tenca VARCHAR(100) NOT NULL,
+                           giobatdau TIME NOT NULL, -- Shift start time
+                           gioketthuc TIME NOT NULL, -- Shift end time
+                           sogiolam DECIMAL(4,2) GENERATED ALWAYS AS (
+                               CAST(
+                                       EXTRACT(EPOCH FROM (
+                                           CASE
+                                               WHEN gioketthuc < giobatdau THEN gioketthuc::time + interval '1 day'
                     ELSE gioketthuc::time
                 END - giobatdau::time
-            )) / 3600
-        AS DECIMAL(4,2))
-    ) STORED, -- Calculated work hours
-    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE,
+                                           )) / 3600
+                                   AS DECIMAL(4,2))
+                               ) STORED, -- Calculated work hours
+                           trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_calamviec_gio CHECK (giobatdau != gioketthuc)
-);
+                           CONSTRAINT chk_calamviec_gio CHECK (giobatdau != gioketthuc)
+    );
 
 -- Bảng quản lý lịch làm việc của nhân viên
 CREATE TABLE lichlamviec (
-    malich SERIAL PRIMARY KEY,
-    manv VARCHAR(50) NOT NULL,
-    maca INT NOT NULL,
-    ngaylam DATE NOT NULL,
-    manvquanly VARCHAR(50),
-    trangthai INT DEFAULT 0,
-    ngayduyet TIMESTAMP,
-    ghichu TEXT,
-    giovao TIME,
-    giora TIME,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    UNIQUE (manv, ngaylam, maca)
+                             malich SERIAL PRIMARY KEY,
+                             manv VARCHAR(50) NOT NULL,
+                             maca INT NOT NULL,
+                             ngaylam DATE NOT NULL,
+                             manvquanly VARCHAR(50),
+                             trangthai INT DEFAULT 0,
+                             ngayduyet TIMESTAMP,
+                             ghichu TEXT,
+                             giovao TIME,
+                             giora TIME,
+                             isdeleted BOOLEAN DEFAULT FALSE,
+                             UNIQUE (manv, ngaylam, maca)
 );
 
 -- Table for monthly employee payroll
 CREATE TABLE bangluong (
-    maluong SERIAL PRIMARY KEY,
-    manv VARCHAR(50) NOT NULL,
-    thangluong INT NOT NULL,
-    namluong INT NOT NULL,
-    luongcoban DECIMAL(15,2) NOT NULL,
-    phucap DECIMAL(15,2) DEFAULT 0,
-    thuong DECIMAL(15,2) DEFAULT 0,
-    khautru DECIMAL(15,2) DEFAULT 0,
-    tongluong DECIMAL(15,2) GENERATED ALWAYS AS (luongcoban + phucap + thuong - khautru) STORED,
-    songaylam INT DEFAULT 0,
-    sogiolam DECIMAL(8,2) DEFAULT 0,
-    ghichu TEXT,
-    trangthai INT DEFAULT 0,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ngaythanhtoan TIMESTAMP NULL,
-    nguoithanhtoan VARCHAR(50) NULL,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    CONSTRAINT check_thang_luong CHECK (thangluong >= 1 AND thangluong <= 12),
-    CONSTRAINT check_nam_luong CHECK (namluong >= 2020),
-    CONSTRAINT check_luong_co_ban CHECK (luongcoban >= 0),
-    CONSTRAINT check_phu_cap CHECK (phucap >= 0),
-    CONSTRAINT check_thuong CHECK (thuong >= 0),
-    CONSTRAINT check_khau_tru CHECK (khautru >= 0),
-    CONSTRAINT check_so_ngay_lam CHECK (songaylam >= 0),
-    CONSTRAINT check_so_gio_lam CHECK (sogiolam >= 0),
-    UNIQUE (manv, thangluong, namluong)
+                           maluong SERIAL PRIMARY KEY,
+                           manv VARCHAR(50) NOT NULL,
+                           thangluong INT NOT NULL,
+                           namluong INT NOT NULL,
+                           luongcoban DECIMAL(15,2) NOT NULL,
+                           phucap DECIMAL(15,2) DEFAULT 0,
+                           thuong DECIMAL(15,2) DEFAULT 0,
+                           khautru DECIMAL(15,2) DEFAULT 0,
+                           tongluong DECIMAL(15,2) GENERATED ALWAYS AS (luongcoban + phucap + thuong - khautru) STORED,
+                           songaylam INT DEFAULT 0,
+                           sogiolam DECIMAL(8,2) DEFAULT 0,
+                           ghichu TEXT,
+                           trangthai INT DEFAULT 0,
+                           ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           ngaythanhtoan TIMESTAMP NULL,
+                           nguoithanhtoan VARCHAR(50) NULL,
+                           isdeleted BOOLEAN DEFAULT FALSE,
+                           CONSTRAINT check_thang_luong CHECK (thangluong >= 1 AND thangluong <= 12),
+                           CONSTRAINT check_nam_luong CHECK (namluong >= 2020),
+                           CONSTRAINT check_luong_co_ban CHECK (luongcoban >= 0),
+                           CONSTRAINT check_phu_cap CHECK (phucap >= 0),
+                           CONSTRAINT check_thuong CHECK (thuong >= 0),
+                           CONSTRAINT check_khau_tru CHECK (khautru >= 0),
+                           CONSTRAINT check_so_ngay_lam CHECK (songaylam >= 0),
+                           CONSTRAINT check_so_gio_lam CHECK (sogiolam >= 0),
+                           UNIQUE (manv, thangluong, namluong)
 );
 
 -- Table for product images
 CREATE TABLE hinhanh (
-    mahinh SERIAL PRIMARY KEY,
-    masp VARCHAR(50) NOT NULL,
-    url VARCHAR(500) NOT NULL,
-    mota VARCHAR(255),
-    lachinh BOOLEAN DEFAULT FALSE, -- Marks the main product image
-    thutuhienthi INT DEFAULT 0, -- Display order
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                         mahinh SERIAL PRIMARY KEY,
+                         masp VARCHAR(50) NOT NULL,
+                         url VARCHAR(500) NOT NULL,
+                         mota VARCHAR(255),
+                         lachinh BOOLEAN DEFAULT FALSE, -- Marks the main product image
+                         thutuhienthi INT DEFAULT 0, -- Display order
+                         ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                         isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for product price history
 CREATE TABLE giasanpham (
-    magia SERIAL PRIMARY KEY,
-    masp VARCHAR(50) NOT NULL,
-    gia DECIMAL(15,2) NOT NULL,
-    ngaybatdau DATE NOT NULL, -- Start date for the new price
-    ngayketthuc DATE, -- End date for the price
-    lydothaydoi VARCHAR(255),
-    nguoithaydoi VARCHAR(50),
-    isdeleted BOOLEAN DEFAULT FALSE,
+                            magia SERIAL PRIMARY KEY,
+                            masp VARCHAR(50) NOT NULL,
+                            gia DECIMAL(15,2) NOT NULL,
+                            ngaybatdau DATE NOT NULL, -- Start date for the new price
+                            ngayketthuc DATE, -- End date for the price
+                            lydothaydoi VARCHAR(255),
+                            nguoithaydoi VARCHAR(50),
+                            isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_giasanpham_gia CHECK (gia > 0),
-    CONSTRAINT chk_giasanpham_ngay CHECK (ngayketthuc IS NULL OR ngaybatdau <= ngayketthuc)
+                            CONSTRAINT chk_giasanpham_gia CHECK (gia > 0),
+                            CONSTRAINT chk_giasanpham_ngay CHECK (ngayketthuc IS NULL OR ngaybatdau <= ngayketthuc)
 );
 
 -- Table to track product inventory
 CREATE TABLE tonkhochitiet (
-    matkct SERIAL PRIMARY KEY,
-    masp VARCHAR(50) NOT NULL,
-    makho INT NOT NULL,
-    soluongton INT DEFAULT 0, -- Current stock quantity
-    soluongtoithieu INT DEFAULT 0, -- Minimum stock level
-    soluongtoida INT, -- Maximum stock level
-    ngaycapnhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                               matkct SERIAL PRIMARY KEY,
+                               masp VARCHAR(50) NOT NULL,
+                               makho INT NOT NULL,
+                               soluongton INT DEFAULT 0, -- Current stock quantity
+                               soluongtoithieu INT DEFAULT 0, -- Minimum stock level
+                               soluongtoida INT, -- Maximum stock level
+                               ngaycapnhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_tonkhochitiet_soluongton CHECK (soluongton >= 0)
+                               CONSTRAINT chk_tonkhochitiet_soluongton CHECK (soluongton >= 0)
 );
 
 -- Table for goods receipt notes from suppliers
 CREATE TABLE phieunhaphang (
-    mapn SERIAL PRIMARY KEY,
-    mancc VARCHAR(50) NOT NULL,
-    makho INT NOT NULL,
-    manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
-    ngaynhap TIMESTAMP NOT NULL,
-    tongtiennhap DECIMAL(15,2) DEFAULT 0,
-    trangthai INT DEFAULT 0, -- 0=Pending, 1=Stocked, 2=Rejected, 3=Canceled
-    ghichu TEXT,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                               mapn SERIAL PRIMARY KEY,
+                               mancc VARCHAR(50) NOT NULL,
+                               makho INT NOT NULL,
+                               manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
+                               ngaynhap TIMESTAMP NOT NULL,
+                               tongtiennhap DECIMAL(15,2) DEFAULT 0,
+                               trangthai INT DEFAULT 0, -- 0=Pending, 1=Stocked, 2=Rejected, 3=Canceled
+                               ghichu TEXT,
+                               ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for details of goods receipt notes
 CREATE TABLE chitietphieunhap (
-    mactpn SERIAL PRIMARY KEY,
-    mapn INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluongnhap INT NOT NULL,
-    dongianhap DECIMAL(15,2) NOT NULL,
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongnhap * dongianhap) STORED,
-    ngayhethan DATE, -- Product expiration date
-    solo VARCHAR(50), -- Production batch number
-    ngaysanxuat DATE,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                                  mactpn SERIAL PRIMARY KEY,
+                                  mapn INT NOT NULL,
+                                  masp VARCHAR(50) NOT NULL,
+                                  soluongnhap INT NOT NULL,
+                                  dongianhap DECIMAL(15,2) NOT NULL,
+                                  thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongnhap * dongianhap) STORED,
+                                  ngayhethan DATE, -- Product expiration date
+                                  solo VARCHAR(50), -- Production batch number
+                                  ngaysanxuat DATE,
+                                  isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_chitietphieunhap_soluongnhap CHECK (soluongnhap > 0),
-    CONSTRAINT chk_chitietphieunhap_dongianhap CHECK (dongianhap > 0)
+                                  CONSTRAINT chk_chitietphieunhap_soluongnhap CHECK (soluongnhap > 0),
+                                  CONSTRAINT chk_chitietphieunhap_dongianhap CHECK (dongianhap > 0)
 );
 
 -- Table for goods issue notes
 CREATE TABLE phieuxuatkho (
-    mapxk SERIAL PRIMARY KEY,
-    makho INT NOT NULL,
-    manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
-    ngayxuat TIMESTAMP NOT NULL,
-    tongsoluong INT DEFAULT 0,
-    tonggiatri DECIMAL(15,2) DEFAULT 0,
-    lydoxuat VARCHAR(255),
-    trangthai INT DEFAULT 0, -- 0=Pending, 1=Issued, 2=Rejected, 3=Canceled
-    ghichu TEXT,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                              mapxk SERIAL PRIMARY KEY,
+                              makho INT NOT NULL,
+                              manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
+                              ngayxuat TIMESTAMP NOT NULL,
+                              tongsoluong INT DEFAULT 0,
+                              tonggiatri DECIMAL(15,2) DEFAULT 0,
+                              lydoxuat VARCHAR(255),
+                              trangthai INT DEFAULT 0, -- 0=Pending, 1=Issued, 2=Rejected, 3=Canceled
+                              ghichu TEXT,
+                              ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for details of goods issue notes
 CREATE TABLE chitietphieuxuat (
-    mactpxk SERIAL PRIMARY KEY,
-    mapxk INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluongxuat INT NOT NULL,
-    dongiaxuat DECIMAL(15,2) NOT NULL,
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongxuat * dongiaxuat) STORED,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                                  mactpxk SERIAL PRIMARY KEY,
+                                  mapxk INT NOT NULL,
+                                  masp VARCHAR(50) NOT NULL,
+                                  soluongxuat INT NOT NULL,
+                                  dongiaxuat DECIMAL(15,2) NOT NULL,
+                                  thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongxuat * dongiaxuat) STORED,
+                                  isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_chitietphieuxuat_soluongxuat CHECK (soluongxuat > 0),
-    CONSTRAINT chk_chitietphieuxuat_dongiaxuat CHECK (dongiaxuat > 0)
+                                  CONSTRAINT chk_chitietphieuxuat_soluongxuat CHECK (soluongxuat > 0),
+                                  CONSTRAINT chk_chitietphieuxuat_dongiaxuat CHECK (dongiaxuat > 0)
 );
 
 
 -- Table for sales invoices
 CREATE TABLE hoadon (
-    mahd SERIAL PRIMARY KEY,
-    makh VARCHAR(50),
-    manvlap VARCHAR(50) NOT NULL, -- Employee who created the invoice
-    makm VARCHAR(50), -- Applied promotion code
-    ngaylap TIMESTAMP NOT NULL,
-    tongtienhang DECIMAL(15,2) DEFAULT 0,
-    tiengiamgia DECIMAL(15,2) DEFAULT 0,
-    tongtien DECIMAL(15,2) GENERATED ALWAYS AS (tongtienhang - tiengiamgia) STORED,
-    mapttt VARCHAR(50),
-    trangthai INT DEFAULT 0, -- 0=Pending, 1=Paid, 2=Processing, 3=Canceled, 4=Returned
-    diemtichluy INT DEFAULT 0, -- Points earned from this invoice
-    ghichu TEXT,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    nguoitao VARCHAR(50),
-    ngaysua TIMESTAMP,
-    nguoisua VARCHAR(50),
-    isdeleted BOOLEAN DEFAULT FALSE
+                        mahd SERIAL PRIMARY KEY,
+                        makh VARCHAR(50),
+                        manvlap VARCHAR(50) NOT NULL, -- Employee who created the invoice
+                        makm VARCHAR(50), -- Applied promotion code
+                        ngaylap TIMESTAMP NOT NULL,
+                        tongtienhang DECIMAL(15,2) DEFAULT 0,
+                        tiengiamgia DECIMAL(15,2) DEFAULT 0,
+                        tongtien DECIMAL(15,2) GENERATED ALWAYS AS (tongtienhang - tiengiamgia) STORED,
+                        trangthai INT DEFAULT 0, -- 0=Pending, 1=Paid, 2=Processing, 3=Canceled, 4=Returned
+                        diemtichluy INT DEFAULT 0, -- Points earned from this invoice
+                        ghichu TEXT,
+                        ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        nguoitao VARCHAR(50),
+                        ngaysua TIMESTAMP,
+                        nguoisua VARCHAR(50),
+                        isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for invoice details
 CREATE TABLE chitiethoadon (
-    macthd SERIAL PRIMARY KEY,
-    mahd INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluong INT NOT NULL,
-    dongiaban DECIMAL(15,2) NOT NULL,
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiaban) STORED,
-    giamgia DECIMAL(15,2) DEFAULT 0,
-    thanhtiensaugiam DECIMAL(15,2) GENERATED ALWAYS AS ((soluong * dongiaban) - giamgia) STORED,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                               macthd SERIAL PRIMARY KEY,
+                               mahd INT NOT NULL,
+                               masp VARCHAR(50) NOT NULL,
+                               soluong INT NOT NULL,
+                               dongiaban DECIMAL(15,2) NOT NULL,
+                               thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiaban) STORED,
+                               giamgia DECIMAL(15,2) DEFAULT 0,
+                               thanhtiensaugiam DECIMAL(15,2) GENERATED ALWAYS AS ((soluong * dongiaban) - giamgia) STORED,
+                               isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_chitiethoadon_soluong CHECK (soluong > 0)
+                               CONSTRAINT chk_chitiethoadon_soluong CHECK (soluong > 0)
 );
 
 -- Table to apply promotions to products
 CREATE TABLE khuyenmaisanpham (
-    makmsp SERIAL PRIMARY KEY,
-    makm VARCHAR(50) NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    ngaybatdau TIMESTAMP,
-    ngayketthuc TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                                  makmsp SERIAL PRIMARY KEY,
+                                  makm VARCHAR(50) NOT NULL,
+                                  masp VARCHAR(50) NOT NULL,
+                                  ngaybatdau TIMESTAMP,
+                                  ngayketthuc TIMESTAMP,
+                                  isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to apply promotions to customers
 CREATE TABLE khuyenmaikhachhang (
-    makmkh SERIAL PRIMARY KEY,
-    makm VARCHAR(50) NOT NULL,
-    makh VARCHAR(50) NOT NULL,
-    ngayapdung TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dasudung BOOLEAN DEFAULT FALSE,
-    isdeleted BOOLEAN DEFAULT FALSE
+                                    makmkh SERIAL PRIMARY KEY,
+                                    makm VARCHAR(50) NOT NULL,
+                                    makh VARCHAR(50) NOT NULL,
+                                    ngayapdung TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    dasudung BOOLEAN DEFAULT FALSE,
+                                    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for payment transactions
 CREATE TABLE thanhtoan (
-    matt SERIAL PRIMARY KEY,
-    mahd INT NOT NULL,
-    mapttt VARCHAR(50) NOT NULL,
-    sotienthanhtoan DECIMAL(15,2) NOT NULL,
-    ngaygiott TIMESTAMP NOT NULL,
-    trangthaitt INT DEFAULT 0, -- 0=Pending, 1=Success, 2=Failed, 3=Canceled, 4=Refunded
-    magiaodichnganhang VARCHAR(100), -- Transaction ID from the bank
-    ghichu TEXT,
-    isdeleted BOOLEAN DEFAULT FALSE
+                           matt SERIAL PRIMARY KEY,
+                           mahd INT NOT NULL,
+                           mapttt VARCHAR(50) NOT NULL,
+                           sotienthanhtoan DECIMAL(15,2) NOT NULL,
+                           ngaygiott TIMESTAMP NOT NULL,
+                           trangthaitt INT DEFAULT 0, -- 0=Pending, 1=Success, 2=Failed, 3=Canceled, 4=Refunded
+                           magiaodichnganhang VARCHAR(100), -- Transaction ID from the bank
+                           ghichu TEXT,
+                           isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Merged table for shopping cart and its details
 CREATE TABLE giohang_chitiet (
-    maghct SERIAL PRIMARY KEY, -- Unique ID for each row
-    makh VARCHAR(50), -- Customer ID
-    manv VARCHAR(50), -- Assisting employee (if any)
-    masp VARCHAR(50) NOT NULL, -- Product ID
-    soluong INT NOT NULL, -- Product quantity
-    dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
-    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
-    ngaycapnhat TIMESTAMP, -- Last update time
-    trangthai INT DEFAULT 0, 
+                                 maghct SERIAL PRIMARY KEY, -- Unique ID for each row
+                                 makh VARCHAR(50), -- Customer ID
+                                 manv VARCHAR(50), -- Assisting employee (if any)
+                                 masp VARCHAR(50) NOT NULL, -- Product ID
+                                 soluong INT NOT NULL, -- Product quantity
+                                 dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
+                                 thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
+                                 ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
+                                 ngaycapnhat TIMESTAMP, -- Last update time
+                                 trangthai INT DEFAULT 0,
 
     -- Constraints
-    CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
-    CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
+                                 CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
+                                 CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
 );
 
 -- Table for statistics and reports
 CREATE TABLE thongkebaocao (
-    mabaocao SERIAL PRIMARY KEY,
-    mach VARCHAR(50),
-    manv VARCHAR(50) NOT NULL, -- Employee who created the report
-    loaibaocao VARCHAR(100) NOT NULL, -- Report type: Revenue, Expense, Inventory, etc.
-    tenbaocao VARCHAR(255) NOT NULL,
-    thoigiantu TIMESTAMP,
-    thoigianden TIMESTAMP,
-    sotien DECIMAL(15,2),
-    soluong INT,
-    ngaybaocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    noidung TEXT,
-    filedinhkem VARCHAR(500),
-    trangthai INT DEFAULT 1, -- 0=Draft, 1=Completed
-    isdeleted BOOLEAN DEFAULT FALSE
+                               mabaocao SERIAL PRIMARY KEY,
+                               mach VARCHAR(50),
+                               manv VARCHAR(50) NOT NULL, -- Employee who created the report
+                               loaibaocao VARCHAR(100) NOT NULL, -- Report type: Revenue, Expense, Inventory, etc.
+                               tenbaocao VARCHAR(255) NOT NULL,
+                               thoigiantu TIMESTAMP,
+                               thoigianden TIMESTAMP,
+                               sotien DECIMAL(15,2),
+                               soluong INT,
+                               ngaybaocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               noidung TEXT,
+                               filedinhkem VARCHAR(500),
+                               trangthai INT DEFAULT 1, -- 0=Draft, 1=Completed
+                               isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- ===================================
@@ -496,7 +496,6 @@ ALTER TABLE chitietphieuxuat ADD CONSTRAINT fk_chitietphieuxuat_sanpham FOREIGN 
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khachhang FOREIGN KEY (makh) REFERENCES khachhang(makh) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nhanvien FOREIGN KEY (manvlap) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_khuyenmai FOREIGN KEY (makm) REFERENCES khuyenmai(makm) ON DELETE NO ACTION ON UPDATE NO ACTION;
-ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_phuongthucthanhtoan FOREIGN KEY (mapttt) REFERENCES phuongthucthanhtoan(mapttt) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nguoitao FOREIGN KEY (nguoitao) REFERENCES nhanvien(manv) ON DELETE SET NULL ON UPDATE NO ACTION;
 ALTER TABLE hoadon ADD CONSTRAINT fk_hoadon_nguoisua FOREIGN KEY (nguoisua) REFERENCES nhanvien(manv) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
@@ -600,28 +599,28 @@ BEGIN
       NEW.ngaysua = CURRENT_TIMESTAMP;
    ELSIF TG_TABLE_NAME = 'giohang_chitiet' THEN
       NEW.ngaycapnhat = CURRENT_TIMESTAMP;
-   END IF;
-   RETURN NEW;
+END IF;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger for tonkhochitiet to update ngaycapnhat
 CREATE TRIGGER trg_tonkhochitiet_updatedate
-BEFORE UPDATE ON tonkhochitiet
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_timestamp();
+    BEFORE UPDATE ON tonkhochitiet
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_update_timestamp();
 
 -- Trigger for hoadon to update ngaysua
 CREATE TRIGGER trg_hoadon_updatedate
-BEFORE UPDATE ON hoadon
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_timestamp();
+    BEFORE UPDATE ON hoadon
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_update_timestamp();
 
 -- Trigger for giohang_chitiet to update ngaycapnhat
 CREATE TRIGGER trg_giohang_chitiet_updatedate
-BEFORE UPDATE ON giohang_chitiet
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_timestamp();
+    BEFORE UPDATE ON giohang_chitiet
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_update_timestamp();
 
 -- ===================================
 -- INSERT SAMPLE DATA
@@ -630,641 +629,642 @@ EXECUTE FUNCTION fn_update_timestamp();
 -- Thêm dữ liệu mẫu cho bảng chính
 -- vaitro: 0=Admin, 1=QuanLy, 2=NhanVien, 3=KhachHang
 INSERT INTO nguoidung (manguoidung, email, matkhau, sub, vaitro) VALUES
-('ND001', 'admin1@gmail.com', 'pass123', null, 0),
-('ND002', 'quanly1@gmail.com', 'pass123', null, 1),
-('ND003', 'nhanvien1@gmail.com', 'pass123', null, 2),
-('ND004', 'nhanvien2@gmail.com', 'pass123', null, 2),
-('ND005', 'nhanvien3@gmail.com', 'pass123', null, 2),
-('ND006', 'nhanvien4@gmail.com', 'pass123', null, 2),
-('ND007', 'nhanvien5@gmail.com', 'pass123', null, 2),
-('ND008', 'quanly2@gmail.com', 'pass123', null, 1),
-('ND009', 'nhanvien6@gmail.com', 'pass123', null, 2),
-('ND010', 'nhanvien7@gmail.com', 'pass123', null, 2),
-('ND011', 'nhanvien8@gmail.com', 'pass123', null, 2),
-('ND012', 'nhanvien9@gmail.com', 'pass123', null, 2),
-('ND013', 'nhanvien10@gmail.com', 'pass123', null, 2),
-('ND014', 'nhanvien11@gmail.com', 'pass123', null,2),
-('ND015', 'khach1@gmail.com', 'pass456', null, 3),
-('ND016', 'khach2@gmail.com', 'pass456', null, 3),
-('ND017', 'khach3@gmail.com', 'pass456', null, 3),
-('ND018', 'khach4@gmail.com', 'pass456', null, 3),
-('ND019', 'khach5@gmail.com', 'pass456', null, 3),
-('ND020', 'khach6@gmail.com', 'pass456', null, 3),
-('ND021', 'khach7@gmail.com', 'pass456', null, 3),
-('ND022', 'khach8@gmail.com', 'pass456', null, 3),
-('ND023', 'khach9@gmail.com', 'pass456', null, 3),
-('ND024', 'khach10@gmail.com', 'pass456', null, 3);
+                                                                     ('ND001', 'admin1@gmail.com', 'pass123', null, 0),
+                                                                     ('ND002', 'quanly1@gmail.com', 'pass123', null, 1),
+                                                                     ('ND003', 'nhanvien1@gmail.com', 'pass123', null, 2),
+                                                                     ('ND004', 'nhanvien2@gmail.com', 'pass123', null, 2),
+                                                                     ('ND005', 'nhanvien3@gmail.com', 'pass123', null, 2),
+                                                                     ('ND006', 'nhanvien4@gmail.com', 'pass123', null, 2),
+                                                                     ('ND007', 'nhanvien5@gmail.com', 'pass123', null, 2),
+                                                                     ('ND008', 'quanly2@gmail.com', 'pass123', null, 1),
+                                                                     ('ND009', 'nhanvien6@gmail.com', 'pass123', null, 2),
+                                                                     ('ND010', 'nhanvien7@gmail.com', 'pass123', null, 2),
+                                                                     ('ND011', 'nhanvien8@gmail.com', 'pass123', null, 2),
+                                                                     ('ND012', 'nhanvien9@gmail.com', 'pass123', null, 2),
+                                                                     ('ND013', 'nhanvien10@gmail.com', 'pass123', null, 2),
+                                                                     ('ND014', 'nhanvien11@gmail.com', 'pass123', null,2),
+                                                                     ('ND015', 'khach1@gmail.com', 'pass456', null, 3),
+                                                                     ('ND016', 'khach2@gmail.com', 'pass456', null, 3),
+                                                                     ('ND017', 'khach3@gmail.com', 'pass456', null, 3),
+                                                                     ('ND018', 'khach4@gmail.com', 'pass456', null, 3),
+                                                                     ('ND019', 'khach5@gmail.com', 'pass456', null, 3),
+                                                                     ('ND020', 'khach6@gmail.com', 'pass456', null, 3),
+                                                                     ('ND021', 'khach7@gmail.com', 'pass456', null, 3),
+                                                                     ('ND022', 'khach8@gmail.com', 'pass456', null, 3),
+                                                                     ('ND023', 'khach9@gmail.com', 'pass456', null, 3),
+                                                                     ('ND024', 'khach10@gmail.com', 'pass456', null, 3);
 
 INSERT INTO cuahang (mach, tench, diachi, sdt, ngaythanhlap, trangthai) VALUES
-('CH001', 'Cửa Hàng EasyMart1', '123 Lê Lợi, Q1', '0909123456', '2020-01-01', 1),
-('CH002', 'Cửa Hàng EasyMart2', '456 Nguyễn Đình Chiểu, Q3', '0911222333', '2020-02-01', 1);
+                                                                            ('CH001', 'Cửa Hàng EasyMart1', '123 Lê Lợi, Q1', '0909123456', '2020-01-01', 1),
+                                                                            ('CH002', 'Cửa Hàng EasyMart2', '456 Nguyễn Đình Chiểu, Q3', '0911222333', '2020-02-01', 1);
 
 INSERT INTO nhacungcap (mancc, tenncc, diachi, sdt, email, thongtinhopdong, ngayhoptac, trangthai) VALUES
-('NCC001', 'Rau Xanh Sạch Đà Lạt', 'Đà Lạt - Lâm Đồng', '0901000001', 'rauxanh@gmail.com', 'Hợp đồng cung cấp rau sạch', '2020-01-01', 1),
-('NCC002', 'Thủy Sản Đông Lạnh Biển Xanh', 'Quận 7 - TP.HCM', '0901000002', 'bienxanh@gmail.com', 'Hợp đồng cung cấp thủy sản', '2020-02-01', 1),
-('NCC003', 'Công Ty Đồ Hộp Việt', 'Bình Dương', '0901000003', 'dohop@gmail.com', 'Hợp đồng cung cấp đồ hộp', '2020-03-01', 1),
-('NCC004', 'Nước Giải Khát Việt Nam', 'TP.HCM', '0901000004', 'nuocgiaikhat@gmail.com', 'Hợp đồng cung cấp nước giải khát', '2020-04-01', 1),
-('NCC005', 'Công Ty Sữa & Bé Khỏe', 'Hà Nội', '0901000005', 'suabekhoe@gmail.com', 'Hợp đồng cung cấp sữa', '2020-05-01', 1),
-('NCC006', 'Gia Vị Nam Ngư', 'TP.HCM', '0901000006', 'giavi@gmail.com', 'Hợp đồng cung cấp gia vị', '2020-06-01', 1),
-('NCC007', 'Hóa Phẩm & Đồ Gia Dụng Unihome', 'Đồng Nai', '0901000007', 'unihome@gmail.com', 'Hợp đồng cung cấp hóa phẩm', '2020-07-01', 1);
+                                                                                                       ('NCC001', 'Rau Xanh Sạch Đà Lạt', 'Đà Lạt - Lâm Đồng', '0901000001', 'rauxanh@gmail.com', 'Hợp đồng cung cấp rau sạch', '2020-01-01', 1),
+                                                                                                       ('NCC002', 'Thủy Sản Đông Lạnh Biển Xanh', 'Quận 7 - TP.HCM', '0901000002', 'bienxanh@gmail.com', 'Hợp đồng cung cấp thủy sản', '2020-02-01', 1),
+                                                                                                       ('NCC003', 'Công Ty Đồ Hộp Việt', 'Bình Dương', '0901000003', 'dohop@gmail.com', 'Hợp đồng cung cấp đồ hộp', '2020-03-01', 1),
+                                                                                                       ('NCC004', 'Nước Giải Khát Việt Nam', 'TP.HCM', '0901000004', 'nuocgiaikhat@gmail.com', 'Hợp đồng cung cấp nước giải khát', '2020-04-01', 1),
+                                                                                                       ('NCC005', 'Công Ty Sữa & Bé Khỏe', 'Hà Nội', '0901000005', 'suabekhoe@gmail.com', 'Hợp đồng cung cấp sữa', '2020-05-01', 1),
+                                                                                                       ('NCC006', 'Gia Vị Nam Ngư', 'TP.HCM', '0901000006', 'giavi@gmail.com', 'Hợp đồng cung cấp gia vị', '2020-06-01', 1),
+                                                                                                       ('NCC007', 'Hóa Phẩm & Đồ Gia Dụng Unihome', 'Đồng Nai', '0901000007', 'unihome@gmail.com', 'Hợp đồng cung cấp hóa phẩm', '2020-07-01', 1);
 
 INSERT INTO nhanvien (manv, manguoidung, hoten, sdt, diachi, ngaysinh, ngayvaolam, chucvu, maquanly, mach, trangthai) VALUES
-('NV001', 'ND001', 'Nguyễn Văn A', '0909111222', '123 Lê Lợi', '1990-01-01', '2020-01-01', 'Giám đốc', NULL, 'CH001', 1),
-('NV002', 'ND002', 'Trần Thị B', '0909333444', '456 Nguyễn Đình Chiểu', '1992-02-02', '2020-02-01', 'Quản lý', 'NV001', 'CH001', 1),
-('NV003', 'ND003', 'Lê Văn C', '0911223344', '789 Phan Văn Trị', '1993-03-03', '2020-03-01', 'Nhân viên bán hàng', 'NV002', 'CH001', 1),
-('NV004', 'ND004', 'Phạm Thị D', '0922334455', '111 Võ Văn Ngân', '1994-04-04', '2020-04-01', 'Nhân viên kho', 'NV002', 'CH001', 1),
-('NV005', 'ND005', 'Hoàng Văn E', '0933445566', '222 Lý Thường Kiệt', '1995-05-05', '2020-05-01', 'Nhân viên thu ngân', 'NV002', 'CH001', 1),
-('NV006', 'ND006', 'Ngô Thị F', '0944556677', '333 Cách Mạng Tháng 8', '1996-06-06', '2020-06-01', 'Nhân viên bán hàng', 'NV002', 'CH001', 1),
-('NV007', 'ND007', 'Đỗ Văn G', '0955667788', '444 Pasteur', '1997-07-07', '2020-07-01', 'Nhân viên kho', 'NV002', 'CH001', 1),
-('NV008', 'ND008', 'Nguyễn Văn H', '0966778899', '123 Lê Lợi', '1990-08-08', '2020-08-01', 'Giám đốc', NULL, 'CH002', 1),
-('NV009', 'ND009', 'Trần Thị I', '0977889900', '456 Nguyễn Đình Chiểu', '1992-09-09', '2020-09-01', 'Quản lý', 'NV008', 'CH002', 1),
-('NV010', 'ND010', 'Lê Văn J', '0988990011', '789 Phan Văn Trị', '1993-10-10', '2020-10-01', 'Nhân viên bán hàng', 'NV009', 'CH002', 1),
-('NV011', 'ND011', 'Phạm Thị K', '0999001122', '111 Võ Văn Ngân', '1994-11-11', '2020-11-01', 'Nhân viên kho', 'NV009', 'CH002', 1),
-('NV012', 'ND012', 'Hoàng Văn L', '0900123456', '222 Lý Thường Kiệt', '1995-12-12', '2020-12-01', 'Nhân viên thu ngân', 'NV009', 'CH002', 1),
-('NV013', 'ND013', 'Ngô Thị M', '0911234567', '333 Cách Mạng Tháng 8', '1996-01-13', '2021-01-01', 'Nhân viên bán hàng', 'NV009', 'CH002', 1),
-('NV014', 'ND014', 'Đỗ Văn N', '0922345678', '444 Pasteur', '1997-02-14', '2021-02-01', 'Nhân viên kho', 'NV009', 'CH002', 1);
+                                                                                                                          ('NV001', 'ND001', 'Nguyễn Văn A', '0909111222', '123 Lê Lợi', '1990-01-01', '2020-01-01', 'Giám đốc', NULL, 'CH001', 1),
+                                                                                                                          ('NV002', 'ND002', 'Trần Thị B', '0909333444', '456 Nguyễn Đình Chiểu', '1992-02-02', '2020-02-01', 'Quản lý', 'NV001', 'CH001', 1),
+                                                                                                                          ('NV003', 'ND003', 'Lê Văn C', '0911223344', '789 Phan Văn Trị', '1993-03-03', '2020-03-01', 'Nhân viên bán hàng', 'NV002', 'CH001', 1),
+                                                                                                                          ('NV004', 'ND004', 'Phạm Thị D', '0922334455', '111 Võ Văn Ngân', '1994-04-04', '2020-04-01', 'Nhân viên kho', 'NV002', 'CH001', 1),
+                                                                                                                          ('NV005', 'ND005', 'Hoàng Văn E', '0933445566', '222 Lý Thường Kiệt', '1995-05-05', '2020-05-01', 'Nhân viên thu ngân', 'NV002', 'CH001', 1),
+                                                                                                                          ('NV006', 'ND006', 'Ngô Thị F', '0944556677', '333 Cách Mạng Tháng 8', '1996-06-06', '2020-06-01', 'Nhân viên bán hàng', 'NV002', 'CH001', 1),
+                                                                                                                          ('NV007', 'ND007', 'Đỗ Văn G', '0955667788', '444 Pasteur', '1997-07-07', '2020-07-01', 'Nhân viên kho', 'NV002', 'CH001', 1),
+                                                                                                                          ('NV008', 'ND008', 'Nguyễn Văn H', '0966778899', '123 Lê Lợi', '1990-08-08', '2020-08-01', 'Giám đốc', NULL, 'CH002', 1),
+                                                                                                                          ('NV009', 'ND009', 'Trần Thị I', '0977889900', '456 Nguyễn Đình Chiểu', '1992-09-09', '2020-09-01', 'Quản lý', 'NV008', 'CH002', 1),
+                                                                                                                          ('NV010', 'ND010', 'Lê Văn J', '0988990011', '789 Phan Văn Trị', '1993-10-10', '2020-10-01', 'Nhân viên bán hàng', 'NV009', 'CH002', 1),
+                                                                                                                          ('NV011', 'ND011', 'Phạm Thị K', '0999001122', '111 Võ Văn Ngân', '1994-11-11', '2020-11-01', 'Nhân viên kho', 'NV009', 'CH002', 1),
+                                                                                                                          ('NV012', 'ND012', 'Hoàng Văn L', '0900123456', '222 Lý Thường Kiệt', '1995-12-12', '2020-12-01', 'Nhân viên thu ngân', 'NV009', 'CH002', 1),
+                                                                                                                          ('NV013', 'ND013', 'Ngô Thị M', '0911234567', '333 Cách Mạng Tháng 8', '1996-01-13', '2021-01-01', 'Nhân viên bán hàng', 'NV009', 'CH002', 1),
+                                                                                                                          ('NV014', 'ND014', 'Đỗ Văn N', '0922345678', '444 Pasteur', '1997-02-14', '2021-02-01', 'Nhân viên kho', 'NV009', 'CH002', 1);
 
 INSERT INTO khachhang (makh, manguoidung, hoten, sdt, diachi, ngaysinh, diemtichluy, loaikhachhang, ngaydangky) VALUES
-('KH001', 'ND015', 'Nguyễn Văn KH1', '0988111222', '123 Q1', '1985-01-01', 100, 'Thường', '2020-01-01'),
-('KH002', 'ND016', 'Trần Thị KH2', '0977223344', '456 Q3', '1986-02-02', 200, 'VIP', '2020-02-01'),
-('KH003', 'ND017', 'Lê Văn KH3', '0966334455', '789 Gò Vấp', '1987-03-03', 150, 'Thường', '2020-03-01'),
-('KH004', 'ND018', 'Phạm Thị KH4', '0955445566', '111 Thủ Đức', '1988-04-04', 50, 'Thường', '2020-04-01'),
-('KH005', 'ND019', 'Đỗ Văn KH5', '0944556677', '222 Tân Bình', '1989-05-05', 300, 'Vàng', '2020-05-01'),
-('KH006', 'ND020', 'Võ Minh KH6', '0933667788', '15 Bình Thạnh', '1990-06-06', 120, 'Thường', '2020-06-01'),
-('KH007', 'ND021', 'Huỳnh Lan KH7', '0922778899', '89 Quận 10', '1991-07-07', 180, 'Bạc', '2020-07-01'),
-('KH008', 'ND022', 'Phan Văn KH8', '0911889900', '12 Quận 7', '1992-08-08', 220, 'Vàng', '2020-08-01'),
-('KH009', 'ND023', 'Trương Mỹ KH9', '0909000111', '35 Quận 5', '1993-09-09', 80, 'Thường', '2020-09-01'),
-('KH010', 'ND024', 'Lâm Quốc KH10', '0988776655', '77 Quận 8', '1994-10-10', 260, 'Kim cương', '2020-10-01');
+                                                                                                                    ('KH001', 'ND015', 'Nguyễn Văn KH1', '0988111222', '123 Q1', '1985-01-01', 100, 'Thường', '2020-01-01'),
+                                                                                                                    ('KH002', 'ND016', 'Trần Thị KH2', '0977223344', '456 Q3', '1986-02-02', 200, 'VIP', '2020-02-01'),
+                                                                                                                    ('KH003', 'ND017', 'Lê Văn KH3', '0966334455', '789 Gò Vấp', '1987-03-03', 150, 'Thường', '2020-03-01'),
+                                                                                                                    ('KH004', 'ND018', 'Phạm Thị KH4', '0955445566', '111 Thủ Đức', '1988-04-04', 50, 'Thường', '2020-04-01'),
+                                                                                                                    ('KH005', 'ND019', 'Đỗ Văn KH5', '0944556677', '222 Tân Bình', '1989-05-05', 300, 'Vàng', '2020-05-01'),
+                                                                                                                    ('KH006', 'ND020', 'Võ Minh KH6', '0933667788', '15 Bình Thạnh', '1990-06-06', 120, 'Thường', '2020-06-01'),
+                                                                                                                    ('KH007', 'ND021', 'Huỳnh Lan KH7', '0922778899', '89 Quận 10', '1991-07-07', 180, 'Bạc', '2020-07-01'),
+                                                                                                                    ('KH008', 'ND022', 'Phan Văn KH8', '0911889900', '12 Quận 7', '1992-08-08', 220, 'Vàng', '2020-08-01'),
+                                                                                                                    ('KH009', 'ND023', 'Trương Mỹ KH9', '0909000111', '35 Quận 5', '1993-09-09', 80, 'Thường', '2020-09-01'),
+                                                                                                                    ('KH010', 'ND024', 'Lâm Quốc KH10', '0988776655', '77 Quận 8', '1994-10-10', 260, 'Kim cương', '2020-10-01');
 
 INSERT INTO bangluong (manv, thangluong, namluong, luongcoban, phucap, thuong, khautru, songaylam, sogiolam, ghichu, trangthai) VALUES
-('NV001', 7, 2025, 15000000, 2000000, 1000000, 0, 22, 176, 'Lương tháng 7/2025', 1),
-('NV002', 7, 2025, 12000000, 1500000, 800000, 0, 21, 168, 'Lương tháng 7/2025', 1),
-('NV003', 7, 2025, 8000000, 500000, 300000, 0, 20, 160, 'Lương tháng 7/2025', 1),
-('NV004', 7, 2025, 8500000, 600000, 400000, 0, 21, 168, 'Lương tháng 7/2025', 1),
-('NV005', 7, 2025, 7500000, 400000, 200000, 0, 19, 152, 'Lương tháng 7/2025', 1),
-('NV006', 7, 2025, 7000000, 300000, 150000, 0, 18, 144, 'Lương tháng 7/2025', 1),
-('NV007', 7, 2025, 6500000, 250000, 100000, 0, 17, 136, 'Lương tháng 7/2025', 1),
-('NV008', 7, 2025, 15000000, 2000000, 1000000, 0, 22, 176, 'Lương tháng 7/2025', 1),
-('NV009', 7, 2025, 12000000, 1500000, 800000, 0, 21, 168, 'Lương tháng 7/2025', 1),
-('NV010', 7, 2025, 8000000, 500000, 300000, 0, 20, 160, 'Lương tháng 7/2025', 1),
-('NV011', 7, 2025, 8500000, 600000, 400000, 0, 21, 168, 'Lương tháng 7/2025', 1),
-('NV012', 7, 2025, 7500000, 400000, 200000, 0, 19, 152, 'Lương tháng 7/2025', 1),
-('NV013', 7, 2025, 7000000, 300000, 150000, 0, 18, 144, 'Lương tháng 7/2025', 1),
-('NV014', 7, 2025, 6500000, 250000, 100000, 0, 17, 136, 'Lương tháng 7/2025', 1);
+                                                                                                                                    ('NV001', 7, 2025, 15000000, 2000000, 1000000, 0, 22, 176, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV002', 7, 2025, 12000000, 1500000, 800000, 0, 21, 168, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV003', 7, 2025, 8000000, 500000, 300000, 0, 20, 160, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV004', 7, 2025, 8500000, 600000, 400000, 0, 21, 168, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV005', 7, 2025, 7500000, 400000, 200000, 0, 19, 152, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV006', 7, 2025, 7000000, 300000, 150000, 0, 18, 144, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV007', 7, 2025, 6500000, 250000, 100000, 0, 17, 136, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV008', 7, 2025, 15000000, 2000000, 1000000, 0, 22, 176, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV009', 7, 2025, 12000000, 1500000, 800000, 0, 21, 168, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV010', 7, 2025, 8000000, 500000, 300000, 0, 20, 160, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV011', 7, 2025, 8500000, 600000, 400000, 0, 21, 168, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV012', 7, 2025, 7500000, 400000, 200000, 0, 19, 152, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV013', 7, 2025, 7000000, 300000, 150000, 0, 18, 144, 'Lương tháng 7/2025', 1),
+                                                                                                                                    ('NV014', 7, 2025, 6500000, 250000, 100000, 0, 17, 136, 'Lương tháng 7/2025', 1);
 
 INSERT INTO loaisanpham (maloaisp, tenloai, mota, maloaicha, thutuhienthi) VALUES
-('LSP001', 'Tươi sống', 'Các loại rau củ quả tươi', NULL, 1),
-('LSP002', 'Đông lạnh', 'Thực phẩm đông lạnh', NULL, 2),
-('LSP003', 'Đồ đóng hộp', 'Thực phẩm đóng hộp', NULL, 3),
-('LSP004', 'Đồ uống', 'Các loại nước giải khát', NULL, 4),
-('LSP005', 'Sữa & em bé', 'Sản phẩm cho trẻ em', NULL, 5),
-('LSP006', 'Gia vị & Dầu ăn', 'Gia vị và dầu ăn', NULL, 6),
-('LSP007', 'Hóa phẩm & Tẩy rửa', 'Sản phẩm vệ sinh', NULL, 7);
+                                                                               ('LSP001', 'Tươi sống', 'Các loại rau củ quả tươi', NULL, 1),
+                                                                               ('LSP002', 'Đông lạnh', 'Thực phẩm đông lạnh', NULL, 2),
+                                                                               ('LSP003', 'Đồ đóng hộp', 'Thực phẩm đóng hộp', NULL, 3),
+                                                                               ('LSP004', 'Đồ uống', 'Các loại nước giải khát', NULL, 4),
+                                                                               ('LSP005', 'Sữa & em bé', 'Sản phẩm cho trẻ em', NULL, 5),
+                                                                               ('LSP006', 'Gia vị & Dầu ăn', 'Gia vị và dầu ăn', NULL, 6),
+                                                                               ('LSP007', 'Hóa phẩm & Tẩy rửa', 'Sản phẩm vệ sinh', NULL, 7);
 
 INSERT INTO sanpham (masp, maloaisp, tensp, mota, donvitinh, trongluong, kichthuoc, hansudung, trangthai) VALUES
-('SP001', 'LSP001', 'Dưa leo Đà Lạt', '[Ngắn] Dưa tươi ngon sạch. [Dài] Dưa leo Đà Lạt được chọn lọc kỹ càng từ nông trại sạch, vỏ xanh mướt, giòn ngọt, thích hợp cho các món salad, dưa muối hoặc ăn sống trực tiếp.', 'Kg', 0.5, '20x5cm', 7, 1),
-('SP002', 'LSP001', 'Cà chua bi', '[Ngắn] Cà chua bi đỏ mọng. [Dài] Cà chua bi được trồng theo phương pháp hữu cơ, vỏ mỏng, vị ngọt thanh, thích hợp cho ăn sống, làm salad hoặc xào nấu.', 'Kg', 0.3, '2x2cm', 5, 1),
-('SP003', 'LSP001', 'Cải thìa tươi', '[Ngắn] Rau xanh giòn ngọt. [Dài] Cải thìa sạch được thu hoạch trong ngày, giàu vitamin A và C, thường dùng trong các món xào hoặc luộc.', 'Kg', 0.4, '25x3cm', 3, 1),
-('SP004', 'LSP001', 'Cải ngọt Đà Lạt', '[Ngắn] Rau tươi sạch. [Dài] Cải ngọt được trồng trong điều kiện khí hậu mát mẻ Đà Lạt, ít sâu bệnh, thích hợp nấu canh, xào hoặc ăn lẩu.', 'Kg', 0.3, '20x2cm', 3, 1),
-('SP005', 'LSP001', 'Rau muống', '[Ngắn] Rau muống giòn ngon. [Dài] Rau muống tươi được lựa chọn kỹ lưỡng, thân giòn, lá xanh, thích hợp cho các món luộc, xào tỏi hoặc làm gỏi.', 'Kg', 0.5, '30x2cm', 2, 1),
-('SP006', 'LSP001', 'Bắp cải trắng', '[Ngắn] Bắp cải tươi giòn. [Dài] Bắp cải trắng giòn ngọt, có thể dùng để nấu canh, xào hoặc làm dưa muối.', 'Cái', 1.0, '15x15cm', 7, 1),
-('SP007', 'LSP001', 'Cà rốt Đà Lạt', '[Ngắn] Cà rốt giòn ngọt. [Dài] Cà rốt trồng tại Đà Lạt, củ đều màu cam đẹp, giàu beta-carotene tốt cho mắt, thường dùng nấu canh, luộc, xào.', 'Kg', 0.6, '20x3cm', 10, 1),
-('SP008', 'LSP001', 'Khoai tây vàng', '[Ngắn] Khoai tây sạch. [Dài] Khoai tây vàng vỏ mỏng, ít nhựa, thích hợp để chiên, nấu súp hoặc nghiền làm món ăn dặm.', 'Kg', 0.8, '8x5cm', 14, 1),
-('SP009', 'LSP001', 'Hành lá', '[Ngắn] Hành tươi xanh. [Dài] Hành lá được thu hoạch từ vườn sạch, lá xanh, mùi thơm nhẹ, là nguyên liệu không thể thiếu cho các món canh và chiên.', 'Kg', 0.2, '25x1cm', 5, 1),
-('SP010', 'LSP001', 'Rau dền đỏ', '[Ngắn] Rau dền mát gan. [Dài] Rau dền đỏ nhiều sắt, hỗ trợ tuần hoàn máu, thích hợp cho các món canh và luộc.', 'Kg', 0.3, '20x2cm', 2, 1),
-('SP011', 'LSP001', 'Mướp hương', '[Ngắn] Mướp mềm thơm. [Dài] Mướp hương có vị ngọt thanh, mềm, thường được dùng trong các món canh hoặc xào chung với trứng.', 'Kg', 0.4, '25x4cm', 3, 1),
-('SP012', 'LSP001', 'Dưa gang', '[Ngắn] Dưa giải nhiệt. [Dài] Dưa gang mọng nước, vị ngọt nhẹ, được ưa chuộng trong mùa nóng vì tác dụng giải nhiệt, ăn sống hoặc làm sinh tố.', 'Kg', 0.8, '15x10cm', 5, 1),
-('SP013', 'LSP001', 'Rau má', '[Ngắn] Rau má mát gan. [Dài] Rau má có tác dụng thanh nhiệt, giải độc, thường dùng để ép nước hoặc làm gỏi.', 'Kg', 0.2, '20x2cm', 2, 1),
-('SP014', 'LSP001', 'Nấm rơm tươi', '[Ngắn] Nấm mềm ngon. [Dài] Nấm rơm tươi từ nông trại sạch, thích hợp cho các món kho, xào, canh.', 'Kg', 0.3, '3x3cm', 3, 1),
-('SP015', 'LSP001', 'Nấm bào ngư', '[Ngắn] Nấm dai ngon. [Dài] Nấm bào ngư trắng, thịt dày, giòn ngọt, thường dùng trong các món xào, súp hoặc chiên giòn.', 'Kg', 0.4, '4x2cm', 5, 1),
-('SP016', 'LSP001', 'Mồng tơi', '[Ngắn] Rau trơn mát. [Dài] Mồng tơi chứa nhiều chất nhầy, hỗ trợ tiêu hóa, là nguyên liệu quen thuộc trong món canh cua.', 'Kg', 0.3, '25x2cm', 2, 1),
-('SP017', 'LSP001', 'Đậu que', '[Ngắn] Đậu non giòn. [Dài] Đậu que non, xanh mướt, thường được xào với thịt bò hoặc luộc ăn kèm nước chấm.', 'Kg', 0.3, '15x1cm', 3, 1),
-('SP018', 'LSP001', 'Dền cơm', '[Ngắn] Rau dền sạch. [Dài] Dền cơm là loại rau dại giàu dinh dưỡng, được trồng theo hướng hữu cơ, dùng để nấu canh hoặc luộc.', 'Kg', 0.2, '20x2cm', 2, 1),
-('SP019', 'LSP001', 'Rau tần ô', '[Ngắn] Rau thơm ngon. [Dài] Tần ô có hương thơm đặc trưng, thường xuất hiện trong lẩu hoặc nấu canh với thịt bằm.', 'Kg', 0.3, '25x2cm', 3, 1),
-('SP020', 'LSP001', 'Bí đỏ trái tròn', '[Ngắn] Bí đỏ ngọt dẻo. [Dài] Bí đỏ được trồng tại nông trại hữu cơ, giàu vitamin A, thường dùng nấu canh hoặc hấp.', 'Kg', 1.5, '20x15cm', 7, 1),
-('SP021', 'LSP002', 'Tôm sú đông lạnh', '[Ngắn] Tôm đông lạnh sạch. [Dài] Tôm sú đông lạnh được cấp đông ngay sau khi đánh bắt để giữ độ tươi ngon, thịt chắc và ngọt, dùng để nấu lẩu, hấp, chiên xù.', 'Kg', 1.0, '15x3cm', 180, 1),
-('SP022', 'LSP002', 'Cá hồi phi lê', '[Ngắn] Cá hồi phi lê tươi ngon. [Dài] Cá hồi Na Uy phi lê được cấp đông nhanh, giữ nguyên chất dinh dưỡng và màu sắc tự nhiên, thích hợp cho sashimi hoặc áp chảo.', 'Kg', 0.8, '20x5cm', 180, 1),
-('SP023', 'LSP002', 'Mực ống đông lạnh', '[Ngắn] Mực tươi cấp đông. [Dài] Mực ống được làm sạch và cấp đông nhanh, giữ được độ giòn và vị ngọt tự nhiên, thích hợp nướng, hấp hoặc chiên giòn.', 'Kg', 0.5, '12x2cm', 180, 1),
-('SP024', 'LSP002', 'Cá viên đông lạnh', '[Ngắn] Cá viên tiện lợi. [Dài] Cá viên làm từ cá thát lát nguyên chất, được cấp đông sẵn, tiện lợi cho món lẩu, chiên hoặc nấu canh.', 'Kg', 0.5, '2x2cm', 180, 1),
-('SP025', 'LSP002', 'Thịt bò viên đông lạnh', '[Ngắn] Bò viên thơm ngon. [Dài] Bò viên được chế biến từ thịt bò tươi, có vị thơm đặc trưng, dễ dàng chế biến trong các món lẩu, xào hoặc bún bò.', 'Kg', 0.5, '2x2cm', 180, 1),
-('SP026', 'LSP002', 'Gà nguyên con đông lạnh', '[Ngắn] Gà cấp đông sạch. [Dài] Gà ta nguyên con được làm sạch và cấp đông theo chuẩn VSATTP, phù hợp để quay, luộc hoặc hấp.', 'Con', 1.5, '25x15cm', 180, 1),
-('SP027', 'LSP002', 'Chân gà rút xương đông lạnh', '[Ngắn] Chân gà tiện dụng. [Dài] Chân gà đã được rút xương, cấp đông sạch, dùng để trộn gỏi hoặc nướng muối ớt.', 'Kg', 0.8, '8x3cm', 180, 1),
-('SP028', 'LSP002', 'Cá thu cắt lát đông lạnh', '[Ngắn] Cá thu cắt lát. [Dài] Cá thu được cắt lát và cấp đông nhanh, thích hợp để chiên hoặc kho với nước dừa.', 'Kg', 0.6, '10x5cm', 180, 1),
-('SP029', 'LSP002', 'Xúc xích tiệt trùng', '[Ngắn] Xúc xích đậm vị. [Dài] Xúc xích heo được tiệt trùng và cấp đông, dễ dàng chế biến các món ăn nhanh hoặc nướng BBQ.', 'Kg', 0.4, '15x2cm', 180, 1),
-('SP030', 'LSP002', 'Cá basa phi lê đông lạnh', '[Ngắn] Cá basa tiện lợi. [Dài] Cá basa phi lê đã bỏ xương, không tanh, dễ chế biến các món chiên giòn, kho tộ hoặc nấu canh chua.', 'Kg', 0.7, '18x4cm', 180, 1),
-('SP031', 'LSP002', 'Tôm sú đông lạnh 1kg', 'Tôm tươi ngon được cấp đông nhanh. ... Giữ được vị ngọt tự nhiên và an toàn thực phẩm.', 'Kg', 1.0, '15x3cm', 180, 1),
-('SP032', 'LSP002', 'Cá diêu hồng đông lạnh 1kg', 'Cá được sơ chế sạch sẽ và cấp đông sâu. ... Tiện lợi cho mọi món ăn hằng ngày.', 'Kg', 1.0, '25x8cm', 180, 1),
-('SP033', 'LSP002', 'Mực ống đông lạnh 500g', 'Mực tươi được làm sạch và đóng gói kỹ lưỡng. ... Đảm bảo an toàn và tươi ngon cho bữa cơm gia đình.', 'Kg', 0.5, '12x2cm', 180, 1),
-('SP034', 'LSP002', 'Thịt ba rọi đông lạnh 500g', 'Thịt heo ba rọi thái lát mỏng và đóng gói. ... Phù hợp chế biến món xào, nướng hoặc lẩu.', 'Kg', 0.5, '10x5cm', 180, 1),
-('SP035', 'LSP002', 'Cánh gà đông lạnh 1kg', 'Cánh gà tươi được lựa chọn kỹ càng. ... Cấp đông nhanh giúp bảo quản lâu và giữ nguyên dinh dưỡng.', 'Kg', 1.0, '12x8cm', 180, 1),
-('SP036', 'LSP002', 'Thăn bò đông lạnh 500g', 'Thịt bò thăn nhập khẩu, mềm, thơm. ... Rất thích hợp cho món bít tết hoặc lẩu.', 'Kg', 0.5, '15x8cm', 180, 1),
-('SP037', 'LSP002', 'Hàu nửa vỏ đông lạnh 1kg', 'Hàu biển tươi được sơ chế và cấp đông. ... Dễ chế biến và bổ dưỡng cho cả gia đình.', 'Kg', 1.0, '8x4cm', 180, 1),
-('SP038', 'LSP002', 'Cá viên đông lạnh 500g', 'Cá viên được làm từ cá tươi nghiền nhuyễn. ... Dùng tốt cho món lẩu hoặc chiên.', 'Kg', 0.5, '2x2cm', 180, 1),
-('SP039', 'LSP002', 'Súp lơ đông lạnh 500g', 'Súp lơ tươi cắt nhỏ và cấp đông ngay sau thu hoạch. ... Giữ nguyên độ giòn và hương vị tự nhiên.', 'Kg', 0.5, '15x10cm', 180, 1),
-('SP040', 'LSP002', 'Đậu que đông lạnh 500g', 'Đậu que tươi cấp đông giữ trọn độ giòn và dinh dưỡng. ... Phù hợp chế biến xào, luộc, hấp.', 'Kg', 0.5, '15x1cm', 180, 1),
-('SP041', 'LSP003', 'Cá ngừ ngâm dầu hộp 185g', 'Cá ngừ nguyên miếng ngâm dầu thơm béo. ... Đóng hộp tiện lợi, thích hợp ăn liền hoặc trộn salad.', 'Hộp', 0.185, '10x8x3cm', 730, 1),
-('SP042', 'LSP003', 'Pate gan heo hộp 170g', 'Pate gan heo mềm mịn, thơm ngon. ... Phù hợp cho bữa sáng hoặc món ăn nhẹ giàu đạm.', 'Hộp', 0.170, '8x6x2cm', 730, 1),
-('SP043', 'LSP003', 'Đậu hầm sốt cà hộp 400g', 'Đậu trắng được hầm mềm với sốt cà đậm đà. ... Món ăn bổ dưỡng, tiện lợi cho bữa cơm gia đình.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP044', 'LSP003', 'Măng chua đóng hộp 400g', 'Măng được sơ chế kỹ và đóng hộp an toàn. ... Dùng nấu canh chua hoặc xào rất tiện lợi.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP045', 'LSP003', 'Nấm rơm hộp 400g', 'Nấm rơm tươi ngon được đóng hộp giữ nguyên vị. ... Dùng cho các món canh, xào, lẩu cực kỳ tiện.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP046', 'LSP003', 'Thịt kho trứng hộp 400g', 'Món thịt kho trứng truyền thống được chế biến sẵn. ... Hương vị đậm đà, mở nắp là ăn ngay.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP047', 'LSP003', 'Chả cá sốt cà hộp 200g', 'Chả cá chiên sốt cà đậm vị, dễ dùng. ... Phù hợp cho các bữa ăn nhanh và vẫn đầy đủ dinh dưỡng.', 'Hộp', 0.200, '10x6x3cm', 730, 1),
-('SP048', 'LSP003', 'Ngô ngọt đóng hộp 400g', 'Ngô ngọt vàng óng, giòn ngọt tự nhiên. ... Có thể ăn liền hoặc chế biến món salad, soup.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP049', 'LSP003', 'Cá mòi sốt cà hộp 155g', 'Cá mòi được nấu cùng nước sốt cà đậm đà. ... Tiện dụng cho mọi bữa ăn gia đình.', 'Hộp', 0.155, '8x6x3cm', 730, 1),
-('SP050', 'LSP003', 'Thịt hộp lợn vai 340g', 'Thịt lợn được nấu chín, nén hộp, dễ bảo quản. ... Phù hợp đi du lịch, dã ngoại hoặc ăn nhanh.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
-('SP051', 'LSP003', 'Bắp cải muối chua hộp 400g', 'Bắp cải được muối chua vừa vị, giòn ngon. ... Dùng ngay hoặc nấu cùng món thịt đều phù hợp.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP052', 'LSP003', 'Cà rốt đóng hộp 400g', 'Cà rốt được cắt khúc và hấp chín. ... Tiện lợi cho các món xào, soup hoặc salad.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP053', 'LSP003', 'Giá đỗ đóng hộp 400g', 'Giá đỗ sạch, giòn ngon được đóng hộp. ... Bổ sung dinh dưỡng và dễ bảo quản lâu dài.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP054', 'LSP003', 'Cà chua xay hộp 400g', 'Cà chua tươi được nghiền nhuyễn và tiệt trùng. ... Dùng làm nước sốt hoặc nấu canh rất tiện.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP055', 'LSP003', 'Dưa cải chua hộp 400g', 'Dưa cải muối chua đậm đà hương vị Bắc. ... Thích hợp ăn kèm món thịt kho, canh chua.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP056', 'LSP003', 'Hạt sen đóng hộp 400g', 'Hạt sen tươi được làm sạch và hấp chín. ... Phù hợp cho món chè, hầm hoặc cháo.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP057', 'LSP003', 'Dừa non đóng hộp 400g', 'Dừa non thái lát được đóng hộp bảo quản lâu. ... Sử dụng tốt trong món chè hoặc cocktail trái cây.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP058', 'LSP003', 'Thịt bò hầm hộp 340g', 'Thịt bò hầm mềm, vị đậm đà. ... Món ăn chế biến sẵn phù hợp cho dân văn phòng.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
-('SP059', 'LSP003', 'Nấm bào ngư hộp 400g', 'Nấm bào ngư tươi được đóng hộp tiện lợi. ... Dùng để xào, nấu lẩu hoặc hầm đều ngon.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
-('SP060', 'LSP003', 'Mì bò kho hộp 350g', 'Mì ăn liền với nước dùng bò kho đậm vị. ... Món ăn nhanh đầy đủ năng lượng cho người bận rộn.', 'Hộp', 0.350, '12x8x4cm', 730, 1),
-('SP061', 'LSP004', 'Nước khoáng thiên nhiên 500ml', 'Nước khoáng tinh khiết, giải khát tức thì. ... Giàu khoáng chất, tốt cho sức khỏe, thích hợp sử dụng hàng ngày.', 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP062', 'LSP004', 'Trà xanh không độ 455ml', 'Trà xanh thanh mát, không đường. ... Giúp giải nhiệt, chống oxy hóa và tăng cường sức khỏe.', 'Chai', 0.455, '6x6x18cm', 365, 1),
-('SP063', 'LSP004', 'Nước tăng lực Red Bull 250ml', 'Nước uống tăng lực hương vị đặc trưng. ... Phù hợp cho người hoạt động thể chất cao, giúp tỉnh táo.', 'Lon', 0.250, '6x6x12cm', 365, 1),
-('SP064', 'LSP004', 'Nước ép cam nguyên chất 330ml', 'Nước ép cam giàu vitamin C, vị tự nhiên. ... Tăng cường đề kháng, tốt cho làn da và hệ miễn dịch.', 'Chai', 0.330, '6x6x15cm', 180, 1),
-('SP065', 'LSP004', 'Sữa đậu nành Fami 200ml', 'Sữa đậu nành nguyên chất từ hạt đậu nành Việt. ... Bổ sung đạm thực vật và tốt cho tim mạch.', 'Hộp', 0.200, '5x5x10cm', 180, 1),
-('SP066', 'LSP004', 'Nước suối Aquafina 1.5L', 'Nước uống tinh khiết được lọc 7 bước. ... Thích hợp dùng cho cả gia đình và mang đi học, đi làm.', 'Chai', 1.500, '8x8x25cm', 365, 1),
-('SP067', 'LSP004', 'Nước ngọt Coca-Cola lon 330ml', 'Nước ngọt có gas hương vị cổ điển. ... Giải khát tức thì, phù hợp với các bữa tiệc và ăn nhanh.', 'Lon', 0.330, '6x6x12cm', 365, 1),
-('SP068', 'LSP004', 'Trà sữa trân châu đóng chai 320ml', 'Trà sữa thơm ngọt, kèm trân châu mềm dai. ... Phù hợp cho giới trẻ, mang đi mọi nơi.', 'Chai', 0.320, '6x6x15cm', 180, 1),
-('SP069', 'LSP004', 'Nước ép táo nguyên chất 330ml', 'Nước ép táo ngọt dịu, không chất bảo quản. ... Tốt cho hệ tiêu hóa và cung cấp vitamin A.', 'Chai', 0.330, '6x6x15cm', 180, 1),
-('SP070', 'LSP004', 'Bò húc Thái chai thủy tinh 250ml', 'Nước tăng lực nhập khẩu hương vị đậm đà. ... Giúp tỉnh táo, bổ sung vitamin B và taurine.', 'Chai', 0.250, '5x5x12cm', 365, 1),
-('SP071', 'LSP004', 'Nước dừa tươi đóng hộp 330ml', 'Nước dừa tự nhiên, giữ nguyên hương vị tươi mát. ... Giàu khoáng và chất điện giải, giải nhiệt tốt.', 'Hộp', 0.330, '6x6x15cm', 180, 1),
-('SP072', 'LSP004', 'Trà đào hương vị trái cây 455ml', 'Trà đào ngọt thanh, mùi thơm dịu nhẹ. ... Dùng lạnh sẽ ngon hơn, hợp mọi lứa tuổi.', 'Chai', 0.455, '6x6x18cm', 365, 1),
-('SP073', 'LSP004', 'Nước yến sào có đường 240ml', 'Nước yến giàu đạm và vi khoáng. ... Hỗ trợ phục hồi sức khỏe, đẹp da và tăng cường sức đề kháng.', 'Chai', 0.240, '5x5x12cm', 365, 1),
-('SP074', 'LSP004', 'Cà phê sữa đá đóng lon 330ml', 'Cà phê Việt đậm đà, hương vị truyền thống. ... Tiện lợi khi di chuyển, giữ nguyên độ ngon như pha máy.', 'Lon', 0.330, '6x6x12cm', 365, 1),
-('SP075', 'LSP004', 'Trà atiso đỏ 500ml', 'Trà atiso đỏ thanh mát, vị chua nhẹ. ... Giúp mát gan, hỗ trợ tiêu hóa và lợi tiểu.', 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP076', 'LSP004', 'Nước ép nho nguyên chất 330ml', 'Nước ép nho ngọt dịu, giàu vitamin và chất chống oxy hóa. ... Giúp cải thiện làn da và ngăn ngừa lão hóa.', 'Chai', 0.330, '6x6x15cm', 180, 1),
-('SP077', 'LSP004', 'Nước nha đam hạt chia 500ml', 'Nước uống kết hợp nha đam và hạt chia. ... Bổ dưỡng, làm mát cơ thể, đẹp da.', 'Chai', 0.500, '7x7x20cm', 180, 1),
-('SP078', 'LSP004', 'Nước cam có tép 450ml', 'Nước cam có tép thật, vị ngọt dịu tự nhiên. ... Giàu vitamin C, tăng cường miễn dịch và sáng da.', 'Chai', 0.450, '6x6x18cm', 180, 1),
-('SP079', 'LSP004', 'Nước khoáng có gas Vĩnh Hảo 500ml', 'Nước khoáng có gas vị nhẹ nhàng. ... Giúp tiêu hóa tốt, dùng với trái cây tươi rất ngon.', 'Chai', 0.500, '7x7x20cm', 365, 1),
-('SP080', 'LSP004', 'Nước chanh muối đóng chai 350ml', 'Nước chanh muối pha sẵn, vị mặn ngọt hài hòa. ... Giải khát, bù điện giải khi vận động nhiều.', 'Chai', 0.350, '6x6x15cm', 180, 1),
-('SP081', 'LSP005', 'Sữa bột Enfagrow 400g', 'Sữa bột cho trẻ từ 1-3 tuổi, giàu DHA. ... Giúp phát triển trí não, tăng cường miễn dịch và tiêu hóa khỏe.', 'Hộp', 0.400, '15x10x8cm', 730, 1),
-('SP082', 'LSP005', 'Sữa tươi tiệt trùng TH True Milk 180ml', 'Sữa tươi tiệt trùng, vị nguyên chất. ... Giàu canxi, tốt cho xương, phù hợp mọi lứa tuổi.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
-('SP083', 'LSP005', 'Bột ăn dặm Nestle gạo sữa 200g', 'Bột ăn dặm vị gạo sữa dễ tiêu hóa. ... Hỗ trợ bé tập ăn dặm, bổ sung vitamin và khoáng.', 'Hộp', 0.200, '12x8x6cm', 730, 1),
-('SP084', 'LSP005', 'Tã dán Pampers NB 40 miếng', 'Tã dán siêu mềm, thấm hút tốt. ... Giúp bé ngủ ngon, da khô thoáng suốt cả đêm.', 'Gói', 0.800, '25x15x8cm', 1095, 1),
-('SP085', 'LSP005', 'Nước rửa bình sữa D-nee 620ml', 'Dung dịch rửa bình sữa an toàn. ... Không chứa hóa chất độc hại, dễ trôi sạch, không mùi.', 'Chai', 0.620, '8x8x20cm', 730, 1),
-('SP086', 'LSP005', 'Khăn ướt Bobby không mùi 100 tờ', 'Khăn ướt mềm mại, không chứa cồn. ... Phù hợp vệ sinh cho bé, dùng được cho da nhạy cảm.', 'Gói', 0.300, '15x10x5cm', 730, 1),
-('SP087', 'LSP005', 'Sữa chua uống Probi 65ml (lốc 4 chai)', 'Sữa chua uống men sống hỗ trợ tiêu hóa. ... Tăng cường hệ miễn dịch, ngon mát dễ uống.', 'Lốc', 0.260, '15x10x8cm', 180, 1),
-('SP088', 'LSP005', 'Dụng cụ hút mũi cho bé', 'Dụng cụ hút mũi bằng silicon mềm. ... Giúp làm sạch mũi nhẹ nhàng, không gây tổn thương.', 'Cái', 0.050, '8x3x2cm', 1095, 1),
-('SP089', 'LSP005', 'Sữa công thức Friso Gold 900g', 'Sữa công thức dành cho trẻ từ 1-2 tuổi. ... Bổ sung chất xơ GOS, hỗ trợ đường ruột và miễn dịch.', 'Hộp', 0.900, '20x15x10cm', 730, 1),
-('SP090', 'LSP005', 'Bánh ăn dặm Pigeon vị bí đỏ 50g', 'Bánh ăn dặm tan nhanh trong miệng. ... Giúp bé làm quen với đồ ăn, dễ cầm nắm.', 'Hộp', 0.050, '10x8x3cm', 730, 1),
-('SP091', 'LSP005', 'Sữa rửa mặt cho mẹ bầu Organic 100ml', 'Sữa rửa mặt thiên nhiên cho da nhạy cảm. ... Không chứa paraben, dịu nhẹ và an toàn.', 'Chai', 0.100, '6x6x15cm', 730, 1),
-('SP092', 'LSP005', 'Dầu gội em bé Johnson 200ml', 'Dầu gội dịu nhẹ, không cay mắt. ... Làm sạch tóc và da đầu cho bé mà không gây kích ứng.', 'Chai', 0.200, '7x7x18cm', 730, 1),
-('SP093', 'LSP005', 'Thermometer đo trán điện tử', 'Nhiệt kế hồng ngoại đo trán nhanh chóng. ... Cho kết quả chính xác trong vài giây, an toàn.', 'Cái', 0.100, '10x3x2cm', 1095, 1),
-('SP094', 'LSP005', 'Sữa nước Grow Plus đỏ 180ml', 'Sữa dành cho bé nhẹ cân, suy dinh dưỡng. ... Giúp tăng cân đều, phát triển khỏe mạnh.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
-('SP095', 'LSP005', 'Bình sữa Avent nhựa PP 260ml', 'Bình sữa cổ rộng, van chống sặc. ... Giúp bé bú dễ dàng, không bị đầy hơi.', 'Cái', 0.150, '8x8x20cm', 1095, 1),
-('SP096', 'LSP005', 'Nước muối sinh lý BabyCare 500ml', 'Nước muối sinh lý dùng nhỏ mũi cho bé. ... Làm sạch nhẹ nhàng, hỗ trợ phòng ngừa viêm mũi.', 'Chai', 0.500, '7x7x20cm', 730, 1),
-('SP097', 'LSP005', 'Trái cây nghiền Hipp táo chuối 125g', 'Trái cây nghiền sẵn, vị ngọt tự nhiên. ... Cung cấp vitamin C, giúp bé ăn ngon miệng.', 'Hộp', 0.125, '8x6x4cm', 730, 1),
-('SP098', 'LSP005', 'Sữa tươi tiệt trùng Dutch Lady 110ml', 'Sữa tươi vị socola hoặc dâu. ... Bổ sung dưỡng chất, ngon miệng dễ uống.', 'Hộp', 0.110, '4x4x8cm', 180, 1),
-('SP099', 'LSP005', 'Bàn chải răng silicon cho bé 6 tháng+', 'Bàn chải mềm, an toàn cho bé. ... Giúp bé tập đánh răng ngay từ sớm.', 'Cái', 0.050, '12x2x1cm', 1095, 1),
-('SP100', 'LSP005', 'Balo y tá đựng đồ sơ sinh', 'Balo chuyên dụng mang theo khi ra ngoài. ... Có nhiều ngăn, dễ sắp xếp đồ dùng cho bé.', 'Cái', 0.800, '30x20x15cm', 1095, 1),
-('SP101', 'LSP006', 'Nước mắm Nam Ngư 500ml', 'Nước mắm truyền thống đậm đà. ... Được ủ từ cá cơm, hương vị tự nhiên, dùng nêm nếm và chấm.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP102', 'LSP006', 'Nước tương Maggi đậm đặc 700ml', 'Nước tương đậm đà, hương vị quen thuộc. ... Thích hợp ăn kèm món luộc, chiên, xào.', 'Chai', 0.700, '8x8x25cm', 1095, 1),
-('SP103', 'LSP006', 'Dầu ăn Tường An 1L', 'Dầu thực vật nguyên chất. ... Giàu vitamin A, E tốt cho tim mạch và sức khỏe.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
-('SP104', 'LSP006', 'Muối i-ốt 500g', 'Muối trắng tinh khiết có bổ sung i-ốt. ... Giúp phòng ngừa bướu cổ và tăng cường sức khỏe.', 'Gói', 0.500, '15x10x2cm', 1095, 1),
-('SP105', 'LSP006', 'Hạt nêm Knorr thịt thăn 400g', 'Hạt nêm vị thịt thăn xương ống. ... Giúp món ăn đậm vị, thơm ngon hơn.', 'Hộp', 0.400, '12x8x6cm', 1095, 1),
-('SP106', 'LSP006', 'Tiêu đen xay Dh Foods 50g', 'Tiêu đen xay mịn, thơm nồng. ... Tăng hương vị cho các món kho, nướng, súp.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
-('SP107', 'LSP006', 'Tỏi băm sẵn 200g', 'Tỏi tươi xay nhuyễn, tiện lợi khi nấu ăn. ... Giữ nguyên hương vị và mùi thơm tự nhiên.', 'Hộp', 0.200, '10x8x4cm', 180, 1),
-('SP108', 'LSP006', 'Hành phi giòn 100g', 'Hành phi vàng thơm, giòn rụm. ... Dùng rắc lên cơm, cháo, bún, phở tăng hương vị.', 'Hộp', 0.100, '8x6x3cm', 365, 1),
-('SP109', 'LSP006', 'Dầu hào Maggi 350g', 'Dầu hào vị ngọt thanh. ... Dùng để xào rau, thịt giúp món ăn thêm đậm đà, bóng đẹp.', 'Chai', 0.350, '7x7x18cm', 1095, 1),
-('SP110', 'LSP006', 'Ớt bột Hàn Quốc 100g', 'Ớt bột vị cay nhẹ, màu đẹp. ... Dùng làm kim chi, lẩu, các món cay kiểu Hàn.', 'Hộp', 0.100, '8x6x3cm', 1095, 1),
-('SP111', 'LSP006', 'Bột nghệ nguyên chất 100g', 'Bột nghệ vàng nguyên chất. ... Dùng ướp thịt, làm bánh, tốt cho tiêu hóa.', 'Hộp', 0.100, '8x6x3cm', 1095, 1),
-('SP112', 'LSP006', 'Giấm gạo Lâm Thủy 500ml', 'Giấm gạo lên men tự nhiên. ... Dùng trộn gỏi, pha nước chấm, khử mùi tanh.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP113', 'LSP006', 'Dầu mè đen Lee Kum Kee 200ml', 'Dầu mè nguyên chất thơm ngon. ... Tăng hương vị cho món Nhật, Hàn, salad.', 'Chai', 0.200, '6x6x15cm', 1095, 1),
-('SP114', 'LSP006', 'Bột canh Hải Châu 190g', 'Bột canh pha sẵn muối, bột ngọt. ... Dùng để nêm nếm tiện lợi, nhanh chóng.', 'Hộp', 0.190, '10x8x4cm', 1095, 1),
-('SP115', 'LSP006', 'Nước cốt dừa Aroy-D 400ml', 'Nước cốt dừa đóng hộp thơm béo. ... Dùng nấu chè, cà ri, bánh, món Thái.', 'Hộp', 0.400, '12x8x4cm', 1095, 1),
-('SP116', 'LSP006', 'Bột ngọt Ajinomoto 400g', 'Bột ngọt giúp làm nổi bật vị ngọt tự nhiên. ... Phù hợp cho mọi món ăn.', 'Hộp', 0.400, '12x8x6cm', 1095, 1),
-('SP117', 'LSP006', 'Bột sả khô 50g', 'Sả khô xay nhuyễn. ... Dùng tẩm ướp thịt nướng, món chay, món kho.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
-('SP118', 'LSP006', 'Tương ớt Chin-Su 250g', 'Tương ớt cay vừa, màu sắc hấp dẫn. ... Dùng chấm đồ chiên, rán, ăn với phở, bún.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP119', 'LSP006', 'Nước màu dừa Bến Tre 250ml', 'Nước hàng kho cá, kho thịt. ... Giúp món ăn lên màu đẹp, vị ngọt thanh.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP120', 'LSP006', 'Nước mắm Phú Quốc truyền thống 520ml', 'Nước mắm nguyên chất cá cơm. ... Đậm đà, thơm ngon đúng chất nước mắm xưa.', 'Chai', 0.520, '7x7x20cm', 1095, 1),
-('SP121', 'LSP007', 'Nước rửa chén Sunlight chanh 750ml', 'Nước rửa chén hương chanh. ... Tẩy sạch dầu mỡ, dịu nhẹ với da tay.', 'Chai', 0.750, '8x8x25cm', 1095, 1),
-('SP122', 'LSP007', 'Nước lau sàn Gift lavender 1L', 'Nước lau sàn hương oải hương. ... Diệt khuẩn, khử mùi hiệu quả, sàn sạch bóng.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
-('SP123', 'LSP007', 'Nước giặt Omo Matic 2.7kg', 'Nước giặt cho máy giặt cửa ngang. ... Đánh bay vết bẩn, lưu hương thơm lâu.', 'Chai', 2.700, '15x10x25cm', 1095, 1),
-('SP124', 'LSP007', 'Nước xả vải Downy hương nắng mai 800ml', 'Nước xả làm mềm vải. ... Giữ mùi thơm mát, giúp quần áo luôn mềm mại.', 'Chai', 0.800, '8x8x25cm', 1095, 1),
-('SP125', 'LSP007', 'Nước tẩy toilet Duck 900ml', 'Tẩy rửa toilet diệt khuẩn. ... Làm sạch và khử mùi bồn cầu hiệu quả.', 'Chai', 0.900, '8x8x25cm', 1095, 1),
-('SP126', 'LSP007', 'Nước rửa tay Lifebuoy 500ml', 'Rửa tay diệt khuẩn 99.9%. ... Hương thơm dễ chịu, bảo vệ tay sạch khuẩn.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP127', 'LSP007', 'Nước lau kính Gift 500ml', 'Nước lau kính chống bám bụi. ... Cho bề mặt kính sáng bóng, không vệt.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP128', 'LSP007', 'Nước tẩy đa năng CIF 500ml', 'Tẩy rửa vết bẩn cứng đầu. ... Dùng cho nhà bếp, nhà tắm, vật dụng inox.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP129', 'LSP007', 'Bột giặt Ariel hương Downy 3.8kg', 'Bột giặt sạch sâu, thơm lâu. ... Loại bỏ vết bẩn, giữ màu vải bền đẹp.', 'Hộp', 3.800, '20x15x25cm', 1095, 1),
-('SP130', 'LSP007', 'Khăn giấy Bless You hộp 200 tờ', 'Giấy mềm mịn, thấm hút tốt. ... Dùng lau mặt, dùng trong gia đình, văn phòng.', 'Hộp', 0.200, '15x10x8cm', 1095, 1),
-('SP131', 'LSP007', 'Giấy vệ sinh Pulppy 10 cuộn', 'Giấy vệ sinh trắng mềm. ... An toàn cho da, phù hợp gia đình và văn phòng.', 'Gói', 0.800, '25x15x8cm', 1095, 1),
-('SP132', 'LSP007', 'Nước rửa bình sữa D-nee 620ml', 'Rửa sạch bình sữa, đồ dùng trẻ em. ... Dịu nhẹ, an toàn cho bé sơ sinh.', 'Chai', 0.620, '8x8x20cm', 730, 1),
-('SP133', 'LSP007', 'Bông gòn y tế 100g', 'Bông trắng sạch, không tạp chất. ... Dùng lau chùi vết thương, vệ sinh cá nhân.', 'Gói', 0.100, '15x10x3cm', 1095, 1),
-('SP134', 'LSP007', 'Bàn chải vệ sinh nhà tắm đa năng', 'Thiết kế chắc chắn, dễ cầm. ... Làm sạch ngóc ngách nhà tắm, bồn rửa.', 'Cái', 0.200, '25x5x2cm', 1095, 1),
-('SP135', 'LSP007', 'Khăn ướt Mamamy 100 tờ', 'Khăn mềm, không cồn. ... Dùng lau mặt, tay chân cho bé và người lớn.', 'Gói', 0.300, '15x10x5cm', 730, 1),
-('SP136', 'LSP007', 'Bình xịt côn trùng Raid 600ml', 'Diệt muỗi, gián hiệu quả. ... Hương nhẹ, dùng an toàn trong nhà.', 'Chai', 0.600, '8x8x20cm', 1095, 1),
-('SP137', 'LSP007', 'Nước súc miệng Listerine 250ml', 'Làm sạch miệng, khử mùi. ... Giúp hơi thở thơm mát, bảo vệ răng miệng.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
-('SP138', 'LSP007', 'Bột thông cống Hando 100g', 'Làm tan chất thải hữu cơ. ... Thông tắc ống thoát nước, không gây hại đường ống.', 'Gói', 0.100, '10x8x3cm', 1095, 1),
-('SP139', 'LSP007', 'Nước diệt khuẩn Dettol 500ml', 'Sát khuẩn mạnh mẽ, đa năng. ... Pha loãng để lau sàn, giặt đồ, vệ sinh da.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
-('SP140', 'LSP007', 'Găng tay cao su Latex', 'Găng tay dẻo, co giãn tốt. ... Dùng khi rửa chén, lau dọn, an toàn cho da tay.', 'Đôi', 0.050, '20x10x2cm', 1095, 1);
+                                                                                                              ('SP001', 'LSP001', 'Dưa leo Đà Lạt', '[Ngắn] Dưa tươi ngon sạch. [Dài] Dưa leo Đà Lạt được chọn lọc kỹ càng từ nông trại sạch, vỏ xanh mướt, giòn ngọt, thích hợp cho các món salad, dưa muối hoặc ăn sống trực tiếp.', 'Kg', 0.5, '20x5cm', 7, 1),
+                                                                                                              ('SP002', 'LSP001', 'Cà chua bi', '[Ngắn] Cà chua bi đỏ mọng. [Dài] Cà chua bi được trồng theo phương pháp hữu cơ, vỏ mỏng, vị ngọt thanh, thích hợp cho ăn sống, làm salad hoặc xào nấu.', 'Kg', 0.3, '2x2cm', 5, 1),
+                                                                                                              ('SP003', 'LSP001', 'Cải thìa tươi', '[Ngắn] Rau xanh giòn ngọt. [Dài] Cải thìa sạch được thu hoạch trong ngày, giàu vitamin A và C, thường dùng trong các món xào hoặc luộc.', 'Kg', 0.4, '25x3cm', 3, 1),
+                                                                                                              ('SP004', 'LSP001', 'Cải ngọt Đà Lạt', '[Ngắn] Rau tươi sạch. [Dài] Cải ngọt được trồng trong điều kiện khí hậu mát mẻ Đà Lạt, ít sâu bệnh, thích hợp nấu canh, xào hoặc ăn lẩu.', 'Kg', 0.3, '20x2cm', 3, 1),
+                                                                                                              ('SP005', 'LSP001', 'Rau muống', '[Ngắn] Rau muống giòn ngon. [Dài] Rau muống tươi được lựa chọn kỹ lưỡng, thân giòn, lá xanh, thích hợp cho các món luộc, xào tỏi hoặc làm gỏi.', 'Kg', 0.5, '30x2cm', 2, 1),
+                                                                                                              ('SP006', 'LSP001', 'Bắp cải trắng', '[Ngắn] Bắp cải tươi giòn. [Dài] Bắp cải trắng giòn ngọt, có thể dùng để nấu canh, xào hoặc làm dưa muối.', 'Cái', 1.0, '15x15cm', 7, 1),
+                                                                                                              ('SP007', 'LSP001', 'Cà rốt Đà Lạt', '[Ngắn] Cà rốt giòn ngọt. [Dài] Cà rốt trồng tại Đà Lạt, củ đều màu cam đẹp, giàu beta-carotene tốt cho mắt, thường dùng nấu canh, luộc, xào.', 'Kg', 0.6, '20x3cm', 10, 1),
+                                                                                                              ('SP008', 'LSP001', 'Khoai tây vàng', '[Ngắn] Khoai tây sạch. [Dài] Khoai tây vàng vỏ mỏng, ít nhựa, thích hợp để chiên, nấu súp hoặc nghiền làm món ăn dặm.', 'Kg', 0.8, '8x5cm', 14, 1),
+                                                                                                              ('SP009', 'LSP001', 'Hành lá', '[Ngắn] Hành tươi xanh. [Dài] Hành lá được thu hoạch từ vườn sạch, lá xanh, mùi thơm nhẹ, là nguyên liệu không thể thiếu cho các món canh và chiên.', 'Kg', 0.2, '25x1cm', 5, 1),
+                                                                                                              ('SP010', 'LSP001', 'Rau dền đỏ', '[Ngắn] Rau dền mát gan. [Dài] Rau dền đỏ nhiều sắt, hỗ trợ tuần hoàn máu, thích hợp cho các món canh và luộc.', 'Kg', 0.3, '20x2cm', 2, 1),
+                                                                                                              ('SP011', 'LSP001', 'Mướp hương', '[Ngắn] Mướp mềm thơm. [Dài] Mướp hương có vị ngọt thanh, mềm, thường được dùng trong các món canh hoặc xào chung với trứng.', 'Kg', 0.4, '25x4cm', 3, 1),
+                                                                                                              ('SP012', 'LSP001', 'Dưa gang', '[Ngắn] Dưa giải nhiệt. [Dài] Dưa gang mọng nước, vị ngọt nhẹ, được ưa chuộng trong mùa nóng vì tác dụng giải nhiệt, ăn sống hoặc làm sinh tố.', 'Kg', 0.8, '15x10cm', 5, 1),
+                                                                                                              ('SP013', 'LSP001', 'Rau má', '[Ngắn] Rau má mát gan. [Dài] Rau má có tác dụng thanh nhiệt, giải độc, thường dùng để ép nước hoặc làm gỏi.', 'Kg', 0.2, '20x2cm', 2, 1),
+                                                                                                              ('SP014', 'LSP001', 'Nấm rơm tươi', '[Ngắn] Nấm mềm ngon. [Dài] Nấm rơm tươi từ nông trại sạch, thích hợp cho các món kho, xào, canh.', 'Kg', 0.3, '3x3cm', 3, 1),
+                                                                                                              ('SP015', 'LSP001', 'Nấm bào ngư', '[Ngắn] Nấm dai ngon. [Dài] Nấm bào ngư trắng, thịt dày, giòn ngọt, thường dùng trong các món xào, súp hoặc chiên giòn.', 'Kg', 0.4, '4x2cm', 5, 1),
+                                                                                                              ('SP016', 'LSP001', 'Mồng tơi', '[Ngắn] Rau trơn mát. [Dài] Mồng tơi chứa nhiều chất nhầy, hỗ trợ tiêu hóa, là nguyên liệu quen thuộc trong món canh cua.', 'Kg', 0.3, '25x2cm', 2, 1),
+                                                                                                              ('SP017', 'LSP001', 'Đậu que', '[Ngắn] Đậu non giòn. [Dài] Đậu que non, xanh mướt, thường được xào với thịt bò hoặc luộc ăn kèm nước chấm.', 'Kg', 0.3, '15x1cm', 3, 1),
+                                                                                                              ('SP018', 'LSP001', 'Dền cơm', '[Ngắn] Rau dền sạch. [Dài] Dền cơm là loại rau dại giàu dinh dưỡng, được trồng theo hướng hữu cơ, dùng để nấu canh hoặc luộc.', 'Kg', 0.2, '20x2cm', 2, 1),
+                                                                                                              ('SP019', 'LSP001', 'Rau tần ô', '[Ngắn] Rau thơm ngon. [Dài] Tần ô có hương thơm đặc trưng, thường xuất hiện trong lẩu hoặc nấu canh với thịt bằm.', 'Kg', 0.3, '25x2cm', 3, 1),
+                                                                                                              ('SP020', 'LSP001', 'Bí đỏ trái tròn', '[Ngắn] Bí đỏ ngọt dẻo. [Dài] Bí đỏ được trồng tại nông trại hữu cơ, giàu vitamin A, thường dùng nấu canh hoặc hấp.', 'Kg', 1.5, '20x15cm', 7, 1),
+                                                                                                              ('SP021', 'LSP002', 'Tôm sú đông lạnh', '[Ngắn] Tôm đông lạnh sạch. [Dài] Tôm sú đông lạnh được cấp đông ngay sau khi đánh bắt để giữ độ tươi ngon, thịt chắc và ngọt, dùng để nấu lẩu, hấp, chiên xù.', 'Kg', 1.0, '15x3cm', 180, 1),
+                                                                                                              ('SP022', 'LSP002', 'Cá hồi phi lê', '[Ngắn] Cá hồi phi lê tươi ngon. [Dài] Cá hồi Na Uy phi lê được cấp đông nhanh, giữ nguyên chất dinh dưỡng và màu sắc tự nhiên, thích hợp cho sashimi hoặc áp chảo.', 'Kg', 0.8, '20x5cm', 180, 1),
+                                                                                                              ('SP023', 'LSP002', 'Mực ống đông lạnh', '[Ngắn] Mực tươi cấp đông. [Dài] Mực ống được làm sạch và cấp đông nhanh, giữ được độ giòn và vị ngọt tự nhiên, thích hợp nướng, hấp hoặc chiên giòn.', 'Kg', 0.5, '12x2cm', 180, 1),
+                                                                                                              ('SP024', 'LSP002', 'Cá viên đông lạnh', '[Ngắn] Cá viên tiện lợi. [Dài] Cá viên làm từ cá thát lát nguyên chất, được cấp đông sẵn, tiện lợi cho món lẩu, chiên hoặc nấu canh.', 'Kg', 0.5, '2x2cm', 180, 1),
+                                                                                                              ('SP025', 'LSP002', 'Thịt bò viên đông lạnh', '[Ngắn] Bò viên thơm ngon. [Dài] Bò viên được chế biến từ thịt bò tươi, có vị thơm đặc trưng, dễ dàng chế biến trong các món lẩu, xào hoặc bún bò.', 'Kg', 0.5, '2x2cm', 180, 1),
+                                                                                                              ('SP026', 'LSP002', 'Gà nguyên con đông lạnh', '[Ngắn] Gà cấp đông sạch. [Dài] Gà ta nguyên con được làm sạch và cấp đông theo chuẩn VSATTP, phù hợp để quay, luộc hoặc hấp.', 'Con', 1.5, '25x15cm', 180, 1),
+                                                                                                              ('SP027', 'LSP002', 'Chân gà rút xương đông lạnh', '[Ngắn] Chân gà tiện dụng. [Dài] Chân gà đã được rút xương, cấp đông sạch, dùng để trộn gỏi hoặc nướng muối ớt.', 'Kg', 0.8, '8x3cm', 180, 1),
+                                                                                                              ('SP028', 'LSP002', 'Cá thu cắt lát đông lạnh', '[Ngắn] Cá thu cắt lát. [Dài] Cá thu được cắt lát và cấp đông nhanh, thích hợp để chiên hoặc kho với nước dừa.', 'Kg', 0.6, '10x5cm', 180, 1),
+                                                                                                              ('SP029', 'LSP002', 'Xúc xích tiệt trùng', '[Ngắn] Xúc xích đậm vị. [Dài] Xúc xích heo được tiệt trùng và cấp đông, dễ dàng chế biến các món ăn nhanh hoặc nướng BBQ.', 'Kg', 0.4, '15x2cm', 180, 1),
+                                                                                                              ('SP030', 'LSP002', 'Cá basa phi lê đông lạnh', '[Ngắn] Cá basa tiện lợi. [Dài] Cá basa phi lê đã bỏ xương, không tanh, dễ chế biến các món chiên giòn, kho tộ hoặc nấu canh chua.', 'Kg', 0.7, '18x4cm', 180, 1),
+                                                                                                              ('SP031', 'LSP002', 'Tôm sú đông lạnh 1kg', 'Tôm tươi ngon được cấp đông nhanh. ... Giữ được vị ngọt tự nhiên và an toàn thực phẩm.', 'Kg', 1.0, '15x3cm', 180, 1),
+                                                                                                              ('SP032', 'LSP002', 'Cá diêu hồng đông lạnh 1kg', 'Cá được sơ chế sạch sẽ và cấp đông sâu. ... Tiện lợi cho mọi món ăn hằng ngày.', 'Kg', 1.0, '25x8cm', 180, 1),
+                                                                                                              ('SP033', 'LSP002', 'Mực ống đông lạnh 500g', 'Mực tươi được làm sạch và đóng gói kỹ lưỡng. ... Đảm bảo an toàn và tươi ngon cho bữa cơm gia đình.', 'Kg', 0.5, '12x2cm', 180, 1),
+                                                                                                              ('SP034', 'LSP002', 'Thịt ba rọi đông lạnh 500g', 'Thịt heo ba rọi thái lát mỏng và đóng gói. ... Phù hợp chế biến món xào, nướng hoặc lẩu.', 'Kg', 0.5, '10x5cm', 180, 1),
+                                                                                                              ('SP035', 'LSP002', 'Cánh gà đông lạnh 1kg', 'Cánh gà tươi được lựa chọn kỹ càng. ... Cấp đông nhanh giúp bảo quản lâu và giữ nguyên dinh dưỡng.', 'Kg', 1.0, '12x8cm', 180, 1),
+                                                                                                              ('SP036', 'LSP002', 'Thăn bò đông lạnh 500g', 'Thịt bò thăn nhập khẩu, mềm, thơm. ... Rất thích hợp cho món bít tết hoặc lẩu.', 'Kg', 0.5, '15x8cm', 180, 1),
+                                                                                                              ('SP037', 'LSP002', 'Hàu nửa vỏ đông lạnh 1kg', 'Hàu biển tươi được sơ chế và cấp đông. ... Dễ chế biến và bổ dưỡng cho cả gia đình.', 'Kg', 1.0, '8x4cm', 180, 1),
+                                                                                                              ('SP038', 'LSP002', 'Cá viên đông lạnh 500g', 'Cá viên được làm từ cá tươi nghiền nhuyễn. ... Dùng tốt cho món lẩu hoặc chiên.', 'Kg', 0.5, '2x2cm', 180, 1),
+                                                                                                              ('SP039', 'LSP002', 'Súp lơ đông lạnh 500g', 'Súp lơ tươi cắt nhỏ và cấp đông ngay sau thu hoạch. ... Giữ nguyên độ giòn và hương vị tự nhiên.', 'Kg', 0.5, '15x10cm', 180, 1),
+                                                                                                              ('SP040', 'LSP002', 'Đậu que đông lạnh 500g', 'Đậu que tươi cấp đông giữ trọn độ giòn và dinh dưỡng. ... Phù hợp chế biến xào, luộc, hấp.', 'Kg', 0.5, '15x1cm', 180, 1),
+                                                                                                              ('SP041', 'LSP003', 'Cá ngừ ngâm dầu hộp 185g', 'Cá ngừ nguyên miếng ngâm dầu thơm béo. ... Đóng hộp tiện lợi, thích hợp ăn liền hoặc trộn salad.', 'Hộp', 0.185, '10x8x3cm', 730, 1),
+                                                                                                              ('SP042', 'LSP003', 'Pate gan heo hộp 170g', 'Pate gan heo mềm mịn, thơm ngon. ... Phù hợp cho bữa sáng hoặc món ăn nhẹ giàu đạm.', 'Hộp', 0.170, '8x6x2cm', 730, 1),
+                                                                                                              ('SP043', 'LSP003', 'Đậu hầm sốt cà hộp 400g', 'Đậu trắng được hầm mềm với sốt cà đậm đà. ... Món ăn bổ dưỡng, tiện lợi cho bữa cơm gia đình.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP044', 'LSP003', 'Măng chua đóng hộp 400g', 'Măng được sơ chế kỹ và đóng hộp an toàn. ... Dùng nấu canh chua hoặc xào rất tiện lợi.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP045', 'LSP003', 'Nấm rơm hộp 400g', 'Nấm rơm tươi ngon được đóng hộp giữ nguyên vị. ... Dùng cho các món canh, xào, lẩu cực kỳ tiện.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP046', 'LSP003', 'Thịt kho trứng hộp 400g', 'Món thịt kho trứng truyền thống được chế biến sẵn. ... Hương vị đậm đà, mở nắp là ăn ngay.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP047', 'LSP003', 'Chả cá sốt cà hộp 200g', 'Chả cá chiên sốt cà đậm vị, dễ dùng. ... Phù hợp cho các bữa ăn nhanh và vẫn đầy đủ dinh dưỡng.', 'Hộp', 0.200, '10x6x3cm', 730, 1),
+                                                                                                              ('SP048', 'LSP003', 'Ngô ngọt đóng hộp 400g', 'Ngô ngọt vàng óng, giòn ngọt tự nhiên. ... Có thể ăn liền hoặc chế biến món salad, soup.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP049', 'LSP003', 'Cá mòi sốt cà hộp 155g', 'Cá mòi được nấu cùng nước sốt cà đậm đà. ... Tiện dụng cho mọi bữa ăn gia đình.', 'Hộp', 0.155, '8x6x3cm', 730, 1),
+                                                                                                              ('SP050', 'LSP003', 'Thịt hộp lợn vai 340g', 'Thịt lợn được nấu chín, nén hộp, dễ bảo quản. ... Phù hợp đi du lịch, dã ngoại hoặc ăn nhanh.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
+                                                                                                              ('SP051', 'LSP003', 'Bắp cải muối chua hộp 400g', 'Bắp cải được muối chua vừa vị, giòn ngon. ... Dùng ngay hoặc nấu cùng món thịt đều phù hợp.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP052', 'LSP003', 'Cà rốt đóng hộp 400g', 'Cà rốt được cắt khúc và hấp chín. ... Tiện lợi cho các món xào, soup hoặc salad.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP053', 'LSP003', 'Giá đỗ đóng hộp 400g', 'Giá đỗ sạch, giòn ngon được đóng hộp. ... Bổ sung dinh dưỡng và dễ bảo quản lâu dài.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP054', 'LSP003', 'Cà chua xay hộp 400g', 'Cà chua tươi được nghiền nhuyễn và tiệt trùng. ... Dùng làm nước sốt hoặc nấu canh rất tiện.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP055', 'LSP003', 'Dưa cải chua hộp 400g', 'Dưa cải muối chua đậm đà hương vị Bắc. ... Thích hợp ăn kèm món thịt kho, canh chua.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP056', 'LSP003', 'Hạt sen đóng hộp 400g', 'Hạt sen tươi được làm sạch và hấp chín. ... Phù hợp cho món chè, hầm hoặc cháo.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP057', 'LSP003', 'Dừa non đóng hộp 400g', 'Dừa non thái lát được đóng hộp bảo quản lâu. ... Sử dụng tốt trong món chè hoặc cocktail trái cây.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP058', 'LSP003', 'Thịt bò hầm hộp 340g', 'Thịt bò hầm mềm, vị đậm đà. ... Món ăn chế biến sẵn phù hợp cho dân văn phòng.', 'Hộp', 0.340, '12x8x4cm', 730, 1),
+                                                                                                              ('SP059', 'LSP003', 'Nấm bào ngư hộp 400g', 'Nấm bào ngư tươi được đóng hộp tiện lợi. ... Dùng để xào, nấu lẩu hoặc hầm đều ngon.', 'Hộp', 0.400, '12x8x4cm', 730, 1),
+                                                                                                              ('SP060', 'LSP003', 'Mì bò kho hộp 350g', 'Mì ăn liền với nước dùng bò kho đậm vị. ... Món ăn nhanh đầy đủ năng lượng cho người bận rộn.', 'Hộp', 0.350, '12x8x4cm', 730, 1),
+                                                                                                              ('SP061', 'LSP004', 'Nước khoáng thiên nhiên 500ml', 'Nước khoáng tinh khiết, giải khát tức thì. ... Giàu khoáng chất, tốt cho sức khỏe, thích hợp sử dụng hàng ngày.', 'Chai', 0.500, '7x7x20cm', 365, 1),
+                                                                                                              ('SP062', 'LSP004', 'Trà xanh không độ 455ml', 'Trà xanh thanh mát, không đường. ... Giúp giải nhiệt, chống oxy hóa và tăng cường sức khỏe.', 'Chai', 0.455, '6x6x18cm', 365, 1),
+                                                                                                              ('SP063', 'LSP004', 'Nước tăng lực Red Bull 250ml', 'Nước uống tăng lực hương vị đặc trưng. ... Phù hợp cho người hoạt động thể chất cao, giúp tỉnh táo.', 'Lon', 0.250, '6x6x12cm', 365, 1),
+                                                                                                              ('SP064', 'LSP004', 'Nước ép cam nguyên chất 330ml', 'Nước ép cam giàu vitamin C, vị tự nhiên. ... Tăng cường đề kháng, tốt cho làn da và hệ miễn dịch.', 'Chai', 0.330, '6x6x15cm', 180, 1),
+                                                                                                              ('SP065', 'LSP004', 'Sữa đậu nành Fami 200ml', 'Sữa đậu nành nguyên chất từ hạt đậu nành Việt. ... Bổ sung đạm thực vật và tốt cho tim mạch.', 'Hộp', 0.200, '5x5x10cm', 180, 1),
+                                                                                                              ('SP066', 'LSP004', 'Nước suối Aquafina 1.5L', 'Nước uống tinh khiết được lọc 7 bước. ... Thích hợp dùng cho cả gia đình và mang đi học, đi làm.', 'Chai', 1.500, '8x8x25cm', 365, 1),
+                                                                                                              ('SP067', 'LSP004', 'Nước ngọt Coca-Cola lon 330ml', 'Nước ngọt có gas hương vị cổ điển. ... Giải khát tức thì, phù hợp với các bữa tiệc và ăn nhanh.', 'Lon', 0.330, '6x6x12cm', 365, 1),
+                                                                                                              ('SP068', 'LSP004', 'Trà sữa trân châu đóng chai 320ml', 'Trà sữa thơm ngọt, kèm trân châu mềm dai. ... Phù hợp cho giới trẻ, mang đi mọi nơi.', 'Chai', 0.320, '6x6x15cm', 180, 1),
+                                                                                                              ('SP069', 'LSP004', 'Nước ép táo nguyên chất 330ml', 'Nước ép táo ngọt dịu, không chất bảo quản. ... Tốt cho hệ tiêu hóa và cung cấp vitamin A.', 'Chai', 0.330, '6x6x15cm', 180, 1),
+                                                                                                              ('SP070', 'LSP004', 'Bò húc Thái chai thủy tinh 250ml', 'Nước tăng lực nhập khẩu hương vị đậm đà. ... Giúp tỉnh táo, bổ sung vitamin B và taurine.', 'Chai', 0.250, '5x5x12cm', 365, 1),
+                                                                                                              ('SP071', 'LSP004', 'Nước dừa tươi đóng hộp 330ml', 'Nước dừa tự nhiên, giữ nguyên hương vị tươi mát. ... Giàu khoáng và chất điện giải, giải nhiệt tốt.', 'Hộp', 0.330, '6x6x15cm', 180, 1),
+                                                                                                              ('SP072', 'LSP004', 'Trà đào hương vị trái cây 455ml', 'Trà đào ngọt thanh, mùi thơm dịu nhẹ. ... Dùng lạnh sẽ ngon hơn, hợp mọi lứa tuổi.', 'Chai', 0.455, '6x6x18cm', 365, 1),
+                                                                                                              ('SP073', 'LSP004', 'Nước yến sào có đường 240ml', 'Nước yến giàu đạm và vi khoáng. ... Hỗ trợ phục hồi sức khỏe, đẹp da và tăng cường sức đề kháng.', 'Chai', 0.240, '5x5x12cm', 365, 1),
+                                                                                                              ('SP074', 'LSP004', 'Cà phê sữa đá đóng lon 330ml', 'Cà phê Việt đậm đà, hương vị truyền thống. ... Tiện lợi khi di chuyển, giữ nguyên độ ngon như pha máy.', 'Lon', 0.330, '6x6x12cm', 365, 1),
+                                                                                                              ('SP075', 'LSP004', 'Trà atiso đỏ 500ml', 'Trà atiso đỏ thanh mát, vị chua nhẹ. ... Giúp mát gan, hỗ trợ tiêu hóa và lợi tiểu.', 'Chai', 0.500, '7x7x20cm', 365, 1),
+                                                                                                              ('SP076', 'LSP004', 'Nước ép nho nguyên chất 330ml', 'Nước ép nho ngọt dịu, giàu vitamin và chất chống oxy hóa. ... Giúp cải thiện làn da và ngăn ngừa lão hóa.', 'Chai', 0.330, '6x6x15cm', 180, 1),
+                                                                                                              ('SP077', 'LSP004', 'Nước nha đam hạt chia 500ml', 'Nước uống kết hợp nha đam và hạt chia. ... Bổ dưỡng, làm mát cơ thể, đẹp da.', 'Chai', 0.500, '7x7x20cm', 180, 1),
+                                                                                                              ('SP078', 'LSP004', 'Nước cam có tép 450ml', 'Nước cam có tép thật, vị ngọt dịu tự nhiên. ... Giàu vitamin C, tăng cường miễn dịch và sáng da.', 'Chai', 0.450, '6x6x18cm', 180, 1),
+                                                                                                              ('SP079', 'LSP004', 'Nước khoáng có gas Vĩnh Hảo 500ml', 'Nước khoáng có gas vị nhẹ nhàng. ... Giúp tiêu hóa tốt, dùng với trái cây tươi rất ngon.', 'Chai', 0.500, '7x7x20cm', 365, 1),
+                                                                                                              ('SP080', 'LSP004', 'Nước chanh muối đóng chai 350ml', 'Nước chanh muối pha sẵn, vị mặn ngọt hài hòa. ... Giải khát, bù điện giải khi vận động nhiều.', 'Chai', 0.350, '6x6x15cm', 180, 1),
+                                                                                                              ('SP081', 'LSP005', 'Sữa bột Enfagrow 400g', 'Sữa bột cho trẻ từ 1-3 tuổi, giàu DHA. ... Giúp phát triển trí não, tăng cường miễn dịch và tiêu hóa khỏe.', 'Hộp', 0.400, '15x10x8cm', 730, 1),
+                                                                                                              ('SP082', 'LSP005', 'Sữa tươi tiệt trùng TH True Milk 180ml', 'Sữa tươi tiệt trùng, vị nguyên chất. ... Giàu canxi, tốt cho xương, phù hợp mọi lứa tuổi.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
+                                                                                                              ('SP083', 'LSP005', 'Bột ăn dặm Nestle gạo sữa 200g', 'Bột ăn dặm vị gạo sữa dễ tiêu hóa. ... Hỗ trợ bé tập ăn dặm, bổ sung vitamin và khoáng.', 'Hộp', 0.200, '12x8x6cm', 730, 1),
+                                                                                                              ('SP084', 'LSP005', 'Tã dán Pampers NB 40 miếng', 'Tã dán siêu mềm, thấm hút tốt. ... Giúp bé ngủ ngon, da khô thoáng suốt cả đêm.', 'Gói', 0.800, '25x15x8cm', 1095, 1),
+                                                                                                              ('SP085', 'LSP005', 'Nước rửa bình sữa D-nee 620ml', 'Dung dịch rửa bình sữa an toàn. ... Không chứa hóa chất độc hại, dễ trôi sạch, không mùi.', 'Chai', 0.620, '8x8x20cm', 730, 1),
+                                                                                                              ('SP086', 'LSP005', 'Khăn ướt Bobby không mùi 100 tờ', 'Khăn ướt mềm mại, không chứa cồn. ... Phù hợp vệ sinh cho bé, dùng được cho da nhạy cảm.', 'Gói', 0.300, '15x10x5cm', 730, 1),
+                                                                                                              ('SP087', 'LSP005', 'Sữa chua uống Probi 65ml (lốc 4 chai)', 'Sữa chua uống men sống hỗ trợ tiêu hóa. ... Tăng cường hệ miễn dịch, ngon mát dễ uống.', 'Lốc', 0.260, '15x10x8cm', 180, 1),
+                                                                                                              ('SP088', 'LSP005', 'Dụng cụ hút mũi cho bé', 'Dụng cụ hút mũi bằng silicon mềm. ... Giúp làm sạch mũi nhẹ nhàng, không gây tổn thương.', 'Cái', 0.050, '8x3x2cm', 1095, 1),
+                                                                                                              ('SP089', 'LSP005', 'Sữa công thức Friso Gold 900g', 'Sữa công thức dành cho trẻ từ 1-2 tuổi. ... Bổ sung chất xơ GOS, hỗ trợ đường ruột và miễn dịch.', 'Hộp', 0.900, '20x15x10cm', 730, 1),
+                                                                                                              ('SP090', 'LSP005', 'Bánh ăn dặm Pigeon vị bí đỏ 50g', 'Bánh ăn dặm tan nhanh trong miệng. ... Giúp bé làm quen với đồ ăn, dễ cầm nắm.', 'Hộp', 0.050, '10x8x3cm', 730, 1),
+                                                                                                              ('SP091', 'LSP005', 'Sữa rửa mặt cho mẹ bầu Organic 100ml', 'Sữa rửa mặt thiên nhiên cho da nhạy cảm. ... Không chứa paraben, dịu nhẹ và an toàn.', 'Chai', 0.100, '6x6x15cm', 730, 1),
+                                                                                                              ('SP092', 'LSP005', 'Dầu gội em bé Johnson 200ml', 'Dầu gội dịu nhẹ, không cay mắt. ... Làm sạch tóc và da đầu cho bé mà không gây kích ứng.', 'Chai', 0.200, '7x7x18cm', 730, 1),
+                                                                                                              ('SP093', 'LSP005', 'Thermometer đo trán điện tử', 'Nhiệt kế hồng ngoại đo trán nhanh chóng. ... Cho kết quả chính xác trong vài giây, an toàn.', 'Cái', 0.100, '10x3x2cm', 1095, 1),
+                                                                                                              ('SP094', 'LSP005', 'Sữa nước Grow Plus đỏ 180ml', 'Sữa dành cho bé nhẹ cân, suy dinh dưỡng. ... Giúp tăng cân đều, phát triển khỏe mạnh.', 'Hộp', 0.180, '5x5x10cm', 180, 1),
+                                                                                                              ('SP095', 'LSP005', 'Bình sữa Avent nhựa PP 260ml', 'Bình sữa cổ rộng, van chống sặc. ... Giúp bé bú dễ dàng, không bị đầy hơi.', 'Cái', 0.150, '8x8x20cm', 1095, 1),
+                                                                                                              ('SP096', 'LSP005', 'Nước muối sinh lý BabyCare 500ml', 'Nước muối sinh lý dùng nhỏ mũi cho bé. ... Làm sạch nhẹ nhàng, hỗ trợ phòng ngừa viêm mũi.', 'Chai', 0.500, '7x7x20cm', 730, 1),
+                                                                                                              ('SP097', 'LSP005', 'Trái cây nghiền Hipp táo chuối 125g', 'Trái cây nghiền sẵn, vị ngọt tự nhiên. ... Cung cấp vitamin C, giúp bé ăn ngon miệng.', 'Hộp', 0.125, '8x6x4cm', 730, 1),
+                                                                                                              ('SP098', 'LSP005', 'Sữa tươi tiệt trùng Dutch Lady 110ml', 'Sữa tươi vị socola hoặc dâu. ... Bổ sung dưỡng chất, ngon miệng dễ uống.', 'Hộp', 0.110, '4x4x8cm', 180, 1),
+                                                                                                              ('SP099', 'LSP005', 'Bàn chải răng silicon cho bé 6 tháng+', 'Bàn chải mềm, an toàn cho bé. ... Giúp bé tập đánh răng ngay từ sớm.', 'Cái', 0.050, '12x2x1cm', 1095, 1),
+                                                                                                              ('SP100', 'LSP005', 'Balo y tá đựng đồ sơ sinh', 'Balo chuyên dụng mang theo khi ra ngoài. ... Có nhiều ngăn, dễ sắp xếp đồ dùng cho bé.', 'Cái', 0.800, '30x20x15cm', 1095, 1),
+                                                                                                              ('SP101', 'LSP006', 'Nước mắm Nam Ngư 500ml', 'Nước mắm truyền thống đậm đà. ... Được ủ từ cá cơm, hương vị tự nhiên, dùng nêm nếm và chấm.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP102', 'LSP006', 'Nước tương Maggi đậm đặc 700ml', 'Nước tương đậm đà, hương vị quen thuộc. ... Thích hợp ăn kèm món luộc, chiên, xào.', 'Chai', 0.700, '8x8x25cm', 1095, 1),
+                                                                                                              ('SP103', 'LSP006', 'Dầu ăn Tường An 1L', 'Dầu thực vật nguyên chất. ... Giàu vitamin A, E tốt cho tim mạch và sức khỏe.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
+                                                                                                              ('SP104', 'LSP006', 'Muối i-ốt 500g', 'Muối trắng tinh khiết có bổ sung i-ốt. ... Giúp phòng ngừa bướu cổ và tăng cường sức khỏe.', 'Gói', 0.500, '15x10x2cm', 1095, 1),
+                                                                                                              ('SP105', 'LSP006', 'Hạt nêm Knorr thịt thăn 400g', 'Hạt nêm vị thịt thăn xương ống. ... Giúp món ăn đậm vị, thơm ngon hơn.', 'Hộp', 0.400, '12x8x6cm', 1095, 1),
+                                                                                                              ('SP106', 'LSP006', 'Tiêu đen xay Dh Foods 50g', 'Tiêu đen xay mịn, thơm nồng. ... Tăng hương vị cho các món kho, nướng, súp.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
+                                                                                                              ('SP107', 'LSP006', 'Tỏi băm sẵn 200g', 'Tỏi tươi xay nhuyễn, tiện lợi khi nấu ăn. ... Giữ nguyên hương vị và mùi thơm tự nhiên.', 'Hộp', 0.200, '10x8x4cm', 180, 1),
+                                                                                                              ('SP108', 'LSP006', 'Hành phi giòn 100g', 'Hành phi vàng thơm, giòn rụm. ... Dùng rắc lên cơm, cháo, bún, phở tăng hương vị.', 'Hộp', 0.100, '8x6x3cm', 365, 1),
+                                                                                                              ('SP109', 'LSP006', 'Dầu hào Maggi 350g', 'Dầu hào vị ngọt thanh. ... Dùng để xào rau, thịt giúp món ăn thêm đậm đà, bóng đẹp.', 'Chai', 0.350, '7x7x18cm', 1095, 1),
+                                                                                                              ('SP110', 'LSP006', 'Ớt bột Hàn Quốc 100g', 'Ớt bột vị cay nhẹ, màu đẹp. ... Dùng làm kim chi, lẩu, các món cay kiểu Hàn.', 'Hộp', 0.100, '8x6x3cm', 1095, 1),
+                                                                                                              ('SP111', 'LSP006', 'Bột nghệ nguyên chất 100g', 'Bột nghệ vàng nguyên chất. ... Dùng ướp thịt, làm bánh, tốt cho tiêu hóa.', 'Hộp', 0.100, '8x6x3cm', 1095, 1),
+                                                                                                              ('SP112', 'LSP006', 'Giấm gạo Lâm Thủy 500ml', 'Giấm gạo lên men tự nhiên. ... Dùng trộn gỏi, pha nước chấm, khử mùi tanh.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP113', 'LSP006', 'Dầu mè đen Lee Kum Kee 200ml', 'Dầu mè nguyên chất thơm ngon. ... Tăng hương vị cho món Nhật, Hàn, salad.', 'Chai', 0.200, '6x6x15cm', 1095, 1),
+                                                                                                              ('SP114', 'LSP006', 'Bột canh Hải Châu 190g', 'Bột canh pha sẵn muối, bột ngọt. ... Dùng để nêm nếm tiện lợi, nhanh chóng.', 'Hộp', 0.190, '10x8x4cm', 1095, 1),
+                                                                                                              ('SP115', 'LSP006', 'Nước cốt dừa Aroy-D 400ml', 'Nước cốt dừa đóng hộp thơm béo. ... Dùng nấu chè, cà ri, bánh, món Thái.', 'Hộp', 0.400, '12x8x4cm', 1095, 1),
+                                                                                                              ('SP116', 'LSP006', 'Bột ngọt Ajinomoto 400g', 'Bột ngọt giúp làm nổi bật vị ngọt tự nhiên. ... Phù hợp cho mọi món ăn.', 'Hộp', 0.400, '12x8x6cm', 1095, 1),
+                                                                                                              ('SP117', 'LSP006', 'Bột sả khô 50g', 'Sả khô xay nhuyễn. ... Dùng tẩm ướp thịt nướng, món chay, món kho.', 'Hộp', 0.050, '8x6x3cm', 1095, 1),
+                                                                                                              ('SP118', 'LSP006', 'Tương ớt Chin-Su 250g', 'Tương ớt cay vừa, màu sắc hấp dẫn. ... Dùng chấm đồ chiên, rán, ăn với phở, bún.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
+                                                                                                              ('SP119', 'LSP006', 'Nước màu dừa Bến Tre 250ml', 'Nước hàng kho cá, kho thịt. ... Giúp món ăn lên màu đẹp, vị ngọt thanh.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
+                                                                                                              ('SP120', 'LSP006', 'Nước mắm Phú Quốc truyền thống 520ml', 'Nước mắm nguyên chất cá cơm. ... Đậm đà, thơm ngon đúng chất nước mắm xưa.', 'Chai', 0.520, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP121', 'LSP007', 'Nước rửa chén Sunlight chanh 750ml', 'Nước rửa chén hương chanh. ... Tẩy sạch dầu mỡ, dịu nhẹ với da tay.', 'Chai', 0.750, '8x8x25cm', 1095, 1),
+                                                                                                              ('SP122', 'LSP007', 'Nước lau sàn Gift lavender 1L', 'Nước lau sàn hương oải hương. ... Diệt khuẩn, khử mùi hiệu quả, sàn sạch bóng.', 'Chai', 1.000, '8x8x25cm', 1095, 1),
+                                                                                                              ('SP123', 'LSP007', 'Nước giặt Omo Matic 2.7kg', 'Nước giặt cho máy giặt cửa ngang. ... Đánh bay vết bẩn, lưu hương thơm lâu.', 'Chai', 2.700, '15x10x25cm', 1095, 1),
+                                                                                                              ('SP124', 'LSP007', 'Nước xả vải Downy hương nắng mai 800ml', 'Nước xả làm mềm vải. ... Giữ mùi thơm mát, giúp quần áo luôn mềm mại.', 'Chai', 0.800, '8x8x25cm', 1095, 1),
+                                                                                                              ('SP125', 'LSP007', 'Nước tẩy toilet Duck 900ml', 'Tẩy rửa toilet diệt khuẩn. ... Làm sạch và khử mùi bồn cầu hiệu quả.', 'Chai', 0.900, '8x8x25cm', 1095, 1),
+                                                                                                              ('SP126', 'LSP007', 'Nước rửa tay Lifebuoy 500ml', 'Rửa tay diệt khuẩn 99.9%. ... Hương thơm dễ chịu, bảo vệ tay sạch khuẩn.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP127', 'LSP007', 'Nước lau kính Gift 500ml', 'Nước lau kính chống bám bụi. ... Cho bề mặt kính sáng bóng, không vệt.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP128', 'LSP007', 'Nước tẩy đa năng CIF 500ml', 'Tẩy rửa vết bẩn cứng đầu. ... Dùng cho nhà bếp, nhà tắm, vật dụng inox.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP129', 'LSP007', 'Bột giặt Ariel hương Downy 3.8kg', 'Bột giặt sạch sâu, thơm lâu. ... Loại bỏ vết bẩn, giữ màu vải bền đẹp.', 'Hộp', 3.800, '20x15x25cm', 1095, 1),
+                                                                                                              ('SP130', 'LSP007', 'Khăn giấy Bless You hộp 200 tờ', 'Giấy mềm mịn, thấm hút tốt. ... Dùng lau mặt, dùng trong gia đình, văn phòng.', 'Hộp', 0.200, '15x10x8cm', 1095, 1),
+                                                                                                              ('SP131', 'LSP007', 'Giấy vệ sinh Pulppy 10 cuộn', 'Giấy vệ sinh trắng mềm. ... An toàn cho da, phù hợp gia đình và văn phòng.', 'Gói', 0.800, '25x15x8cm', 1095, 1),
+                                                                                                              ('SP132', 'LSP007', 'Nước rửa bình sữa D-nee 620ml', 'Rửa sạch bình sữa, đồ dùng trẻ em. ... Dịu nhẹ, an toàn cho bé sơ sinh.', 'Chai', 0.620, '8x8x20cm', 730, 1),
+                                                                                                              ('SP133', 'LSP007', 'Bông gòn y tế 100g', 'Bông trắng sạch, không tạp chất. ... Dùng lau chùi vết thương, vệ sinh cá nhân.', 'Gói', 0.100, '15x10x3cm', 1095, 1),
+                                                                                                              ('SP134', 'LSP007', 'Bàn chải vệ sinh nhà tắm đa năng', 'Thiết kế chắc chắn, dễ cầm. ... Làm sạch ngóc ngách nhà tắm, bồn rửa.', 'Cái', 0.200, '25x5x2cm', 1095, 1),
+                                                                                                              ('SP135', 'LSP007', 'Khăn ướt Mamamy 100 tờ', 'Khăn mềm, không cồn. ... Dùng lau mặt, tay chân cho bé và người lớn.', 'Gói', 0.300, '15x10x5cm', 730, 1),
+                                                                                                              ('SP136', 'LSP007', 'Bình xịt côn trùng Raid 600ml', 'Diệt muỗi, gián hiệu quả. ... Hương nhẹ, dùng an toàn trong nhà.', 'Chai', 0.600, '8x8x20cm', 1095, 1),
+                                                                                                              ('SP137', 'LSP007', 'Nước súc miệng Listerine 250ml', 'Làm sạch miệng, khử mùi. ... Giúp hơi thở thơm mát, bảo vệ răng miệng.', 'Chai', 0.250, '6x6x15cm', 1095, 1),
+                                                                                                              ('SP138', 'LSP007', 'Bột thông cống Hando 100g', 'Làm tan chất thải hữu cơ. ... Thông tắc ống thoát nước, không gây hại đường ống.', 'Gói', 0.100, '10x8x3cm', 1095, 1),
+                                                                                                              ('SP139', 'LSP007', 'Nước diệt khuẩn Dettol 500ml', 'Sát khuẩn mạnh mẽ, đa năng. ... Pha loãng để lau sàn, giặt đồ, vệ sinh da.', 'Chai', 0.500, '7x7x20cm', 1095, 1),
+                                                                                                              ('SP140', 'LSP007', 'Găng tay cao su Latex', 'Găng tay dẻo, co giãn tốt. ... Dùng khi rửa chén, lau dọn, an toàn cho da tay.', 'Đôi', 0.050, '20x10x2cm', 1095, 1);
 
 INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
-('SP001', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP002', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP003', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP004', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP005', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP006', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP007', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP008', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP009', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP010', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP011', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP012', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP013', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP014', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP015', 30000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP016', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP017', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP018', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP019', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP020', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP021', 120000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP022', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP023', 150000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP024', 60000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP025', 65000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP026', 110000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP027', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP028', 130000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP029', 40000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP030', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP031', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP032', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP033', 97000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP034', 72000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP035', 105000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP036', 168000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP037', 125000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP038', 55000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP039', 39000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP040', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP041', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP042', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP043', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP044', 19000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP045', 25000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP046', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP047', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP048', 21000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP049', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP050', 37000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP051', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP052', 22000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP053', 21000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP054', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP055', 18500, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP056', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP057', 31000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP058', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP059', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP060', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP061', 6000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP062', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP063', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP064', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP065', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP066', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP067', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP068', 19000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP069', 17500, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP070', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP071', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP072', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP073', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP074', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP075', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP076', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP077', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP078', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP079', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP080', 9500, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP081', 245000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP082', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP083', 58000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP084', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP085', 53000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP086', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP087', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP088', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP089', 510000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP090', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP091', 79000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP092', 57000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP093', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP094', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP095', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP096', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP097', 40000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP098', 5000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP099', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP100', 155000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP101', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP102', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP103', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP104', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP105', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP106', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP107', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP108', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP109', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP110', 38000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP111', 25000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP112', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP113', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP114', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP115', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP116', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP117', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP118', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP119', 20000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP120', 68000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP121', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP122', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP123', 132000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP124', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP125', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP126', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP127', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP128', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP129', 125000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP130', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP131', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP132', 52000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP133', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP134', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP135', 37000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP136', 69000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP137', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP138', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP139', 87000, '2025-01-01', 'Giá niêm yết', 'NV001'),
-('SP140', 22000, '2025-01-01', 'Giá niêm yết', 'NV001');
+                                                                              ('SP001', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP002', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP003', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP004', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP005', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP006', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP007', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP008', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP009', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP010', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP011', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP012', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP013', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP014', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP015', 30000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP016', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP017', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP018', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP019', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP020', 13000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP021', 120000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP022', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP023', 150000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP024', 60000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP025', 65000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP026', 110000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP027', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP028', 130000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP029', 40000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP030', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP031', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP032', 85000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP033', 97000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP034', 72000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP035', 105000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP036', 168000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP037', 125000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP038', 55000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP039', 39000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP040', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP041', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP042', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP043', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP044', 19000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP045', 25000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP046', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP047', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP048', 21000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP049', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP050', 37000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP051', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP052', 22000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP053', 21000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP054', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP055', 18500, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP056', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP057', 31000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP058', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP059', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP060', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP061', 6000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP062', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP063', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP064', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP065', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP066', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP067', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP068', 19000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP069', 17500, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP070', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP071', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP072', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP073', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP074', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP075', 9000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP076', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP077', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP078', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP079', 10000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP080', 9500, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP081', 245000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP082', 7000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP083', 58000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP084', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP085', 53000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP086', 33000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP087', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP088', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP089', 510000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP090', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP091', 79000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP092', 57000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP093', 195000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP094', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP095', 230000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP096', 18000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP097', 40000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP098', 5000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP099', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP100', 155000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP101', 24000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP102', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP103', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP104', 8000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP105', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP106', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP107', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP108', 23000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP109', 27000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP110', 38000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP111', 25000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP112', 16000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP113', 46000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP114', 11000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP115', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP116', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP117', 15000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP118', 12000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP119', 20000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP120', 68000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP121', 28000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP122', 34000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP123', 132000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP124', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP125', 36000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP126', 42000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP127', 26000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP128', 45000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP129', 125000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP130', 29000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP131', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP132', 52000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP133', 17000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP134', 32000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP135', 37000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP136', 69000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP137', 49000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP138', 14000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP139', 87000, '2025-01-01', 'Giá niêm yết', 'NV001'),
+                                                                              ('SP140', 22000, '2025-01-01', 'Giá niêm yết', 'NV001');
 
-INSERT INTO khuyenmai (makm, tenchuongtrinh, mota, loaikm, giatrikm, dieukienapdung, ngaybatdau, ngayketthuc, soluongtoida, dasudung, maquanly, trangthai) VALUES
-('KMSP001', 'Giảm giá tháng 7', 'Giảm giá cho tất cả mặt hàng', 'PhầnTrăm', 10.0, 'Áp dụng cho tất cả sản phẩm', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1000, 50, 'NV002', 1),
-('KMSP002', 'Tặng điểm tích lũy', 'Tặng điểm cho khách hàng VIP', 'Điểm', 50, 'Khách hàng VIP trở lên', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 500, 25, 'NV002', 1),
-('KMSP003', 'Mua 1 tặng 1', 'Áp dụng cho sản phẩm mỹ phẩm', 'MuaXTangY', 0, 'Mua 1 sản phẩm tặng 1 sản phẩm cùng loại', '2025-07-10 00:00:00', '2025-07-20 23:59:59', 200, 10, 'NV002', 1);
+INSERT INTO khuyenmai (makm, tenchuongtrinh, mota, loaikm, giatrikm, coupon_code, dieukienapdung, ngaybatdau, ngayketthuc, soluongtoida, dasudung, maquanly, trangthai) VALUES
+                                                                                                                                                                            ('KMSP001', 'Giảm giá tháng 7', 'Giảm giá cho tất cả mặt hàng', 'PhanTram', 10.0, 'WELCOME-T7', 'Áp dụng cho tất cả sản phẩm', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1000, 50, 'NV002', 1),
+                                                                                                                                                                            ('KMSP002', 'Tặng điểm tích lũy', 'Tặng điểm cho khách hàng VIP', 'Diem', 50, 'WELCOME-TL', 'Khách hàng VIP trở lên', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 500, 25, 'NV002', 1),
+                                                                                                                                                                            ('KMSP003', 'Mua 1 tặng 1', 'Áp dụng cho sản phẩm mỹ phẩm', 'MuaXTangY', 0, 'WELCOME-MP', 'Mua 1 sản phẩm tặng 1 sản phẩm cùng loại', '2025-07-10 00:00:00', '2025-07-20 23:59:59', 200, 10, 'NV002', 1);
 
 INSERT INTO phuongthucthanhtoan (mapttt, tenpttt, mota, phigiaodich, trangthai) VALUES
-('PTTT001', 'Tiền Mặt', 'Thanh toán bằng tiền mặt', 0, 1),
-('PTTT002', 'Chuyển Khoản', 'Thanh toán qua ngân hàng', 0.5, 1),
-('PTTT003', 'MoMo', 'Thanh toán bằng ví điện tử MoMo', 1.0, 1),
-('PTTT004', 'ZaloPay', 'Thanh toán qua ZaloPay', 1.0, 1),
-('PTTT005', 'Thẻ Tín Dụng', 'Thanh toán bằng thẻ tín dụng', 2.0, 1);
+                                                                                    ('PTTT001', 'Tiền Mặt', 'Thanh toán bằng tiền mặt', 0, 1),
+                                                                                    ('PTTT002', 'Chuyển Khoản', 'Thanh toán qua ngân hàng', 0.5, 1),
+                                                                                    ('PTTT003', 'MoMo', 'Thanh toán bằng ví điện tử MoMo', 1.0, 1),
+                                                                                    ('PTTT004', 'ZaloPay', 'Thanh toán qua ZaloPay', 1.0, 1),
+                                                                                    ('PTTT005', 'Thẻ Tín Dụng', 'Thanh toán bằng thẻ tín dụng', 2.0, 1),
+                                                                                    ('PTTT006', 'VNPay', 'Thanh toán bằng VNPay', 2.0, 1);
 
 INSERT INTO kho (tenkho, diachi, dientich, succhua, mach, trangthai) VALUES
-('Kho EasyMart1', '123 Nguyễn Xí, Bình Thạnh', 500.00, 1000000.00, 'CH001', 1),
-('Kho EasyMart2', '456 Nguyễn Văn Trối, Phú Nhuận', 600.00, 1200000.00, 'CH002', 1);
+                                                                         ('Kho EasyMart1', '123 Nguyễn Xí, Bình Thạnh', 500.00, 1000000.00, 'CH001', 1),
+                                                                         ('Kho EasyMart2', '456 Nguyễn Văn Trối, Phú Nhuận', 600.00, 1200000.00, 'CH002', 1);
 
 INSERT INTO calamviec (tenca, giobatdau, gioketthuc, trangthai) VALUES
-('Sáng', '08:00:00', '12:00:00', 1),
-('Chiều', '13:00:00', '17:00:00', 1),
-('Tối', '18:00:00', '22:00:00', 1),
-('Cả ngày', '08:00:00', '22:00:00', 1),
-('Ca đêm', '22:00:00', '07:00:00', 1);
+                                                                    ('Sáng', '08:00:00', '12:00:00', 1),
+                                                                    ('Chiều', '13:00:00', '17:00:00', 1),
+                                                                    ('Tối', '18:00:00', '22:00:00', 1),
+                                                                    ('Cả ngày', '08:00:00', '22:00:00', 1),
+                                                                    ('Ca đêm', '22:00:00', '07:00:00', 1);
 
 INSERT INTO tonkhochitiet (masp, makho, soluongton, soluongtoithieu, soluongtoida) VALUES
-('SP001', 1, 100, 20, 200),
-('SP002', 1, 200, 30, 300),
-('SP003', 1, 150, 25, 250),
-('SP004', 1, 80, 15, 150),
-('SP005', 1, 90, 20, 180),
-('SP006', 1, 120, 25, 250),
-('SP007', 1, 110, 20, 220),
-('SP008', 1, 95, 15, 190),
-('SP009', 1, 85, 10, 170),
-('SP010', 1, 75, 15, 150),
-('SP011', 1, 130, 20, 260),
-('SP012', 1, 140, 25, 280),
-('SP013', 1, 80, 10, 160),
-('SP014', 1, 60, 10, 120),
-('SP015', 1, 70, 15, 140),
-('SP016', 1, 90, 15, 180),
-('SP017', 1, 110, 20, 220),
-('SP018', 1, 75, 10, 150),
-('SP019', 1, 95, 15, 190),
-('SP020', 1, 85, 20, 170),
-('SP021', 1, 50, 10, 100),
-('SP022', 1, 40, 8, 80),
-('SP023', 1, 65, 12, 130),
-('SP024', 1, 120, 20, 240),
-('SP025', 1, 110, 18, 220),
-('SP026', 1, 80, 15, 160),
-('SP027', 1, 95, 15, 190),
-('SP028', 1, 70, 12, 140),
-('SP029', 1, 150, 25, 300),
-('SP030', 1, 85, 15, 170),
-('SP031', 1, 45, 8, 90),
-('SP032', 1, 75, 12, 150),
-('SP033', 1, 60, 10, 120),
-('SP034', 1, 90, 15, 180),
-('SP035', 1, 100, 18, 200),
-('SP036', 1, 55, 10, 110),
-('SP037', 1, 70, 12, 140),
-('SP038', 1, 130, 20, 260),
-('SP039', 1, 85, 15, 170),
-('SP040', 1, 95, 18, 190),
-('SP041', 1, 110, 20, 220),
-('SP042', 1, 95, 15, 190),
-('SP043', 1, 80, 12, 160),
-('SP044', 1, 70, 10, 140),
-('SP045', 1, 90, 15, 180),
-('SP046', 1, 120, 20, 240),
-('SP047', 1, 85, 12, 170),
-('SP048', 1, 100, 18, 200),
-('SP049', 1, 75, 12, 150),
-('SP050', 1, 110, 18, 220),
-('SP051', 1, 90, 15, 180),
-('SP052', 1, 85, 12, 170),
-('SP053', 1, 95, 15, 190),
-('SP054', 1, 80, 12, 160),
-('SP055', 1, 70, 10, 140),
-('SP056', 1, 60, 8, 120),
-('SP057', 1, 75, 12, 150),
-('SP058', 1, 85, 15, 170),
-('SP059', 1, 90, 15, 180),
-('SP060', 1, 100, 18, 200),
-('SP061', 1, 200, 30, 400),
-('SP062', 1, 180, 25, 360),
-('SP063', 1, 150, 20, 300),
-('SP064', 1, 120, 18, 240),
-('SP065', 1, 160, 25, 320),
-('SP066', 1, 140, 20, 280),
-('SP067', 1, 130, 18, 260),
-('SP068', 1, 110, 15, 220),
-('SP069', 1, 95, 12, 190),
-('SP070', 1, 85, 10, 170),
-('SP071', 1, 75, 8, 150),
-('SP072', 1, 90, 12, 180),
-('SP073', 1, 65, 10, 130),
-('SP074', 1, 80, 12, 160),
-('SP075', 1, 70, 10, 140),
-('SP076', 1, 85, 12, 170),
-('SP077', 1, 95, 15, 190),
-('SP078', 1, 110, 18, 220),
-('SP079', 1, 75, 10, 150),
-('SP080', 1, 85, 12, 170),
-('SP081', 1, 40, 8, 80),
-('SP082', 1, 180, 25, 360),
-('SP083', 1, 60, 10, 120),
-('SP084', 1, 35, 5, 70),
-('SP085', 1, 120, 18, 240),
-('SP086', 1, 150, 20, 300),
-('SP087', 1, 200, 30, 400),
-('SP088', 1, 45, 8, 90),
-('SP089', 1, 30, 5, 60),
-('SP090', 1, 80, 12, 160),
-('SP091', 1, 55, 8, 110),
-('SP092', 1, 95, 15, 190),
-('SP093', 1, 25, 5, 50),
-('SP094', 1, 140, 20, 280),
-('SP095', 1, 40, 8, 80),
-('SP096', 1, 110, 18, 220),
-('SP097', 1, 70, 12, 140),
-('SP098', 1, 160, 25, 320),
-('SP099', 1, 50, 8, 100),
-('SP100', 1, 35, 5, 70),
-('SP101', 1, 180, 25, 360),
-('SP102', 1, 150, 20, 300),
-('SP103', 1, 200, 30, 400),
-('SP104', 1, 250, 35, 500),
-('SP105', 1, 120, 18, 240),
-('SP106', 1, 90, 15, 180),
-('SP107', 1, 110, 18, 220),
-('SP108', 1, 85, 12, 170),
-('SP109', 1, 95, 15, 190),
-('SP110', 1, 70, 10, 140),
-('SP111', 1, 80, 12, 160),
-('SP112', 1, 100, 15, 200),
-('SP113', 1, 65, 10, 130),
-('SP114', 1, 130, 20, 260),
-('SP115', 1, 75, 12, 150),
-('SP116', 1, 160, 25, 320),
-('SP117', 1, 90, 15, 180),
-('SP118', 1, 140, 20, 280),
-('SP119', 1, 85, 12, 170),
-('SP120', 1, 45, 8, 90),
-('SP121', 1, 200, 30, 400),
-('SP122', 1, 150, 20, 300),
-('SP123', 1, 80, 12, 160),
-('SP124', 1, 120, 18, 240),
-('SP125', 1, 95, 15, 190),
-('SP126', 1, 110, 18, 220),
-('SP127', 1, 85, 12, 170),
-('SP128', 1, 100, 15, 200),
-('SP129', 1, 70, 10, 140),
-('SP130', 1, 180, 25, 360),
-('SP131', 1, 130, 20, 260),
-('SP132', 1, 90, 15, 180),
-('SP133', 1, 150, 20, 300),
-('SP134', 1, 75, 10, 150),
-('SP135', 1, 110, 18, 220),
-('SP136', 1, 60, 8, 120),
-('SP137', 1, 95, 15, 190),
-('SP138', 1, 120, 18, 240),
-('SP139', 1, 85, 12, 170),
-('SP140', 1, 100, 15, 200),
-('SP001', 2, 90, 20, 200),
-('SP002', 2, 150, 30, 300),
-('SP003', 2, 130, 25, 250),
-('SP004', 2, 70, 15, 150),
-('SP005', 2, 100, 20, 180);
+                                                                                       ('SP001', 1, 100, 20, 200),
+                                                                                       ('SP002', 1, 200, 30, 300),
+                                                                                       ('SP003', 1, 150, 25, 250),
+                                                                                       ('SP004', 1, 80, 15, 150),
+                                                                                       ('SP005', 1, 90, 20, 180),
+                                                                                       ('SP006', 1, 120, 25, 250),
+                                                                                       ('SP007', 1, 110, 20, 220),
+                                                                                       ('SP008', 1, 95, 15, 190),
+                                                                                       ('SP009', 1, 85, 10, 170),
+                                                                                       ('SP010', 1, 75, 15, 150),
+                                                                                       ('SP011', 1, 130, 20, 260),
+                                                                                       ('SP012', 1, 140, 25, 280),
+                                                                                       ('SP013', 1, 80, 10, 160),
+                                                                                       ('SP014', 1, 60, 10, 120),
+                                                                                       ('SP015', 1, 70, 15, 140),
+                                                                                       ('SP016', 1, 90, 15, 180),
+                                                                                       ('SP017', 1, 110, 20, 220),
+                                                                                       ('SP018', 1, 75, 10, 150),
+                                                                                       ('SP019', 1, 95, 15, 190),
+                                                                                       ('SP020', 1, 85, 20, 170),
+                                                                                       ('SP021', 1, 50, 10, 100),
+                                                                                       ('SP022', 1, 40, 8, 80),
+                                                                                       ('SP023', 1, 65, 12, 130),
+                                                                                       ('SP024', 1, 120, 20, 240),
+                                                                                       ('SP025', 1, 110, 18, 220),
+                                                                                       ('SP026', 1, 80, 15, 160),
+                                                                                       ('SP027', 1, 95, 15, 190),
+                                                                                       ('SP028', 1, 70, 12, 140),
+                                                                                       ('SP029', 1, 150, 25, 300),
+                                                                                       ('SP030', 1, 85, 15, 170),
+                                                                                       ('SP031', 1, 45, 8, 90),
+                                                                                       ('SP032', 1, 75, 12, 150),
+                                                                                       ('SP033', 1, 60, 10, 120),
+                                                                                       ('SP034', 1, 90, 15, 180),
+                                                                                       ('SP035', 1, 100, 18, 200),
+                                                                                       ('SP036', 1, 55, 10, 110),
+                                                                                       ('SP037', 1, 70, 12, 140),
+                                                                                       ('SP038', 1, 130, 20, 260),
+                                                                                       ('SP039', 1, 85, 15, 170),
+                                                                                       ('SP040', 1, 95, 18, 190),
+                                                                                       ('SP041', 1, 110, 20, 220),
+                                                                                       ('SP042', 1, 95, 15, 190),
+                                                                                       ('SP043', 1, 80, 12, 160),
+                                                                                       ('SP044', 1, 70, 10, 140),
+                                                                                       ('SP045', 1, 90, 15, 180),
+                                                                                       ('SP046', 1, 120, 20, 240),
+                                                                                       ('SP047', 1, 85, 12, 170),
+                                                                                       ('SP048', 1, 100, 18, 200),
+                                                                                       ('SP049', 1, 75, 12, 150),
+                                                                                       ('SP050', 1, 110, 18, 220),
+                                                                                       ('SP051', 1, 90, 15, 180),
+                                                                                       ('SP052', 1, 85, 12, 170),
+                                                                                       ('SP053', 1, 95, 15, 190),
+                                                                                       ('SP054', 1, 80, 12, 160),
+                                                                                       ('SP055', 1, 70, 10, 140),
+                                                                                       ('SP056', 1, 60, 8, 120),
+                                                                                       ('SP057', 1, 75, 12, 150),
+                                                                                       ('SP058', 1, 85, 15, 170),
+                                                                                       ('SP059', 1, 90, 15, 180),
+                                                                                       ('SP060', 1, 100, 18, 200),
+                                                                                       ('SP061', 1, 200, 30, 400),
+                                                                                       ('SP062', 1, 180, 25, 360),
+                                                                                       ('SP063', 1, 150, 20, 300),
+                                                                                       ('SP064', 1, 120, 18, 240),
+                                                                                       ('SP065', 1, 160, 25, 320),
+                                                                                       ('SP066', 1, 140, 20, 280),
+                                                                                       ('SP067', 1, 130, 18, 260),
+                                                                                       ('SP068', 1, 110, 15, 220),
+                                                                                       ('SP069', 1, 95, 12, 190),
+                                                                                       ('SP070', 1, 85, 10, 170),
+                                                                                       ('SP071', 1, 75, 8, 150),
+                                                                                       ('SP072', 1, 90, 12, 180),
+                                                                                       ('SP073', 1, 65, 10, 130),
+                                                                                       ('SP074', 1, 80, 12, 160),
+                                                                                       ('SP075', 1, 70, 10, 140),
+                                                                                       ('SP076', 1, 85, 12, 170),
+                                                                                       ('SP077', 1, 95, 15, 190),
+                                                                                       ('SP078', 1, 110, 18, 220),
+                                                                                       ('SP079', 1, 75, 10, 150),
+                                                                                       ('SP080', 1, 85, 12, 170),
+                                                                                       ('SP081', 1, 40, 8, 80),
+                                                                                       ('SP082', 1, 180, 25, 360),
+                                                                                       ('SP083', 1, 60, 10, 120),
+                                                                                       ('SP084', 1, 35, 5, 70),
+                                                                                       ('SP085', 1, 120, 18, 240),
+                                                                                       ('SP086', 1, 150, 20, 300),
+                                                                                       ('SP087', 1, 200, 30, 400),
+                                                                                       ('SP088', 1, 45, 8, 90),
+                                                                                       ('SP089', 1, 30, 5, 60),
+                                                                                       ('SP090', 1, 80, 12, 160),
+                                                                                       ('SP091', 1, 55, 8, 110),
+                                                                                       ('SP092', 1, 95, 15, 190),
+                                                                                       ('SP093', 1, 25, 5, 50),
+                                                                                       ('SP094', 1, 140, 20, 280),
+                                                                                       ('SP095', 1, 40, 8, 80),
+                                                                                       ('SP096', 1, 110, 18, 220),
+                                                                                       ('SP097', 1, 70, 12, 140),
+                                                                                       ('SP098', 1, 160, 25, 320),
+                                                                                       ('SP099', 1, 50, 8, 100),
+                                                                                       ('SP100', 1, 35, 5, 70),
+                                                                                       ('SP101', 1, 180, 25, 360),
+                                                                                       ('SP102', 1, 150, 20, 300),
+                                                                                       ('SP103', 1, 200, 30, 400),
+                                                                                       ('SP104', 1, 250, 35, 500),
+                                                                                       ('SP105', 1, 120, 18, 240),
+                                                                                       ('SP106', 1, 90, 15, 180),
+                                                                                       ('SP107', 1, 110, 18, 220),
+                                                                                       ('SP108', 1, 85, 12, 170),
+                                                                                       ('SP109', 1, 95, 15, 190),
+                                                                                       ('SP110', 1, 70, 10, 140),
+                                                                                       ('SP111', 1, 80, 12, 160),
+                                                                                       ('SP112', 1, 100, 15, 200),
+                                                                                       ('SP113', 1, 65, 10, 130),
+                                                                                       ('SP114', 1, 130, 20, 260),
+                                                                                       ('SP115', 1, 75, 12, 150),
+                                                                                       ('SP116', 1, 160, 25, 320),
+                                                                                       ('SP117', 1, 90, 15, 180),
+                                                                                       ('SP118', 1, 140, 20, 280),
+                                                                                       ('SP119', 1, 85, 12, 170),
+                                                                                       ('SP120', 1, 45, 8, 90),
+                                                                                       ('SP121', 1, 200, 30, 400),
+                                                                                       ('SP122', 1, 150, 20, 300),
+                                                                                       ('SP123', 1, 80, 12, 160),
+                                                                                       ('SP124', 1, 120, 18, 240),
+                                                                                       ('SP125', 1, 95, 15, 190),
+                                                                                       ('SP126', 1, 110, 18, 220),
+                                                                                       ('SP127', 1, 85, 12, 170),
+                                                                                       ('SP128', 1, 100, 15, 200),
+                                                                                       ('SP129', 1, 70, 10, 140),
+                                                                                       ('SP130', 1, 180, 25, 360),
+                                                                                       ('SP131', 1, 130, 20, 260),
+                                                                                       ('SP132', 1, 90, 15, 180),
+                                                                                       ('SP133', 1, 150, 20, 300),
+                                                                                       ('SP134', 1, 75, 10, 150),
+                                                                                       ('SP135', 1, 110, 18, 220),
+                                                                                       ('SP136', 1, 60, 8, 120),
+                                                                                       ('SP137', 1, 95, 15, 190),
+                                                                                       ('SP138', 1, 120, 18, 240),
+                                                                                       ('SP139', 1, 85, 12, 170),
+                                                                                       ('SP140', 1, 100, 15, 200),
+                                                                                       ('SP001', 2, 90, 20, 200),
+                                                                                       ('SP002', 2, 150, 30, 300),
+                                                                                       ('SP003', 2, 130, 25, 250),
+                                                                                       ('SP004', 2, 70, 15, 150),
+                                                                                       ('SP005', 2, 100, 20, 180);
 
 INSERT INTO phieunhaphang (mancc, makho, manvlap, ngaynhap, tongtiennhap, trangthai, ghichu) VALUES
-('NCC001', 1, 'NV002', '2025-07-01 09:00:00', 5500000, 1, 'Nhập hàng tháng 7'),
-('NCC002', 1, 'NV003', '2025-07-01 10:00:00', 2800000, 1, 'Nhập hàng tháng 7'),
-('NCC003', 2, 'NV004', '2025-07-01 11:00:00', 8000000, 1, 'Nhập hàng tháng 7');
+                                                                                                 ('NCC001', 1, 'NV002', '2025-07-01 09:00:00', 5500000, 1, 'Nhập hàng tháng 7'),
+                                                                                                 ('NCC002', 1, 'NV003', '2025-07-01 10:00:00', 2800000, 1, 'Nhập hàng tháng 7'),
+                                                                                                 ('NCC003', 2, 'NV004', '2025-07-01 11:00:00', 8000000, 1, 'Nhập hàng tháng 7');
 
 INSERT INTO chitietphieunhap (mapn, masp, soluongnhap, dongianhap, ngayhethan, solo, ngaysanxuat) VALUES
-(1, 'SP001', 100, 12000, '2025-12-31', 'LOT001', '2025-06-15'),
-(1, 'SP002', 200, 15000, '2025-11-30', 'LOT002', '2025-06-20'),
-(2, 'SP003', 50, 10000, '2025-10-31', 'LOT003', '2025-06-25'),
-(2, 'SP004', 80, 11000, '2025-09-30', 'LOT004', '2025-06-30'),
-(3, 'SP005', 50, 8000, '2025-08-31', 'LOT005', '2025-07-01');
+                                                                                                      (1, 'SP001', 100, 12000, '2025-12-31', 'LOT001', '2025-06-15'),
+                                                                                                      (1, 'SP002', 200, 15000, '2025-11-30', 'LOT002', '2025-06-20'),
+                                                                                                      (2, 'SP003', 50, 10000, '2025-10-31', 'LOT003', '2025-06-25'),
+                                                                                                      (2, 'SP004', 80, 11000, '2025-09-30', 'LOT004', '2025-06-30'),
+                                                                                                      (3, 'SP005', 50, 8000, '2025-08-31', 'LOT005', '2025-07-01');
 
 INSERT INTO phieuxuatkho (makho, manvlap, ngayxuat, tongsoluong, tonggiatri, lydoxuat, trangthai, ghichu) VALUES
-(1, 'NV002', '2025-07-05 08:00:00', 180, 3240000, 'Bán hàng', 1, 'Xuất kho bán hàng'),
-(1, 'NV003', '2025-07-06 09:00:00', 200, 3600000, 'Bán hàng', 1, 'Xuất kho bán hàng'),
-(2, 'NV005', '2025-07-07 10:00:00', 140, 2520000, 'Chuyển kho', 1, 'Chuyển kho giữa các cửa hàng');
+                                                                                                              (1, 'NV002', '2025-07-05 08:00:00', 180, 3240000, 'Bán hàng', 1, 'Xuất kho bán hàng'),
+                                                                                                              (1, 'NV003', '2025-07-06 09:00:00', 200, 3600000, 'Bán hàng', 1, 'Xuất kho bán hàng'),
+                                                                                                              (2, 'NV005', '2025-07-07 10:00:00', 140, 2520000, 'Chuyển kho', 1, 'Chuyển kho giữa các cửa hàng');
 
 INSERT INTO chitietphieuxuat (mapxk, masp, soluongxuat, dongiaxuat) VALUES
-(1, 'SP001', 40, 15000),
-(1, 'SP002', 60, 18000),
-(1, 'SP003', 30, 12000),
-(2, 'SP004', 40, 13000),
-(2, 'SP005', 30, 10000),
-(3, 'SP001', 50, 15000),
-(3, 'SP002', 40, 18000),
-(3, 'SP003', 50, 12000);
+                                                                        (1, 'SP001', 40, 15000),
+                                                                        (1, 'SP002', 60, 18000),
+                                                                        (1, 'SP003', 30, 12000),
+                                                                        (2, 'SP004', 40, 13000),
+                                                                        (2, 'SP005', 30, 10000),
+                                                                        (3, 'SP001', 50, 15000),
+                                                                        (3, 'SP002', 40, 18000),
+                                                                        (3, 'SP003', 50, 12000);
 
 
-INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, mapttt, trangthai, diemtichluy, ghichu, nguoitao) VALUES
-('KH001', 'NV002', 'KMSP001', '2025-07-11 14:00:00', 500000, 50000, 'PTTT001', 1, 50, 'Hóa đơn tháng 7', 'NV002'),
-('KH002', 'NV003', 'KMSP002', '2025-07-11 15:00:00', 750000, 0, 'PTTT002', 1, 75, 'Hóa đơn tháng 7', 'NV003'),
-('KH003', 'NV005', NULL, '2025-07-11 16:00:00', 900000, 0, 'PTTT001', 2, 90, 'Hóa đơn tháng 7', 'NV005'),
-('KH004', 'NV006', NULL, '2025-07-12 08:30:00', 200000, 0, 'PTTT002', 3, 20, 'Hóa đơn tháng 7', 'NV006'),
-('KH005', 'NV001', 'KMSP003', '2025-07-12 09:45:00', 300000, 0, 'PTTT001', 1, 30, 'Hóa đơn tháng 7', 'NV001');
+INSERT INTO hoadon (makh, manvlap, makm, ngaylap, tongtienhang, tiengiamgia, trangthai, diemtichluy, ghichu, nguoitao) VALUES
+                                                                                                                           ('KH001', 'NV002', 'KMSP001', '2025-07-11 14:00:00', 500000, 50000, 1, 50, 'Hóa đơn tháng 7', 'NV002'),
+                                                                                                                           ('KH002', 'NV003', 'KMSP002', '2025-07-11 15:00:00', 750000, 0, 1, 75, 'Hóa đơn tháng 7', 'NV003'),
+                                                                                                                           ('KH003', 'NV005', NULL, '2025-07-11 16:00:00', 900000, 0, 2, 90, 'Hóa đơn tháng 7', 'NV005'),
+                                                                                                                           ('KH004', 'NV006', NULL, '2025-07-12 08:30:00', 200000, 0, 3, 20, 'Hóa đơn tháng 7', 'NV006'),
+                                                                                                                           ('KH005', 'NV001', 'KMSP003', '2025-07-12 09:45:00', 300000, 0, 1, 30, 'Hóa đơn tháng 7', 'NV001');
 
 INSERT INTO chitiethoadon (mahd, masp, soluong, dongiaban, giamgia) VALUES
-(1, 'SP001', 2, 15000, 0),
-(1, 'SP002', 5, 18000, 0),
-(2, 'SP003', 1, 12000, 0),
-(3, 'SP004', 2, 13000, 0),
-(4, 'SP005', 2, 10000, 0),
-(5, 'SP001', 3, 15000, 0);
+                                                                        (1, 'SP001', 2, 15000, 0),
+                                                                        (1, 'SP002', 5, 18000, 0),
+                                                                        (2, 'SP003', 1, 12000, 0),
+                                                                        (3, 'SP004', 2, 13000, 0),
+                                                                        (4, 'SP005', 2, 10000, 0),
+                                                                        (5, 'SP001', 3, 15000, 0);
 
 INSERT INTO khuyenmaisanpham (makm, masp, ngaybatdau, ngayketthuc) VALUES
-('KMSP001', 'SP001', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
-('KMSP001', 'SP002', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
-('KMSP002', 'SP003', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
-('KMSP003', 'SP004', '2025-07-10 00:00:00', '2025-07-20 23:59:59'),
-('KMSP003', 'SP005', '2025-07-10 00:00:00', '2025-07-20 23:59:59');
+                                                                       ('KMSP001', 'SP001', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
+                                                                       ('KMSP001', 'SP002', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
+                                                                       ('KMSP002', 'SP003', '2025-07-01 00:00:00', '2025-07-31 23:59:59'),
+                                                                       ('KMSP003', 'SP004', '2025-07-10 00:00:00', '2025-07-20 23:59:59'),
+                                                                       ('KMSP003', 'SP005', '2025-07-10 00:00:00', '2025-07-20 23:59:59');
 
 INSERT INTO khuyenmaikhachhang (makm, makh, ngayapdung, dasudung) VALUES
-('KMSP001', 'KH001', '2025-07-01 00:00:00', FALSE),
-('KMSP001', 'KH002', '2025-07-01 00:00:00', FALSE),
-('KMSP002', 'KH003', '2025-07-01 00:00:00', FALSE),
-('KMSP003', 'KH004', '2025-07-10 00:00:00', FALSE),
-('KMSP003', 'KH005', '2025-07-10 00:00:00', FALSE);
+                                                                      ('KMSP001', 'KH001', '2025-07-01 00:00:00', FALSE),
+                                                                      ('KMSP001', 'KH002', '2025-07-01 00:00:00', FALSE),
+                                                                      ('KMSP002', 'KH003', '2025-07-01 00:00:00', FALSE),
+                                                                      ('KMSP003', 'KH004', '2025-07-10 00:00:00', FALSE),
+                                                                      ('KMSP003', 'KH005', '2025-07-10 00:00:00', FALSE);
 
 INSERT INTO thanhtoan (mahd, mapttt, sotienthanhtoan, ngaygiott, trangthaitt, magiaodichnganhang, ghichu) VALUES
-(1, 'PTTT001', 450000, '2025-07-11 14:05:00', 1, NULL, 'Thanh toán tiền mặt'),
-(2, 'PTTT002', 750000, '2025-07-11 15:10:00', 1, 'GD001', 'Chuyển khoản ngân hàng'),
-(3, 'PTTT001', 900000, '2025-07-11 16:20:00', 0, NULL, 'Đang xử lý'),
-(4, 'PTTT002', 200000, '2025-07-12 09:00:00', 3, 'GD002', 'Giao dịch bị hủy'),
-(5, 'PTTT001', 300000, '2025-07-12 10:00:00', 1, NULL, 'Thanh toán tiền mặt');
+                                                                                                              (1, 'PTTT001', 450000, '2025-07-11 14:05:00', 1, NULL, 'Thanh toán tiền mặt'),
+                                                                                                              (2, 'PTTT002', 750000, '2025-07-11 15:10:00', 1, 'GD001', 'Chuyển khoản ngân hàng'),
+                                                                                                              (3, 'PTTT001', 900000, '2025-07-11 16:20:00', 0, NULL, 'Đang xử lý'),
+                                                                                                              (4, 'PTTT002', 200000, '2025-07-12 09:00:00', 3, 'GD002', 'Giao dịch bị hủy'),
+                                                                                                              (5, 'PTTT001', 300000, '2025-07-12 10:00:00', 1, NULL, 'Thanh toán tiền mặt');
 
 -- Thêm dữ liệu giỏ hàng chi tiết (đã gộp)
 INSERT INTO giohang_chitiet (makh, manv, masp, soluong, dongiahientai, ngaythem, trangthai ) VALUES
-('KH001', 'NV002', 'SP001', 2, 15000, '2025-07-10 10:00:00', 0),
-('KH002', 'NV003', 'SP002', 5, 18000, '2025-07-10 11:00:00', 0),
-('KH003', 'NV005', 'SP003', 1, 12000, '2025-07-10 12:00:00', 1 ),
-('KH004', 'NV006', 'SP004', 2, 13000, '2025-07-10 13:00:00', 1),
-('KH005', 'NV001', 'SP005', 3, 10000, '2025-07-10 14:00:00', 1);
+                                                                                                 ('KH001', 'NV002', 'SP001', 2, 15000, '2025-07-10 10:00:00', 0),
+                                                                                                 ('KH002', 'NV003', 'SP002', 5, 18000, '2025-07-10 11:00:00', 0),
+                                                                                                 ('KH003', 'NV005', 'SP003', 1, 12000, '2025-07-10 12:00:00', 1 ),
+                                                                                                 ('KH004', 'NV006', 'SP004', 2, 13000, '2025-07-10 13:00:00', 1),
+                                                                                                 ('KH005', 'NV001', 'SP005', 3, 10000, '2025-07-10 14:00:00', 1);
 
 INSERT INTO thongkebaocao (mach, manv, loaibaocao, tenbaocao, thoigiantu, thoigianden, sotien, soluong, ngaybaocao, noidung, trangthai) VALUES
-('CH001', 'NV001', 'DoanhThu', 'Báo cáo doanh thu Q1', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 5000000, 1000, '2025-07-10 18:00:00', 'Báo cáo doanh thu Q1', 1),
-('CH002', 'NV008', 'ChiPhi', 'Báo cáo chi phí Q3', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1500000, 500, '2025-07-10 18:30:00', 'Báo cáo chi phí Q3', 1);
+                                                                                                                                            ('CH001', 'NV001', 'DoanhThu', 'Báo cáo doanh thu Q1', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 5000000, 1000, '2025-07-10 18:00:00', 'Báo cáo doanh thu Q1', 1),
+                                                                                                                                            ('CH002', 'NV008', 'ChiPhi', 'Báo cáo chi phí Q3', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1500000, 500, '2025-07-10 18:30:00', 'Báo cáo chi phí Q3', 1);
 
 INSERT INTO lichlamviec (manv, maca, ngaylam, manvquanly, trangthai, ngayduyet, ghichu) VALUES
-('NV002', 1, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca sáng'),
-('NV003', 2, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca chiều'),
-('NV004', 3, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca tối'),
-('NV005', 1, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca sáng'),
-('NV006', 2, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca chiều'),
-('NV007', 3, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca tối'),
-('NV008', 1, '2025-07-14', 'NV001', 0, NULL, 'Đang chờ duyệt'),
-('NV009', 1, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca sáng'),
-('NV010', 2, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca chiều'),
-('NV011', 3, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca tối'),
-('NV012', 1, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca sáng'),
-('NV013', 2, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca chiều'),
-('NV014', 3, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca tối');
+                                                                                            ('NV002', 1, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca sáng'),
+                                                                                            ('NV003', 2, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca chiều'),
+                                                                                            ('NV004', 3, '2025-07-12', 'NV001', 1, '2025-07-11 10:00:00', 'Ca tối'),
+                                                                                            ('NV005', 1, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca sáng'),
+                                                                                            ('NV006', 2, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca chiều'),
+                                                                                            ('NV007', 3, '2025-07-13', 'NV001', 1, '2025-07-12 10:00:00', 'Ca tối'),
+                                                                                            ('NV008', 1, '2025-07-14', 'NV001', 0, NULL, 'Đang chờ duyệt'),
+                                                                                            ('NV009', 1, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca sáng'),
+                                                                                            ('NV010', 2, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca chiều'),
+                                                                                            ('NV011', 3, '2025-07-12', 'NV002', 1, '2025-07-11 10:00:00', 'Ca tối'),
+                                                                                            ('NV012', 1, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca sáng'),
+                                                                                            ('NV013', 2, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca chiều'),
+                                                                                            ('NV014', 3, '2025-07-13', 'NV002', 1, '2025-07-12 10:00:00', 'Ca tối');
 
 -- ===================================
 -- PROCEDURE INSERTPRODUCTIMAGES
@@ -1274,22 +1274,22 @@ CREATE OR REPLACE PROCEDURE insertproductimages()
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    product_record RECORD;
+product_record RECORD;
 BEGIN
-    FOR product_record IN SELECT masp, tensp FROM sanpham
-    LOOP
-        INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
-        VALUES (product_record.masp, product_record.masp || '_main.jfif',
-                'Hình chính ' || product_record.tensp, TRUE, 1);
+FOR product_record IN SELECT masp, tensp FROM sanpham
+                                                  LOOP
+    INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
+                      VALUES (product_record.masp, product_record.masp || '_main.jfif',
+                          'Hình chính ' || product_record.tensp, TRUE, 1);
 
-        INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
-        VALUES (product_record.masp, product_record.masp || '_main1.jfif',
-                'Góc nghiêng 1 ' || product_record.tensp, FALSE, 2);
+INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
+VALUES (product_record.masp, product_record.masp || '_main1.jfif',
+        'Góc nghiêng 1 ' || product_record.tensp, FALSE, 2);
 
-        INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
-        VALUES (product_record.masp, product_record.masp || '_main2.jfif',
-                'Góc nghiêng 2 ' || product_record.tensp, FALSE, 3);
-    END LOOP;
+INSERT INTO hinhanh (masp, url, mota, lachinh, thutuhienthi)
+VALUES (product_record.masp, product_record.masp || '_main2.jfif',
+        'Góc nghiêng 2 ' || product_record.tensp, FALSE, 3);
+END LOOP;
 END;
 $$;
 
