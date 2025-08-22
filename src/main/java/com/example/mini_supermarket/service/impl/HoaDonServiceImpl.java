@@ -9,6 +9,8 @@ import com.example.mini_supermarket.entity.NhanVien;
 import com.example.mini_supermarket.entity.SanPham;
 import com.example.mini_supermarket.entity.KhuyenMai;
 import com.example.mini_supermarket.service.HoaDonService;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import com.example.mini_supermarket.service.ChiTietHoaDonService;
 import com.example.mini_supermarket.service.GioHangChiTietService;
 import com.example.mini_supermarket.service.KhachHangService;
@@ -75,6 +77,7 @@ public class HoaDonServiceImpl implements HoaDonService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"hoadon-summary", "hoadon-by-customer", "hoadon-count"}, allEntries = true)
     public HoaDon save(HoaDon theHoaDon) {
         return hoaDonRepository.save(theHoaDon);
     }
@@ -344,5 +347,53 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Mã khách hàng không được để trống");
         }
         return hoaDonRepository.findActiveByCustomer(maKH.trim());
+    }
+    
+    // ===== OPTIMIZED METHODS IMPLEMENTATION - Temporarily disabled =====
+    
+    /*
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-summary", key = "#pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
+    public Page<HoaDonSummaryDTO> findAllActiveSummary(Pageable pageable) {
+        return hoaDonRepository.findAllActiveSummary(pageable);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-by-customer", key = "#maKH + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<HoaDonSummaryDTO> findActiveByCustomerSummary(String maKH, Pageable pageable) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        return hoaDonRepository.findActiveByCustomerSummary(maKH.trim(), pageable);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-by-customer", key = "#maKH + '_list'")
+    public List<HoaDonSummaryDTO> findActiveByCustomerSummaryList(String maKH) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        return hoaDonRepository.findActiveByCustomerSummaryList(maKH.trim());
+    }
+    */
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-count", key = "'trangthai_' + #trangThai")
+    public Long countByTrangThai(Integer trangThai) {
+        return hoaDonRepository.countByTrangThai(trangThai);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "hoadon-count", key = "'customer_' + #maKH")
+    public Long countByCustomer(String maKH) {
+        if (maKH == null || maKH.trim().isEmpty()) {
+            throw new RuntimeException("Mã khách hàng không được để trống");
+        }
+        return hoaDonRepository.countByCustomer(maKH.trim());
     }
 } 

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -78,4 +79,13 @@ public class ThanhToanServiceImpl implements ThanhToanService {
             thanhToanRepository.save(thanhToan);
         }
     }
+
+    @Override
+    public ThanhToan createVNPayPayment(ThanhToan thanhToan, Map<String, String> vnpayParams) {
+        thanhToan.setMaGiaoDichNganHang(vnpayParams.get("vnp_TxnRef"));
+        thanhToan.setTrangThaiTT(0); // Chờ xử lý
+        return thanhToanRepository.save(thanhToan);
+    }
+
+
 } 

@@ -390,7 +390,8 @@ INSERT INTO phuongthucthanhtoan (mapttt, tenpttt, mota, phigiaodich, trangthai) 
 ('PTTT002', 'Chuyển Khoản', 'Thanh toán qua ngân hàng', 0.5, 1),
 ('PTTT003', 'MoMo', 'Thanh toán bằng ví điện tử MoMo', 1.0, 1),
 ('PTTT004', 'ZaloPay', 'Thanh toán qua ZaloPay', 1.0, 1),
-('PTTT005', 'Thẻ Tín Dụng', 'Thanh toán bằng thẻ tín dụng', 2.0, 1);
+('PTTT005', 'Thẻ Tín Dụng', 'Thanh toán bằng thẻ tín dụng', 2.0, 1),
+('PTTT006', 'VNPay', 'Thanh toán bằng VNPay', 2.0, 1);
 
 INSERT INTO kho (tenkho, diachi, dientich, succhua, mach, trangthai) VALUES
 ('Kho EasyMart1', '123 Nguyễn Xí, Bình Thạnh', 500.00, 1000000.00, 'CH001', 1),

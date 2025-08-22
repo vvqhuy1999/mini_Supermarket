@@ -21,4 +21,8 @@ public interface PhuongThucThanhToanRepository extends JpaRepository<PhuongThucT
     // Tìm phương thức thanh toán theo ID (bao gồm cả đã xóa)
     @Query("SELECT p FROM PhuongThucThanhToan p WHERE p.maPTTT = :id")
     Optional<PhuongThucThanhToan> findByIdIncludeDeleted(@Param("id") String id);
+
+    // Tìm phương thức thanh toán theo ID và chưa bị xóa
+    @Query("SELECT p FROM PhuongThucThanhToan p WHERE p.maPTTT = :id AND p.isDeleted = false")
+    Optional<PhuongThucThanhToan> findActiveByTenPTTT(@Param("tenPTTT") String id);
 } 

@@ -90,6 +90,8 @@ public class SecurityConfig {
     
     // ===== API CÔNG KHAI (Public) - Không cần authentication =====
     private final String[] PUBLIC_ENDPOINTS = {
+
+            "/api/thanhtoan/vnpay",
         // Swagger & API Documentation
         "/swagger-ui/**", 
         "/swagger-ui.html", 
@@ -162,6 +164,8 @@ public class SecurityConfig {
         "/api/hoadon",                  // GET: Xem hóa đơn cá nhân
         "/api/hoadon/*",                // GET: Xem chi tiết hóa đơn cá nhân
         "/api/hoadon/by-khachhang/*",   // GET: Xem hóa đơn theo khách hàng cụ thể
+        "/api/hoadon/optimized",        // GET: Xem hóa đơn tối ưu với pagination
+        "/api/hoadon/count/**",         // GET: Đếm hóa đơn
         "/api/chitiethoadon",           // GET: Xem chi tiết hóa đơn cá nhân
         "/api/chitiethoadon/*",         // GET: Xem chi tiết cụ thể
         

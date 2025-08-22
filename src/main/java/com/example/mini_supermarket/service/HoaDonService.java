@@ -38,4 +38,23 @@ public interface HoaDonService {
 
     // Lấy danh sách hóa đơn theo khách hàng
     List<HoaDon> findActiveByCustomer(String maKH);
+    
+    // ===== OPTIMIZED METHODS - Temporarily disabled =====
+    
+    /*
+    // Lấy danh sách hóa đơn tối ưu với pagination
+    Page<HoaDonSummaryDTO> findAllActiveSummary(Pageable pageable);
+    
+    // Lấy hóa đơn theo khách hàng tối ưu với pagination
+    Page<HoaDonSummaryDTO> findActiveByCustomerSummary(String maKH, Pageable pageable);
+    
+    // Lấy hóa đơn theo khách hàng tối ưu không pagination
+    List<HoaDonSummaryDTO> findActiveByCustomerSummaryList(String maKH);
+    */
+    
+    // Đếm số lượng hóa đơn theo trạng thái
+    Long countByTrangThai(Integer trangThai);
+    
+    // Đếm số lượng hóa đơn của khách hàng
+    Long countByCustomer(String maKH);
 } 

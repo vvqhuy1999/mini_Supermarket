@@ -248,4 +248,136 @@ public class HoaDonRestController {
                             .build());
         }
     }
+    
+    // ===== OPTIMIZED APIs - Temporarily disabled =====
+    
+    /*
+    // Lấy danh sách hóa đơn tối ưu với pagination
+    @GetMapping("/optimized")
+    @Operation(summary = "Lấy danh sách hóa đơn tối ưu", description = "Lấy danh sách hóa đơn với pagination và chỉ trả về thông tin cần thiết")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Thành công"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    public ResponseEntity<ApiResponse<Page<HoaDonSummaryDTO>>> getAllHoaDonOptimized(
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số lượng item mỗi trang", example = "10") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sắp xếp theo trường", example = "ngayLap") @RequestParam(defaultValue = "ngayLap") String sortBy,
+            @Parameter(description = "Hướng sắp xếp", example = "desc") @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("desc") 
+                ? Sort.by(sortBy).descending() 
+                : Sort.by(sortBy).ascending();
+            
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<HoaDonSummaryDTO> danhSachHoaDon = hoaDonService.findAllActiveSummary(pageable);
+            
+            return ResponseEntity.ok(ApiResponse.<Page<HoaDonSummaryDTO>>builder()
+                    .success(true)
+                    .message("Lấy danh sách hóa đơn tối ưu thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<Page<HoaDonSummaryDTO>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy danh sách hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // Lấy hóa đơn theo khách hàng tối ưu với pagination
+    @GetMapping("/by-khachhang/{maKH}/optimized")
+    @Operation(summary = "Lấy hóa đơn theo khách hàng tối ưu", description = "Lấy hóa đơn theo khách hàng với pagination và chỉ trả về thông tin cần thiết")
+    public ResponseEntity<ApiResponse<Page<HoaDonSummaryDTO>>> getHoaDonByCustomerOptimized(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH,
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số lượng item mỗi trang", example = "10") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sắp xếp theo trường", example = "ngayLap") @RequestParam(defaultValue = "ngayLap") String sortBy,
+            @Parameter(description = "Hướng sắp xếp", example = "desc") @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("desc") 
+                ? Sort.by(sortBy).descending() 
+                : Sort.by(sortBy).ascending();
+            
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<HoaDonSummaryDTO> danhSachHoaDon = hoaDonService.findActiveByCustomerSummary(maKH, pageable);
+            
+            return ResponseEntity.ok(ApiResponse.<Page<HoaDonSummaryDTO>>builder()
+                    .success(true)
+                    .message("Lấy danh sách hóa đơn theo khách hàng tối ưu thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<Page<HoaDonSummaryDTO>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy hóa đơn theo khách hàng: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // Lấy hóa đơn theo khách hàng tối ưu không pagination (fast API)
+    @GetMapping("/by-khachhang/{maKH}/summary")
+    @Operation(summary = "Lấy hóa đơn theo khách hàng nhanh", description = "Lấy hóa đơn theo khách hàng chỉ thông tin cần thiết, không pagination")
+    public ResponseEntity<ApiResponse<List<HoaDonSummaryDTO>>> getHoaDonByCustomerSummary(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH) {
+        try {
+            List<HoaDonSummaryDTO> danhSachHoaDon = hoaDonService.findActiveByCustomerSummaryList(maKH);
+            return ResponseEntity.ok(ApiResponse.<List<HoaDonSummaryDTO>>builder()
+                    .success(true)
+                    .message("Lấy danh sách hóa đơn theo khách hàng nhanh thành công")
+                    .result(danhSachHoaDon)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<List<HoaDonSummaryDTO>>builder()
+                            .success(false)
+                            .error("Lỗi khi lấy hóa đơn theo khách hàng: " + e.getMessage())
+                            .build());
+        }
+    }
+    */
+    
+    // API đếm số lượng hóa đơn theo trạng thái
+    @GetMapping("/count/trangthai/{trangThai}")
+    @Operation(summary = "Đếm hóa đơn theo trạng thái", description = "Đếm số lượng hóa đơn theo trạng thái cụ thể")
+    public ResponseEntity<ApiResponse<Long>> countByTrangThai(
+            @Parameter(description = "Trạng thái hóa đơn", required = true) @PathVariable Integer trangThai) {
+        try {
+            Long count = hoaDonService.countByTrangThai(trangThai);
+            return ResponseEntity.ok(ApiResponse.<Long>builder()
+                    .success(true)
+                    .message("Đếm hóa đơn theo trạng thái thành công")
+                    .result(count)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<Long>builder()
+                            .success(false)
+                            .error("Lỗi khi đếm hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // API đếm số lượng hóa đơn của khách hàng
+    @GetMapping("/count/khachhang/{maKH}")
+    @Operation(summary = "Đếm hóa đơn theo khách hàng", description = "Đếm số lượng hóa đơn của khách hàng cụ thể")
+    public ResponseEntity<ApiResponse<Long>> countByCustomer(
+            @Parameter(description = "Mã khách hàng", required = true) @PathVariable String maKH) {
+        try {
+            Long count = hoaDonService.countByCustomer(maKH);
+            return ResponseEntity.ok(ApiResponse.<Long>builder()
+                    .success(true)
+                    .message("Đếm hóa đơn theo khách hàng thành công")
+                    .result(count)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<Long>builder()
+                            .success(false)
+                            .error("Lỗi khi đếm hóa đơn: " + e.getMessage())
+                            .build());
+        }
+    }
 } 

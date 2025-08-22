@@ -74,4 +74,10 @@ public class PhuongThucThanhToanServiceImpl implements PhuongThucThanhToanServic
             phuongThucThanhToanRepository.save(phuongThucThanhToan);
         }
     }
+
+    @Override
+    public PhuongThucThanhToan findActiveBytenPTTT(String id) {
+        Optional<PhuongThucThanhToan> result = phuongThucThanhToanRepository.findActiveByTenPTTT(id);
+        return result.orElse(null);
+    }
 } 

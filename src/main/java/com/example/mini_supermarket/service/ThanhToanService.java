@@ -4,6 +4,7 @@ import com.example.mini_supermarket.entity.ThanhToan;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public interface ThanhToanService {
@@ -22,4 +23,7 @@ public interface ThanhToanService {
     void softDeleteById(Integer id); // Soft delete - set isDeleted = true
 
     ThanhToan update(ThanhToan thanhToan);
+
+    ThanhToan createVNPayPayment(ThanhToan thanhToan, Map<String, String> vnpayParams);
+
 } 
