@@ -87,5 +87,10 @@ public class ThanhToanServiceImpl implements ThanhToanService {
         return thanhToanRepository.save(thanhToan);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ThanhToan findByMaGiaoDichNganHang(String maGiaoDichNganHang) {
+        return thanhToanRepository.findByMaGiaoDichNganHang(maGiaoDichNganHang);
+    }
 
 } 

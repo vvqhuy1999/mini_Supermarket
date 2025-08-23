@@ -7,6 +7,7 @@ import com.example.mini_supermarket.entity.ThanhToan;
 import com.example.mini_supermarket.repository.HoaDonRepository;
 import com.example.mini_supermarket.repository.PhuongThucThanhToanRepository;
 import com.example.mini_supermarket.service.ThanhToanService;
+import com.example.mini_supermarket.service.HoaDonService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +49,9 @@ public class ThanhToanRestController {
 
     @Autowired
     private PhuongThucThanhToanRepository phuongThucThanhToanRepository;
+
+    @Autowired
+    private HoaDonService hoaDonService;
 
     @Operation(summary = "Lấy tất cả thanh toán", description = "Trả về danh sách tất cả thanh toán chưa bị xóa")
     @ApiResponses(value = {
@@ -159,6 +166,7 @@ public class ThanhToanRestController {
     }
 
 
+
     @Operation(summary = "Tạo thanh toán VNPay", description = "Tạo giao dịch thanh toán VNPay và trả về URL thanh toán")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Tạo URL thanh toán thành công",
@@ -174,6 +182,7 @@ public class ThanhToanRestController {
             String vnp_OrderInfo = requestParams.get("vnp_OrderInfo");
             String orderType = requestParams.get("ordertype");
             String amountStr = requestParams.get("amount");
+
             if (vnp_OrderInfo == null || orderType == null || amountStr == null) {
                 return new ResponseEntity<>(Map.of("code", "99", "message", "Thiếu tham số bắt buộc"), HttpStatus.BAD_REQUEST);
             }
@@ -198,33 +207,35 @@ public class ThanhToanRestController {
             } catch (NumberFormatException e) {
                 return new ResponseEntity<>(Map.of("code", "97", "message", "Mã hóa đơn không hợp lệ"), HttpStatus.BAD_REQUEST);
             }
+
             Optional<HoaDon> hoaDonOpt = hoaDonRepository.findActiveById(maHD);
             if (!hoaDonOpt.isPresent()) {
                 return new ResponseEntity<>(Map.of("code", "97", "message", "Hóa đơn không tồn tại hoặc đã bị xóa"), HttpStatus.BAD_REQUEST);
             }
 
             // Kiểm tra phương thức thanh toán
-            Optional<PhuongThucThanhToan> ptttOpt = phuongThucThanhToanRepository.findActiveById("PTTT006"); // ID cố định cho VNPay
+            Optional<PhuongThucThanhToan> ptttOpt = phuongThucThanhToanRepository.findActiveById("PTTT006");
             if (!ptttOpt.isPresent()) {
                 return new ResponseEntity<>(Map.of("code", "96", "message", "Phương thức thanh toán VNPay không được cấu hình"), HttpStatus.BAD_REQUEST);
             }
 
+            // Tham số VNPAY theo phiên bản 2.1.0
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
-            String vnp_TxnRef = vnpayConfig.getRandomNumber(8); // Sử dụng instance để gọi
-            String vnp_IpAddr = vnpayConfig.getIpAddress(request); // Sử dụng instance để gọi
+            String vnp_TxnRef = vnpayConfig.getRandomNumber(8);
+            String vnp_IpAddr = vnpayConfig.getIpAddress(request);
 
             Map<String, String> vnp_Params = new HashMap<>();
             vnp_Params.put("vnp_Version", vnp_Version);
             vnp_Params.put("vnp_Command", vnp_Command);
-            vnp_Params.put("vnp_TmnCode", vnpayConfig.getVnp_TmnCode()); // Sử dụng getter
+            vnp_Params.put("vnp_TmnCode", vnpayConfig.getVnp_TmnCode());
             vnp_Params.put("vnp_Amount", String.valueOf(amount));
             vnp_Params.put("vnp_CurrCode", "VND");
             vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
             vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
             vnp_Params.put("vnp_OrderType", orderType);
             vnp_Params.put("vnp_Locale", requestParams.getOrDefault("language", "vn"));
-            vnp_Params.put("vnp_ReturnUrl", vnpayConfig.getVnp_ReturnUrl()); // Sử dụng getter
+            vnp_Params.put("vnp_ReturnUrl", vnpayConfig.getVnp_ReturnUrl());
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
             String bankCode = requestParams.get("bankcode");
@@ -232,16 +243,21 @@ public class ThanhToanRestController {
                 vnp_Params.put("vnp_BankCode", bankCode);
             }
 
+            // Tạo thời gian
             Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             String vnp_CreateDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+
+            // Thời gian hết hạn (15 phút)
             cld.add(Calendar.MINUTE, 15);
             String vnp_ExpireDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
+            // Thêm các tham số billing tùy chọn
             vnp_Params.put("vnp_Bill_Mobile", requestParams.getOrDefault("txt_billing_mobile", ""));
             vnp_Params.put("vnp_Bill_Email", requestParams.getOrDefault("txt_billing_email", ""));
+
             String fullName = requestParams.getOrDefault("txt_billing_fullname", "").trim();
             if (!fullName.isEmpty()) {
                 int idx = fullName.indexOf(' ');
@@ -252,6 +268,7 @@ public class ThanhToanRestController {
                     vnp_Params.put("vnp_Bill_LastName", lastName);
                 }
             }
+
             vnp_Params.put("vnp_Bill_Address", requestParams.getOrDefault("txt_inv_addr1", ""));
             vnp_Params.put("vnp_Bill_City", requestParams.getOrDefault("txt_bill_city", ""));
             vnp_Params.put("vnp_Bill_Country", requestParams.getOrDefault("txt_bill_country", ""));
@@ -264,26 +281,42 @@ public class ThanhToanRestController {
             vnp_Params.put("vnp_Inv_Taxcode", requestParams.getOrDefault("txt_inv_taxcode", ""));
             vnp_Params.put("vnp_Inv_Type", requestParams.getOrDefault("cbo_inv_type", ""));
 
+            // ✅ Build hashData và querystring theo phiên bản 2.1.0
             List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
             Collections.sort(fieldNames);
             StringBuilder hashData = new StringBuilder();
             StringBuilder query = new StringBuilder();
-            for (String fieldName : fieldNames) {
+
+            Iterator<String> itr = fieldNames.iterator();
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
                 String fieldValue = vnp_Params.get(fieldName);
                 if (fieldValue != null && !fieldValue.isEmpty()) {
-                    hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII)).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                    if (fieldNames.indexOf(fieldName) < fieldNames.size() - 1) {
+                    // ✅ Build hash data - PHẢI encode cả key và value (phiên bản 2.1.0)
+                    hashData.append(fieldName);
+                    hashData.append('=');
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+
+                    // Build query
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
+                    query.append('=');
+                    query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+
+                    if (itr.hasNext()) {
                         query.append('&');
                         hashData.append('&');
                     }
                 }
             }
-            String queryUrl = query.toString();
-            String vnp_SecureHash = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashData.toString()); // Sử dụng instance
-            queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
-            String paymentUrl = vnpayConfig.getVnp_PayUrl() + "?" + queryUrl; // Sử dụng getter
 
+            String queryUrl = query.toString();
+
+            // ✅ Tạo vnp_SecureHash bằng HMACSHA512 (phiên bản 2.1.0)
+            String vnp_SecureHash = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashData.toString());
+            queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
+            String paymentUrl = vnpayConfig.getVnp_PayUrl() + "?" + queryUrl;
+
+            // Lưu thông tin thanh toán vào database
             ThanhToan thanhToan = new ThanhToan();
             thanhToan.setSoTienThanhToan(new BigDecimal(amountStr));
             thanhToan.setNgayGioTT(Timestamp.valueOf(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()));
@@ -300,11 +333,36 @@ public class ThanhToanRestController {
             response.put("message", "success");
             response.put("data", paymentUrl);
             return new ResponseEntity<>(response, HttpStatus.OK);
+
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(Map.of("code", "99", "message", "Lỗi server: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // ✅ Method hmacSHA512 cần có trong VnpayConfig
+    public static String hmacSHA512(final String key, final String data) {
+        try {
+            if (key == null || data == null) {
+                throw new NullPointerException();
+            }
+            final Mac hmac512 = Mac.getInstance("HmacSHA512");
+            byte[] hmacKeyBytes = key.getBytes();
+            final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
+            hmac512.init(secretKey);
+            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
+            byte[] result = hmac512.doFinal(dataBytes);
+            StringBuilder sb = new StringBuilder(2 * result.length);
+            for (byte b : result) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            return sb.toString();
+        } catch (Exception ex) {
+            return "";
+        }
+    }
+
+
 
     @Operation(summary = "Xử lý callback từ VNPAY", description = "Cập nhật và xác nhận trạng thái thanh toán từ VNPAY")
     @ApiResponses(value = {
@@ -314,11 +372,248 @@ public class ThanhToanRestController {
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
     @GetMapping("/vnpay/return")
-    public ResponseEntity<Map<String, String>> handleVNPayReturn(
+    public ResponseEntity<String> handleVNPayReturn(
             @RequestParam Map<String, String> vnpParams,
             HttpServletRequest request) {
         try {
             // Lấy và lưu các tham số từ request
+            Map<String, String> fields = new HashMap<>();
+            for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
+                String fieldName = params.nextElement();
+                String fieldValue = request.getParameter(fieldName);
+                if (fieldValue != null && !fieldValue.isEmpty()) {
+                    fields.put(fieldName, fieldValue);
+                }
+            }
+
+            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+            String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+            String vnp_TxnRef = request.getParameter("vnp_TxnRef");
+            String vnp_Amount = request.getParameter("vnp_Amount");
+            String vnp_OrderInfo = request.getParameter("vnp_OrderInfo");
+            String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus"); // ✅ Tham số mới trong 2.1.0
+
+            // Kiểm tra các tham số bắt buộc
+            if (vnp_SecureHash == null || vnp_ResponseCode == null || vnp_TxnRef == null) {
+                return ResponseEntity.badRequest().body("Missing required parameters");
+            }
+
+            // Loại bỏ vnp_SecureHash và vnp_SecureHashType khỏi fields để tính toán hash
+            if (fields.containsKey("vnp_SecureHashType")) {
+                fields.remove("vnp_SecureHashType");
+            }
+            if (fields.containsKey("vnp_SecureHash")) {
+                fields.remove("vnp_SecureHash");
+            }
+
+            // ✅ Kiểm tra chữ ký bảo mật theo phiên bản 2.1.0
+            String signValue = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashAllFields(fields));
+
+            if (!signValue.equals(vnp_SecureHash)) {
+                return ResponseEntity.badRequest().body("Invalid signature");
+            }
+
+            // ✅ Tìm giao dịch theo vnp_TxnRef (không dùng findAll() - tối ưu performance)
+            ThanhToan thanhToan = thanhToanService.findByMaGiaoDichNganHang(vnp_TxnRef);
+
+            if (thanhToan == null) {
+                return ResponseEntity.badRequest().body("Transaction not found");
+            }
+
+            // ✅ Kiểm tra số tiền
+            long dbAmount = thanhToan.getSoTienThanhToan().multiply(new BigDecimal("100")).longValue();
+            long vnpAmount = Long.parseLong(vnp_Amount);
+
+            if (dbAmount != vnpAmount) {
+                return ResponseEntity.badRequest().body("Invalid amount");
+            }
+
+            // ✅ Kiểm tra trạng thái giao dịch đã được xử lý chưa
+            if (thanhToan.getTrangThaiTT() != 0) { // Đã xử lý rồi
+                if (thanhToan.getTrangThaiTT() == 1) { // Đã thành công
+                    // Trả về HTML page để redirect người dùng
+                    String successHtml = """
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Thanh toán thành công</title>
+                                <meta charset="UTF-8">
+                                <style>
+                                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                    .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
+                                    .redirect { color: #6c757d; font-size: 16px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="success">✅ Thanh toán thành công!</div>
+                                <div class="redirect">Đang chuyển hướng...</div>
+                                <script>
+                                    setTimeout(function() {
+                                        window.location.href = 'http://localhost:3000/payment-success';
+                                    }, 2000);
+                                </script>
+                            </body>
+                            </html>
+                            """;
+                    return ResponseEntity.ok()
+                            .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                            .body(successHtml);
+                } else { // Đã thất bại
+                    // Trả về HTML page để redirect người dùng
+                    String failedHtml = """
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Thanh toán thất bại</title>
+                                <meta charset="UTF-8">
+                                <style>
+                                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                    .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                                    .redirect { color: #6c757d; font-size: 16px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="failed">❌ Thanh toán thất bại!</div>
+                                <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
+                                <script>
+                                    setTimeout(function() {
+                                        window.location.href = 'http://localhost:3000/orders';
+                                    }, 2000);
+                                </script>
+                            </body>
+                            </html>
+                            """;
+                    return ResponseEntity.ok()
+                            .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                            .body(failedHtml);
+                }
+            }
+
+            // ✅ Xử lý theo vnp_ResponseCode và vnp_TransactionStatus (phiên bản 2.1.0)
+            if ("00".equals(vnp_ResponseCode)) {
+                // ✅ Kiểm tra vnp_TransactionStatus (tham số mới trong 2.1.0)
+                if ("00".equals(vnp_TransactionStatus)) {
+                    // Giao dịch thành công tại VNPAY
+                    thanhToan.setTrangThaiTT(1); // Thành công
+                    thanhToan.setGhiChu(thanhToan.getGhiChu() + " - Thanh toán thành công qua VNPAY");
+                    thanhToanService.update(thanhToan);
+
+                    // ✅ Cập nhật trạng thái hóa đơn nếu cần
+                    HoaDon hoaDon = thanhToan.getHoaDon();
+                    if (hoaDon != null && hoaDon.getTrangThai() == 0) { // Chờ thanh toán
+                        hoaDon.setTrangThai(1); // Đã thanh toán
+                        hoaDonService.update(hoaDon);
+                    }
+
+                                         // Trả về HTML page để redirect người dùng
+                     String successHtml = """
+                             <!DOCTYPE html>
+                             <html>
+                             <head>
+                                 <title>Thanh toán thành công</title>
+                                 <meta charset="UTF-8">
+                                 <style>
+                                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                     .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
+                                     .redirect { color: #6c757d; font-size: 16px; }
+                                 </style>
+                             </head>
+                             <body>
+                                 <div class="success">✅ Thanh toán thành công!</div>
+                                 <div class="redirect">Đang chuyển hướng...</div>
+                                 <script>
+                                     setTimeout(function() {
+                                         window.location.href = 'http://localhost:3000/payment-success';
+                                     }, 2000);
+                                 </script>
+                             </body>
+                             </html>
+                             """;
+                     return ResponseEntity.ok()
+                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                             .body(successHtml);
+                } else {
+                    // ResponseCode = 00 nhưng TransactionStatus != 00
+                    thanhToan.setTrangThaiTT(2); // Thất bại
+                    thanhToan.setGhiChu(thanhToan.getGhiChu() + " - Giao dịch không thành công tại VNPAY. TransactionStatus: " + vnp_TransactionStatus);
+                    thanhToanService.update(thanhToan);
+
+                                         // Trả về HTML page để redirect người dùng
+                     String failedHtml = """
+                             <!DOCTYPE html>
+                             <html>
+                             <head>
+                                 <title>Thanh toán thất bại</title>
+                                 <meta charset="UTF-8">
+                                 <style>
+                                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                     .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                                     .redirect { color: #6c757d; font-size: 16px; }
+                                 </style>
+                             </head>
+                             <body>
+                                 <div class="failed">❌ Thanh toán thất bại!</div>
+                                 <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
+                                 <script>
+                                     setTimeout(function() {
+                                         window.location.href = 'http://localhost:3000/orders';
+                                     }, 2000);
+                                 </script>
+                             </body>
+                             </html>
+                             """;
+                     return ResponseEntity.ok()
+                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                             .body(failedHtml);
+                }
+            } else {
+                // ✅ Xử lý các mã lỗi khác
+                thanhToan.setTrangThaiTT(2); // Thất bại
+                String errorMessage = getVNPayErrorMessage(vnp_ResponseCode);
+                thanhToan.setGhiChu(thanhToan.getGhiChu() + " - " + errorMessage);
+                thanhToanService.update(thanhToan);
+
+                // Trả về HTML page để redirect người dùng
+                String errorHtml = String.format("""
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Thanh toán thất bại</title>
+                            <meta charset="UTF-8">
+                            <style>
+                                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                                .redirect { color: #6c757d; font-size: 16px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="failed">❌ Thanh toán thất bại!</div>
+                            <div class="redirect">Lỗi: %s</div>
+                            <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
+                            <script>
+                                setTimeout(function() {
+                                    window.location.href = 'http://localhost:3000/orders';
+                                }, 3000);
+                            </script>
+                        </body>
+                        </html>
+                        """, errorMessage);
+                return ResponseEntity.ok()
+                        .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                        .body(errorHtml);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("System error: " + e.getMessage());
+        }
+    }
+
+    // ✅ IPN Handler - Xử lý thông báo từ VNPAY server
+    @PostMapping("/vnpay/ipn")
+    public ResponseEntity<Map<String, String>> handleVNPayIPN(
+            HttpServletRequest request) {
+        try {
             Map<String, String> fields = new HashMap<>();
             for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
                 String fieldName = params.nextElement();
@@ -336,58 +631,89 @@ public class ThanhToanRestController {
                 fields.remove("vnp_SecureHash");
             }
 
-            // Kiểm tra chữ ký bảo mật
-            String signValue = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashAllFields(fields)); // Sử dụng instance
+            String signValue = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashAllFields(fields));
+
             if (signValue.equals(vnp_SecureHash)) {
                 String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
-                if ("00".equals(vnp_ResponseCode)) {
-                    // Tìm và cập nhật trạng thái thanh toán trong cơ sở dữ liệu
-                    String vnp_TxnRef = request.getParameter("vnp_TxnRef");
-                    Optional<ThanhToan> thanhToanOpt = thanhToanService.findAll().stream()
-                            .filter(tt -> vnp_TxnRef.equals(tt.getMaGiaoDichNganHang()))
-                            .findFirst();
-                    if (thanhToanOpt.isPresent()) {
-                        ThanhToan thanhToan = thanhToanOpt.get();
-                        thanhToan.setTrangThaiTT(1); // Thành công
-                        thanhToanService.update(thanhToan);
+                String vnp_TxnRef = request.getParameter("vnp_TxnRef");
+                String vnp_Amount = request.getParameter("vnp_Amount");
+                String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus");
+
+                ThanhToan thanhToan = thanhToanService.findByMaGiaoDichNganHang(vnp_TxnRef);
+
+                if (thanhToan != null) {
+
+                    // Kiểm tra số tiền
+                    long dbAmount = thanhToan.getSoTienThanhToan().multiply(new BigDecimal("100")).longValue();
+                    long vnpAmount = Long.parseLong(vnp_Amount);
+
+                    if (dbAmount == vnpAmount) {
+                        if (thanhToan.getTrangThaiTT() == 0) { // Chưa xử lý
+                            if ("00".equals(vnp_ResponseCode) && "00".equals(vnp_TransactionStatus)) {
+                                thanhToan.setTrangThaiTT(1); // Thành công
+                            } else {
+                                thanhToan.setTrangThaiTT(2); // Thất bại
+                            }
+                            thanhToanService.update(thanhToan);
+
+                            return ResponseEntity.ok(Map.of("RspCode", "00", "Message", "Confirm Success"));
+                        } else {
+                            return ResponseEntity.ok(Map.of("RspCode", "02", "Message", "Order already confirmed"));
+                        }
+                    } else {
+                        return ResponseEntity.ok(Map.of("RspCode", "04", "Message", "Invalid amount"));
                     }
-                    return new ResponseEntity<>(Map.of("message", "GD Thanh cong"), HttpStatus.OK);
                 } else {
-                    // Cập nhật trạng thái thất bại nếu cần
-                    String vnp_TxnRef = request.getParameter("vnp_TxnRef");
-                    Optional<ThanhToan> thanhToanOpt = thanhToanService.findAll().stream()
-                            .filter(tt -> vnp_TxnRef.equals(tt.getMaGiaoDichNganHang()))
-                            .findFirst();
-                    if (thanhToanOpt.isPresent()) {
-                        ThanhToan thanhToan = thanhToanOpt.get();
-                        thanhToan.setTrangThaiTT(2); // Thất bại
-                        thanhToanService.update(thanhToan);
-                    }
-                    return new ResponseEntity<>(Map.of("message", "GD Khong thanh cong"), HttpStatus.OK);
+                    return ResponseEntity.ok(Map.of("RspCode", "01", "Message", "Order not found"));
                 }
             } else {
-                return new ResponseEntity<>(Map.of("message", "Chu ky khong hop le"), HttpStatus.BAD_REQUEST);
+                return ResponseEntity.ok(Map.of("RspCode", "97", "Message", "Invalid signature"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(Map.of("message", "Loi server"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.ok(Map.of("RspCode", "99", "Message", "Unknown error"));
         }
     }
 
-    // Phương thức hỗ trợ để hash tất cả các field
+    // ✅ Phương thức hash theo phiên bản 2.1.0 - PHẢI encode key và value
     private String hashAllFields(Map<String, String> fields) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
-        for (String fieldName : fieldNames) {
+
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(fieldValue);
-                if (fieldNames.indexOf(fieldName) < fieldNames.size() - 1) {
+                // ✅ Encode cả key và value theo phiên bản 2.1.0
+                hashData.append(fieldName);
+                hashData.append('=');
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                if (itr.hasNext()) {
                     hashData.append('&');
                 }
             }
         }
         return hashData.toString();
     }
+
+    // ✅ Phương thức lấy thông báo lỗi VNPAY
+    private String getVNPayErrorMessage(String responseCode) {
+        Map<String, String> errorMessages = new HashMap<>();
+        errorMessages.put("07", "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).");
+        errorMessages.put("09", "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking tại ngân hàng.");
+        errorMessages.put("10", "Giao dịch không thành công do: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần");
+        errorMessages.put("11", "Giao dịch không thành công do: Đã hết hạn chờ thanh toán. Xin quý khách vui lòng thực hiện lại giao dịch.");
+        errorMessages.put("12", "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng bị khóa.");
+        errorMessages.put("13", "Giao dịch không thành công do Quý khách nhập sai mật khẩu xác thực giao dịch (OTP).");
+        errorMessages.put("24", "Giao dịch không thành công do: Khách hàng hủy giao dịch");
+        errorMessages.put("51", "Giao dịch không thành công do: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch.");
+        errorMessages.put("65", "Giao dịch không thành công do: Tài khoản của Quý khách đã vượt quá hạn mức giao dịch trong ngày.");
+        errorMessages.put("75", "Ngân hàng thanh toán đang bảo trì.");
+        errorMessages.put("79", "Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định.");
+        errorMessages.put("99", "Các lỗi khác (lỗi còn lại, không có trong danh sách mã lỗi đã liệt kê)");
+
+        return errorMessages.getOrDefault(responseCode, "Giao dịch không thành công - Mã lỗi: " + responseCode);
+    }
+
 } 

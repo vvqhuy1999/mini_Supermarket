@@ -26,4 +26,7 @@ public interface ThanhToanService {
 
     ThanhToan createVNPayPayment(ThanhToan thanhToan, Map<String, String> vnpayParams);
 
+    // Tìm thanh toán theo mã giao dịch ngân hàng
+    ThanhToan findByMaGiaoDichNganHang(String maGiaoDichNganHang);
+
 } 
