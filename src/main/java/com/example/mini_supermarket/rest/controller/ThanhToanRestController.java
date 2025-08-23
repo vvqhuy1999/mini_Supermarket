@@ -37,7 +37,7 @@ public class ThanhToanRestController {
     private ThanhToanService thanhToanService;
 
     @Autowired
-    private VNPayConfig vnpayConfig; // Tiêm instance của VNPayConfig
+    private VNPayConfig vnpayConfig;
 
     @Autowired
     private HoaDonRepository hoaDonRepository;
@@ -209,20 +209,20 @@ public class ThanhToanRestController {
 
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
-            String vnp_TxnRef = vnpayConfig.getRandomNumber(8); // Sử dụng instance để gọi
-            String vnp_IpAddr = vnpayConfig.getIpAddress(request); // Sử dụng instance để gọi
+            String vnp_TxnRef = vnpayConfig.getRandomNumber(8);
+            String vnp_IpAddr = vnpayConfig.getIpAddress(request);
 
             Map<String, String> vnp_Params = new HashMap<>();
             vnp_Params.put("vnp_Version", vnp_Version);
             vnp_Params.put("vnp_Command", vnp_Command);
-            vnp_Params.put("vnp_TmnCode", vnpayConfig.getVnp_TmnCode()); // Sử dụng getter
+            vnp_Params.put("vnp_TmnCode", vnpayConfig.getVnp_TmnCode());
             vnp_Params.put("vnp_Amount", String.valueOf(amount));
             vnp_Params.put("vnp_CurrCode", "VND");
             vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
             vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
             vnp_Params.put("vnp_OrderType", orderType);
             vnp_Params.put("vnp_Locale", requestParams.getOrDefault("language", "vn"));
-            vnp_Params.put("vnp_ReturnUrl", vnpayConfig.getVnp_ReturnUrl()); // Sử dụng getter
+            vnp_Params.put("vnp_ReturnUrl", vnpayConfig.getVnp_ReturnUrl());
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
             String bankCode = requestParams.get("bankcode");
@@ -278,12 +278,12 @@ public class ThanhToanRestController {
                 }
             }
             String queryUrl = query.toString();
-            String vnp_SecureHash = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashData.toString()); // Sử dụng instance
+            String vnp_SecureHash = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashData.toString());
             queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
-            String paymentUrl = vnpayConfig.getVnp_PayUrl() + "?" + queryUrl; // Sử dụng getter
+            String paymentUrl = vnpayConfig.getVnp_PayUrl() + "?" + queryUrl;
 
             ThanhToan thanhToan = new ThanhToan();
-            thanhToan.setSoTienThanhToan(new BigDecimal(amountStr));
+            thanhToan.setSoTienThanhToan(new BigDecimal(String.valueOf(amount))); // Sử dụng amount đã nhân 100
             thanhToan.setNgayGioTT(new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
             thanhToan.setPhuongThucThanhToan(ptttOpt.get());
             thanhToan.setHoaDon(hoaDonOpt.get());
@@ -323,56 +323,99 @@ public class ThanhToanRestController {
                 String fieldValue = request.getParameter(fieldName);
                 if (fieldValue != null && !fieldValue.isEmpty()) {
                     fields.put(fieldName, fieldValue);
+                    System.out.println("Param: " + fieldName + " = " + fieldValue); // Log từng tham số
                 }
             }
+            System.out.println("Received all params: " + fields);
 
-            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
-            if (fields.containsKey("vnp_SecureHashType")) {
-                fields.remove("vnp_SecureHashType");
+            if (fields.isEmpty()) {
+                System.out.println("No parameters received from VNPay");
+                return new ResponseEntity<>(Map.of("message", "Không nhận được dữ liệu từ VNPay"), HttpStatus.BAD_REQUEST);
             }
-            if (fields.containsKey("vnp_SecureHash")) {
-                fields.remove("vnp_SecureHash");
+
+            String vnp_SecureHash = fields.get("vnp_SecureHash");
+            if (vnp_SecureHash == null || vnp_SecureHash.isEmpty()) {
+                System.out.println("Missing vnp_SecureHash");
+                return new ResponseEntity<>(Map.of("message", "Thiếu chữ ký bảo mật vnp_SecureHash"), HttpStatus.BAD_REQUEST);
             }
+
+            fields.remove("vnp_SecureHashType");
+            fields.remove("vnp_SecureHash");
 
             // Kiểm tra chữ ký bảo mật
-            String signValue = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashAllFields(fields)); // Sử dụng instance
-            if (signValue.equals(vnp_SecureHash)) {
-                String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
-                if ("00".equals(vnp_ResponseCode)) {
-                    // Tìm và cập nhật trạng thái thanh toán trong cơ sở dữ liệu
-                    String vnp_TxnRef = request.getParameter("vnp_TxnRef");
-                    Optional<ThanhToan> thanhToanOpt = thanhToanService.findAll().stream()
-                            .filter(tt -> vnp_TxnRef.equals(tt.getMaGiaoDichNganHang()))
-                            .findFirst();
-                    if (thanhToanOpt.isPresent()) {
-                        ThanhToan thanhToan = thanhToanOpt.get();
-                        thanhToan.setTrangThaiTT(1); // Thành công
-                        thanhToanService.update(thanhToan);
-                    }
-                    return new ResponseEntity<>(Map.of("message", "GD Thanh cong"), HttpStatus.OK);
-                } else {
-                    // Cập nhật trạng thái thất bại nếu cần
-                    String vnp_TxnRef = request.getParameter("vnp_TxnRef");
-                    Optional<ThanhToan> thanhToanOpt = thanhToanService.findAll().stream()
-                            .filter(tt -> vnp_TxnRef.equals(tt.getMaGiaoDichNganHang()))
-                            .findFirst();
-                    if (thanhToanOpt.isPresent()) {
-                        ThanhToan thanhToan = thanhToanOpt.get();
-                        thanhToan.setTrangThaiTT(2); // Thất bại
-                        thanhToanService.update(thanhToan);
-                    }
-                    return new ResponseEntity<>(Map.of("message", "GD Khong thanh cong"), HttpStatus.OK);
-                }
-            } else {
+            String signValue = vnpayConfig.hmacSHA512(vnpayConfig.getVnp_HashSecret(), hashAllFields(fields));
+            System.out.println("Calculated signValue: " + signValue);
+            System.out.println("Received vnp_SecureHash: " + vnp_SecureHash);
+
+            if (signValue == null || signValue.isEmpty()) {
+                System.out.println("Cannot create secure hash");
+                return new ResponseEntity<>(Map.of("message", "Không thể tạo chữ ký bảo mật"), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (!signValue.equals(vnp_SecureHash)) {
+                System.out.println("Signature mismatch");
                 return new ResponseEntity<>(Map.of("message", "Chu ky khong hop le"), HttpStatus.BAD_REQUEST);
             }
+
+            String vnp_ResponseCode = fields.get("vnp_ResponseCode");
+            String vnp_TxnRef = fields.get("vnp_TxnRef");
+            Map<String, String> response = new HashMap<>();
+
+            if ("00".equals(vnp_ResponseCode)) {
+                // Tìm và cập nhật trạng thái thanh toán trong cơ sở dữ liệu
+                ThanhToan thanhToan = thanhToanService.findByMaGiaoDichNganHang(vnp_TxnRef);
+                if (thanhToan != null) {
+                    thanhToan.setTrangThaiTT(1); // Thành công
+                    thanhToanService.update(thanhToan);
+
+                    String vnpAmount = fields.get("vnp_Amount");
+                    BigDecimal originalAmount = thanhToan.getSoTienThanhToan();
+                    System.out.println("vnp_Amount: " + vnpAmount + ", Original amount: " + originalAmount + ", SoTienThanhToan from DB: " + thanhToan.getSoTienThanhToan());
+                    if (vnpAmount != null) {
+                        try {
+                            BigDecimal vnpAmountBigDecimal = new BigDecimal(vnpAmount);
+                            if (originalAmount.compareTo(vnpAmountBigDecimal) != 0) {
+                                System.out.println("Amount mismatch - Debug: vnpAmount = " + vnpAmountBigDecimal + ", originalAmount = " + originalAmount);
+                                return new ResponseEntity<>(Map.of("message", "Số tiền không khớp"), HttpStatus.BAD_REQUEST);
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid vnp_Amount format: " + vnpAmount);
+                            return new ResponseEntity<>(Map.of("message", "Số tiền từ VNPay không hợp lệ"), HttpStatus.BAD_REQUEST);
+                        }
+                    }
+                }
+                response.put("code", "00");
+                response.put("message", "GD Thanh cong");
+                response.put("orderCode", vnp_TxnRef);
+                String totalValue = "0";
+                if (fields.get("vnp_Amount") != null) {
+                    try {
+                        totalValue = String.valueOf(Integer.parseInt(fields.get("vnp_Amount")) / 100);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid vnp_Amount format: " + fields.get("vnp_Amount"));
+                    }
+                }
+                response.put("total", totalValue);
+                response.put("paymentMethod", "vnpay");
+                response.put("redirectUrl", vnpayConfig.getVnp_ReturnUrl() != null ? vnpayConfig.getVnp_ReturnUrl() : "http://localhost:3000/payment-success");
+            } else {
+                // Cập nhật trạng thái thất bại nếu cần
+                ThanhToan thanhToan = thanhToanService.findByMaGiaoDichNganHang(vnp_TxnRef);
+                if (thanhToan != null) {
+                    thanhToan.setTrangThaiTT(2); // Thất bại
+                    thanhToanService.update(thanhToan);
+                }
+                response.put("code", "99");
+                response.put("message", "GD Khong thanh cong");
+                response.put("redirectUrl", "http://localhost:3000");
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>(Map.of("message", "Loi server"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Map.of("message", "Loi server: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // Phương thức hỗ trợ để hash tất cả các field
     private String hashAllFields(Map<String, String> fields) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
@@ -380,7 +423,13 @@ public class ThanhToanRestController {
         for (String fieldName : fieldNames) {
             String fieldValue = fields.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=').append(fieldValue);
+                try {
+                    hashData.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII))
+                            .append('=')
+                            .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                } catch (Exception e) {
+                    hashData.append(fieldName).append('=').append(fieldValue);
+                }
                 if (fieldNames.indexOf(fieldName) < fieldNames.size() - 1) {
                     hashData.append('&');
                 }

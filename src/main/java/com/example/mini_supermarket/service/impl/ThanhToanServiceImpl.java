@@ -1,6 +1,5 @@
 package com.example.mini_supermarket.service.impl;
 
-
 import com.example.mini_supermarket.entity.ThanhToan;
 import com.example.mini_supermarket.repository.ThanhToanRepository;
 import com.example.mini_supermarket.service.ThanhToanService;
@@ -67,5 +66,10 @@ public class ThanhToanServiceImpl implements ThanhToanService {
         thanhToan.setMaGiaoDichNganHang(vnpayParams.get("vnp_TxnRef"));
         thanhToan.setTrangThaiTT(0); // Chờ xử lý
         return thanhToanRepository.save(thanhToan);
+    }
+
+    @Override
+    public ThanhToan findByMaGiaoDichNganHang(String maGiaoDichNganHang) {
+        return thanhToanRepository.findByMaGiaoDichNganHangAndIsDeletedFalse(maGiaoDichNganHang).orElse(null);
     }
 }

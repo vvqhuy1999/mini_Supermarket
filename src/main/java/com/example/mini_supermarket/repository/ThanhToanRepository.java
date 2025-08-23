@@ -22,5 +22,6 @@ public interface ThanhToanRepository extends JpaRepository<ThanhToan, Integer> {
     @Query("SELECT t FROM ThanhToan t WHERE t.maTT = :id")
     Optional<ThanhToan> findByIdIncludeDeleted(@Param("id") Integer id);
 
+    Optional<ThanhToan> findByMaGiaoDichNganHangAndIsDeletedFalse(String maGiaoDichNganHang);
 
 } 

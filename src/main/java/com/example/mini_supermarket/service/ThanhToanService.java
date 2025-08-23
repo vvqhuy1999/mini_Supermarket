@@ -21,6 +21,7 @@ public interface ThanhToanService {
     void softDeleteById(Integer id);
 
     ThanhToan update(ThanhToan thanhToan);
+    ThanhToan findByMaGiaoDichNganHang(String maGiaoDichNganHang);
 
     ThanhToan createVNPayPayment(ThanhToan thanhToan, Map<String, String> vnpayParams);
 }

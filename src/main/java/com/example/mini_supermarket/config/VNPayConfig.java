@@ -26,6 +26,8 @@ public class VNPayConfig {
     private String vnp_HashSecret; // Loại bỏ static
 
     // Getter để truy cập các giá trị (nếu cần)
+
+
     public String getVnp_PayUrl() {
         return vnp_PayUrl;
     }
