@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.CaLamViecRepository;
 import com.example.mini_supermarket.entity.CaLamViec;
 import com.example.mini_supermarket.service.CaLamViecService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,12 @@ public class CaLamViecServiceImpl implements CaLamViecService {
     @Override
     @Transactional
     public CaLamViec save(CaLamViec caLamViec) {
+        // Đặt giá trị mặc định
+        if (caLamViec.getIsDeleted() == null) {
+            caLamViec.setIsDeleted(false);
+        }
+        
+        // MaCa được tự động generate bởi @GeneratedValue
         return caLamViecRepository.save(caLamViec);
     }
 

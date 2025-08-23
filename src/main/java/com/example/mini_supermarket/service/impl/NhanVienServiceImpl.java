@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.NhanVienRepository;
 import com.example.mini_supermarket.entity.NhanVien;
 import com.example.mini_supermarket.service.NhanVienService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,33 @@ public class NhanVienServiceImpl implements NhanVienService {
     @Override
     @Transactional
     public NhanVien save(NhanVien theNhanVien) {
+        // Tự động generate mã nhân viên nếu chưa có
+        if (theNhanVien.getMaNV() == null || theNhanVien.getMaNV().trim().isEmpty()) {
+            String maNV = generateMaNhanVien();
+            theNhanVien.setMaNV(maNV);
+        }
+        
+        // Đặt giá trị mặc định
+        if (theNhanVien.getIsDeleted() == null) {
+            theNhanVien.setIsDeleted(false);
+        }
+        
         return nhanVienRepository.save(theNhanVien);
+    }
+    
+    /**
+     * Tạo mã nhân viên tự động
+     * @return Mã nhân viên duy nhất
+     */
+    private String generateMaNhanVien() {
+        String maNV;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            maNV = CodeGenerator.generateMaNhanVien();
+        } while (nhanVienRepository.existsByMaNV(maNV));
+        
+        return maNV;
     }
 
     @Override

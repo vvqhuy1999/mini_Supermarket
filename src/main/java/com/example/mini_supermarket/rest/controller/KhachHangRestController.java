@@ -3,6 +3,8 @@ package com.example.mini_supermarket.rest.controller;
 import com.example.mini_supermarket.entity.KhachHang;
 import com.example.mini_supermarket.service.KhachHangService;
 import com.example.mini_supermarket.dto.CustomerRegistrationRequest;
+import com.example.mini_supermarket.dto.KhachHangUpdateRequest;
+import com.example.mini_supermarket.dto.KhachHangInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -407,6 +409,160 @@ public class KhachHangRestController {
             errorResponse.put("message", "Lỗi khi tìm kiếm khách hàng: " + e.getMessage());
             errorResponse.put("email", email);
             errorResponse.put("error_type", "server_error");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    // ===== API CẬP NHẬT THÔNG TIN KHÁCH HÀNG =====
+    
+    @Operation(summary = "✏️ Cập nhật thông tin khách hàng", description = """
+        **Chức năng:** Cập nhật thông tin cá nhân của khách hàng
+        
+        **Các trường có thể cập nhật:**
+        - Họ tên (hoTen)
+        - Số điện thoại (sdt)
+        - Ngày sinh (ngaySinh)
+        - Địa chỉ (diaChi)
+        
+        **Lưu ý:**
+        - Chỉ cập nhật các trường được gửi trong request
+        - Các trường khác giữ nguyên giá trị cũ
+        - Mã khách hàng và mã người dùng không thể thay đổi
+        """)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "✅ Cập nhật thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = KhachHangInfoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "❌ Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "404", description = "❌ Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    @PutMapping("/{maKH}/update-info")
+    public ResponseEntity<?> updateCustomerInfo(
+            @Parameter(description = "Mã khách hàng cần cập nhật", required = true) 
+            @PathVariable String maKH,
+            @Parameter(description = "Thông tin cần cập nhật", required = true) 
+            @RequestBody KhachHangUpdateRequest updateRequest) {
+        
+        try {
+            // Cập nhật thông tin khách hàng
+            KhachHang updatedKhachHang = khachHangService.updateCustomerInfo(
+                maKH, 
+                updateRequest.getHoTen(), 
+                updateRequest.getSdt(), 
+                updateRequest.getNgaySinh(), 
+                updateRequest.getDiaChi()
+            );
+            
+            // Tạo response thành công
+            KhachHangInfoResponse response = KhachHangInfoResponse.builder()
+                .maKH(updatedKhachHang.getMaKH())
+                .maNguoiDung(updatedKhachHang.getNguoiDung() != null ? updatedKhachHang.getNguoiDung().getMaNguoiDung() : null)
+                .email(updatedKhachHang.getNguoiDung() != null ? updatedKhachHang.getNguoiDung().getEmail() : null)
+                .hoTen(updatedKhachHang.getHoTen())
+                .sdt(updatedKhachHang.getSdt())
+                .ngaySinh(updatedKhachHang.getNgaySinh())
+                .diaChi(updatedKhachHang.getDiaChi())
+                .diemTichLuy(updatedKhachHang.getDiemTichLuy())
+                .loaiKhachHang(updatedKhachHang.getLoaiKhachHang())
+                .message("Cập nhật thông tin khách hàng thành công")
+                .success(true)
+                .build();
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            // Lỗi không tìm thấy khách hàng
+            KhachHangInfoResponse errorResponse = KhachHangInfoResponse.builder()
+                .message("Lỗi: " + e.getMessage())
+                .success(false)
+                .build();
+            
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            
+        } catch (Exception e) {
+            // Lỗi server
+            e.printStackTrace();
+            KhachHangInfoResponse errorResponse = KhachHangInfoResponse.builder()
+                .message("Lỗi server: " + e.getMessage())
+                .success(false)
+                .build();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    // ===== API HIỂN THỊ THÔNG TIN KHÁCH HÀNG =====
+    
+    @Operation(summary = "👤 Hiển thị thông tin khách hàng", description = """
+        **Chức năng:** Lấy thông tin chi tiết của khách hàng theo mã khách hàng
+        
+        **Thông tin trả về:**
+        - Mã khách hàng (maKH)
+        - Mã người dùng (maNguoiDung)
+        - Email (email)
+        - Họ tên (hoTen)
+        - Số điện thoại (sdt)
+        - Ngày sinh (ngaySinh)
+        - Địa chỉ (diaChi)
+        - Điểm tích lũy (diemTichLuy)
+        - Loại khách hàng (loaiKhachHang)
+        
+        **Sử dụng:**
+        - Xem profile cá nhân
+        - Hiển thị thông tin trong form cập nhật
+        - Kiểm tra thông tin khách hàng
+        """)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "✅ Lấy thông tin thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = KhachHangInfoResponse.class))),
+            @ApiResponse(responseCode = "404", description = "❌ Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    @GetMapping("/{maKH}/info")
+    public ResponseEntity<?> getCustomerInfo(
+            @Parameter(description = "Mã khách hàng cần lấy thông tin", required = true) 
+            @PathVariable String maKH) {
+        
+        try {
+            // Lấy thông tin khách hàng
+            KhachHang khachHang = khachHangService.getCustomerInfo(maKH);
+            
+            // Tạo response thành công
+            KhachHangInfoResponse response = KhachHangInfoResponse.builder()
+                .maKH(khachHang.getMaKH())
+                .maNguoiDung(khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getMaNguoiDung() : null)
+                .email(khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getEmail() : null)
+                .hoTen(khachHang.getHoTen())
+                .sdt(khachHang.getSdt())
+                .ngaySinh(khachHang.getNgaySinh())
+                .diaChi(khachHang.getDiaChi())
+                .diemTichLuy(khachHang.getDiemTichLuy())
+                .loaiKhachHang(khachHang.getLoaiKhachHang())
+                .message("Lấy thông tin khách hàng thành công")
+                .success(true)
+                .build();
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            // Lỗi không tìm thấy khách hàng
+            KhachHangInfoResponse errorResponse = KhachHangInfoResponse.builder()
+                .message("Lỗi: " + e.getMessage())
+                .success(false)
+                .build();
+            
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            
+        } catch (Exception e) {
+            // Lỗi server
+            e.printStackTrace();
+            KhachHangInfoResponse errorResponse = KhachHangInfoResponse.builder()
+                .message("Lỗi server: " + e.getMessage())
+                .success(false)
+                .build();
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }

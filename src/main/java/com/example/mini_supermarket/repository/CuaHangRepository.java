@@ -21,4 +21,7 @@ public interface CuaHangRepository extends JpaRepository<CuaHang, String> {
     // Tìm cửa hàng theo ID (bao gồm cả đã xóa)
     @Query("SELECT c FROM CuaHang c WHERE c.maCH = :id")
     Optional<CuaHang> findByIdIncludeDeleted(@Param("id") String id);
+    
+    // Kiểm tra mã cửa hàng có tồn tại không
+    boolean existsByMaCH(String maCH);
 } 

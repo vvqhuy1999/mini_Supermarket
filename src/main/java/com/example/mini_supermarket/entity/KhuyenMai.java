@@ -33,6 +33,9 @@ public class KhuyenMai implements Serializable {
     @Column(name = "LoaiKM", length = 50, nullable = false)
     private String loaiKM; // PhầnTrăm, SốTiền, Điểm, MuaXTangY
 
+    @Column(name = "CouponCode", length = 50, nullable = false)
+    private String couponCode; 
+
     @Column(name = "GiaTriKM", precision = 15, scale = 2, nullable = false)
     private BigDecimal giaTriKM;
 

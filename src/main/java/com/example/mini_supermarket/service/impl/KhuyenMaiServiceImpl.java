@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.KhuyenMaiRepository;
 import com.example.mini_supermarket.entity.KhuyenMai;
 import com.example.mini_supermarket.service.KhuyenMaiService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,62 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     @Override
     @Transactional
     public KhuyenMai save(KhuyenMai theKhuyenMai) {
+        // Tự động generate mã khuyến mãi nếu chưa có
+        if (theKhuyenMai.getMaKM() == null || theKhuyenMai.getMaKM().trim().isEmpty()) {
+            String maKM = generateMaKhuyenMai();
+            theKhuyenMai.setMaKM(maKM);
+        }
+        
+        // Tự động generate coupon code nếu chưa có
+        if (theKhuyenMai.getCouponCode() == null || theKhuyenMai.getCouponCode().trim().isEmpty()) {
+            String couponCode = generateCouponCode();
+            theKhuyenMai.setCouponCode(couponCode);
+        }
+        
+        // Đặt giá trị mặc định
+        if (theKhuyenMai.getIsDeleted() == null) {
+            theKhuyenMai.setIsDeleted(false);
+        }
+        
+        if (theKhuyenMai.getTrangThai() == null) {
+            theKhuyenMai.setTrangThai(1); // Mặc định active
+        }
+        
+        if (theKhuyenMai.getDaSuDung() == null) {
+            theKhuyenMai.setDaSuDung(0); // Mặc định chưa sử dụng
+        }
+        
         return khuyenMaiRepository.save(theKhuyenMai);
+    }
+    
+    /**
+     * Tạo mã khuyến mãi tự động
+     * @return Mã khuyến mãi duy nhất
+     */
+    private String generateMaKhuyenMai() {
+        String maKM;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            maKM = CodeGenerator.generateMaKhuyenMai();
+        } while (khuyenMaiRepository.existsByMaKM(maKM));
+        
+        return maKM;
+    }
+    
+    /**
+     * Tạo coupon code tự động
+     * @return Coupon code duy nhất
+     */
+    private String generateCouponCode() {
+        String couponCode;
+        
+        // Lặp để đảm bảo coupon code không trùng
+        do {
+            couponCode = CodeGenerator.generateCustomCode("COUPON", 8);
+        } while (khuyenMaiRepository.existsByCouponCode(couponCode));
+        
+        return couponCode;
     }
 
     @Override

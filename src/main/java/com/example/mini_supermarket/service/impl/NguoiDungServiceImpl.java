@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.NguoiDungRepository;
 import com.example.mini_supermarket.entity.NguoiDung;
 import com.example.mini_supermarket.service.NguoiDungService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,33 @@ public class NguoiDungServiceImpl implements NguoiDungService {
     @Override
     @Transactional
     public NguoiDung save(NguoiDung theNguoiDung) {
+        // Tự động generate mã người dùng nếu chưa có
+        if (theNguoiDung.getMaNguoiDung() == null || theNguoiDung.getMaNguoiDung().trim().isEmpty()) {
+            String maNguoiDung = generateMaNguoiDung();
+            theNguoiDung.setMaNguoiDung(maNguoiDung);
+        }
+        
+        // Đặt giá trị mặc định
+        if (theNguoiDung.getIsDeleted() == null) {
+            theNguoiDung.setIsDeleted(false);
+        }
+        
         return nguoiDungRepository.save(theNguoiDung);
+    }
+    
+    /**
+     * Tạo mã người dùng tự động
+     * @return Mã người dùng duy nhất
+     */
+    private String generateMaNguoiDung() {
+        String maNguoiDung;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            maNguoiDung = CodeGenerator.generateMaNguoiDung();
+        } while (nguoiDungRepository.existsByMaNguoiDung(maNguoiDung));
+        
+        return maNguoiDung;
     }
 
     @Override

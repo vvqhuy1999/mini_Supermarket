@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.CuaHangRepository;
 import com.example.mini_supermarket.entity.CuaHang;
 import com.example.mini_supermarket.service.CuaHangService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,33 @@ public class CuaHangServiceImpl implements CuaHangService {
     @Override
     @Transactional
     public CuaHang save(CuaHang theCuaHang) {
+        // Tự động generate mã cửa hàng nếu chưa có
+        if (theCuaHang.getMaCH() == null || theCuaHang.getMaCH().trim().isEmpty()) {
+            String maCH = generateMaCuaHang();
+            theCuaHang.setMaCH(maCH);
+        }
+        
+        // Đặt giá trị mặc định
+        if (theCuaHang.getIsDeleted() == null) {
+            theCuaHang.setIsDeleted(false);
+        }
+        
         return cuaHangRepository.save(theCuaHang);
+    }
+    
+    /**
+     * Tạo mã cửa hàng tự động
+     * @return Mã cửa hàng duy nhất
+     */
+    private String generateMaCuaHang() {
+        String maCH;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            maCH = CodeGenerator.generateMaCuaHang();
+        } while (cuaHangRepository.existsByMaCH(maCH));
+        
+        return maCH;
     }
 
     @Override

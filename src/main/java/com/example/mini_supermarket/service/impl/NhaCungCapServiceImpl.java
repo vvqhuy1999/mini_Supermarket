@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.NhaCungCapRepository;
 import com.example.mini_supermarket.entity.NhaCungCap;
 import com.example.mini_supermarket.service.NhaCungCapService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,33 @@ public class NhaCungCapServiceImpl implements NhaCungCapService {
     @Override
     @Transactional
     public NhaCungCap save(NhaCungCap theNhaCungCap) {
+        // Tự động generate mã nhà cung cấp nếu chưa có
+        if (theNhaCungCap.getMaNCC() == null || theNhaCungCap.getMaNCC().trim().isEmpty()) {
+            String maNCC = generateMaNhaCungCap();
+            theNhaCungCap.setMaNCC(maNCC);
+        }
+        
+        // Đặt giá trị mặc định
+        if (theNhaCungCap.getIsDeleted() == null) {
+            theNhaCungCap.setIsDeleted(false);
+        }
+        
         return nhaCungCapRepository.save(theNhaCungCap);
+    }
+    
+    /**
+     * Tạo mã nhà cung cấp tự động
+     * @return Mã nhà cung cấp duy nhất
+     */
+    private String generateMaNhaCungCap() {
+        String maNCC;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            maNCC = CodeGenerator.generateMaNhaCungCap();
+        } while (nhaCungCapRepository.existsByMaNCC(maNCC));
+        
+        return maNCC;
     }
 
     @Override

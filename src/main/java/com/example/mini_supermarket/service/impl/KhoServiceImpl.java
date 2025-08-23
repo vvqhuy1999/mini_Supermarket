@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.KhoRepository;
 import com.example.mini_supermarket.entity.Kho;
 import com.example.mini_supermarket.service.KhoService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,12 @@ public class KhoServiceImpl implements KhoService {
     @Override
     @Transactional
     public Kho save(Kho kho) {
+        // Đặt giá trị mặc định
+        if (kho.getIsDeleted() == null) {
+            kho.setIsDeleted(false);
+        }
+        
+        // MaKho được tự động generate bởi @GeneratedValue
         return khoRepository.save(kho);
     }
 

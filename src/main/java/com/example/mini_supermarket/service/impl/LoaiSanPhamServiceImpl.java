@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.LoaiSanPhamRepository;
 import com.example.mini_supermarket.entity.LoaiSanPham;
 import com.example.mini_supermarket.service.LoaiSanPhamService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,33 @@ public class LoaiSanPhamServiceImpl implements LoaiSanPhamService {
     @Override
     @Transactional
     public LoaiSanPham save(LoaiSanPham loaiSanPham) {
+        // Tự động generate mã loại sản phẩm nếu chưa có
+        if (loaiSanPham.getMaLoaiSP() == null || loaiSanPham.getMaLoaiSP().trim().isEmpty()) {
+            String maLoaiSP = generateMaLoaiSanPham();
+            loaiSanPham.setMaLoaiSP(maLoaiSP);
+        }
+        
+        // Đặt giá trị mặc định
+        if (loaiSanPham.getIsDeleted() == null) {
+            loaiSanPham.setIsDeleted(false);
+        }
+        
         return loaiSanPhamRepository.save(loaiSanPham);
+    }
+    
+    /**
+     * Tạo mã loại sản phẩm tự động
+     * @return Mã loại sản phẩm duy nhất
+     */
+    private String generateMaLoaiSanPham() {
+        String maLoaiSP;
+        
+        // Lặp để đảm bảo mã không trùng
+        do {
+            maLoaiSP = CodeGenerator.generateMaLoaiSanPham();
+        } while (loaiSanPhamRepository.existsByMaLoaiSP(maLoaiSP));
+        
+        return maLoaiSP;
     }
 
     @Override

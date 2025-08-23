@@ -21,4 +21,7 @@ public interface LoaiSanPhamRepository extends JpaRepository<LoaiSanPham, String
     // Tìm loại sản phẩm theo ID (bao gồm cả đã xóa)
     @Query("SELECT l FROM LoaiSanPham l WHERE l.maLoaiSP = :id")
     Optional<LoaiSanPham> findByIdIncludeDeleted(@Param("id") String id);
+    
+    // Kiểm tra mã loại sản phẩm có tồn tại không
+    boolean existsByMaLoaiSP(String maLoaiSP);
 } 

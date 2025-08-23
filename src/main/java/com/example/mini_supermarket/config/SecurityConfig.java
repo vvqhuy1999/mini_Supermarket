@@ -91,7 +91,7 @@ public class SecurityConfig {
     // ===== API CÔNG KHAI (Public) - Không cần authentication =====
     private final String[] PUBLIC_ENDPOINTS = {
 
-            "/api/thanhtoan/vnpay",
+           
         // Swagger & API Documentation
         "/swagger-ui/**", 
         "/swagger-ui.html", 
@@ -128,6 +128,13 @@ public class SecurityConfig {
         "/api/giasanpham/*",            // GET: Xem chi tiết giá sản phẩm
         "/api/tonkhochitiet",           // GET: Xem tồn kho
         "/api/tonkhochitiet/*",         // GET: Xem chi tiết tồn kho
+        
+        // Khách hàng - CHỈ XEM thông tin cơ bản (không cần authentication)
+        "/api/khachhang/register",      // POST: Đăng ký tài khoản khách hàng mới
+        "/api/khachhang/by-email/*",    // GET: Tìm khách hàng theo email
+        
+        // Người dùng - CHỈ XEM thông tin cơ bản (không cần authentication)
+        "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
 
 
         // Media & Images
@@ -138,27 +145,29 @@ public class SecurityConfig {
         "/api/upload/product-image/**",     // Xem ảnh sản phẩm theo ID
         "/api/upload/product-main-image/**", // Xem ảnh chính sản phẩm
         "/images/**",                   // Truy cập ảnh từ uploads/images
-        "/uploads/**",                  // Truy cập trực tiếp từ thư mục uploads
-        
+        "/uploads/**",                   // Truy cập trực tiếp từ thư mục uploads
+
+        // VNPay callback - Không cần authentication
+        "/api/thanhtoan/vnpay/return",  // Callback URL từ VNPay sau khi thanh toán
+
+        "/api/phuongthucthanhtoan",
+
+
         // Health check
         "/actuator/health/**",
-        "/health",
-        // Đăng ký tài khoản khách hàng mới
-        "/api/khachhang/register",      // POST: Đăng ký tài khoản khách hàng mới
-        
-        // Tìm kiếm khách hàng theo email (không cần authentication)
-        "/api/khachhang/by-email/*",    // GET: Tìm khách hàng theo email
-        
-        // Profile khách hàng - Xem thông tin cá nhân (không cần authentication)
-        "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
+        "/health"
     };
     
     // ===== API DÀNH CHO KHÁCH HÀNG (Customer) - Cần authentication =====
     private final String[] CUSTOMER_ENDPOINTS = {
+        "/api/thanhtoan/vnpay",
+
         // Giỏ hàng cá nhân - FULL CRUD (merged controller)
         "/api/giohang/**",              // FULL CRUD giỏ hàng và items, sync, status
         
-        "/api/khachhang/**", 
+        // Khách hàng - Quản lý cá nhân (cần authentication)
+        "/api/khachhang/by-nguoidung/*", // GET: Xem profile, PUT: Cập nhật profile
+        "/api/khachhang/*",             // GET: Xem thông tin cá nhân, PUT: Cập nhật thông tin
 
         // Tạo hóa đơn từ giỏ hàng - thay thế đơn hàng
         "/api/hoadon/from-cart",       // POST: Tạo hóa đơn từ giỏ hàng
@@ -173,7 +182,6 @@ public class SecurityConfig {
         "/api/hoadon/optimized",        // GET: Xem hóa đơn tối ưu với pagination
         "/api/hoadon/count/**",         // GET: Đếm hóa đơn
         "/api/hoadon/*/cancel",         // PATCH: Hủy hóa đơn của mình
-        "/api/hoadon/{maHD}/cancel",    // PATCH: Hủy hóa đơn cụ thể (explicit pattern)
         "/api/hoadon/*/status",         // POST: Cập nhật trạng thái hóa đơn
         "/api/hoadon/*/trangthai/*",    // PUT: Cập nhật trạng thái hóa đơn (alternative)
         "/api/chitiethoadon",           // GET: Xem chi tiết hóa đơn cá nhân
@@ -183,11 +191,11 @@ public class SecurityConfig {
         // Thanh toán cá nhân
         "/api/thanhtoan",               // POST: Tạo thanh toán
         "/api/thanhtoan/*",             // GET: Xem trạng thái thanh toán
-        "/api/phuongthucthanhtoan",     // GET: Xem phương thức thanh toán
+             // GET: Xem phương thức thanh toán
         
         // Profile khách hàng - Xem và cập nhật thông tin cá nhân (cần authentication)
         "/api/khachhang/by-nguoidung/*", // GET: Xem profile, PUT: Cập nhật profile
-        "/api/nguoidung/email/*",       // GET: Lấy thông tin người dùng theo email
+        // Lưu ý: /api/nguoidung/email/* đã được chuyển sang PUBLIC_ENDPOINTS
         
         // Đổi mật khẩu
         "/api/nguoidung/change-password", // POST: Đổi mật khẩu
@@ -207,8 +215,10 @@ public class SecurityConfig {
     
     // ===== API DÀNH CHO NHÂN VIÊN (Employee) - Cần role EMPLOYEE =====
     private final String[] EMPLOYEE_ENDPOINTS = {
-        // Quản lý khách hàng - FULL CRUD
-        "/api/khachhang/**",            // Quản lý tất cả khách hàng
+        // Quản lý khách hàng - FULL CRUD (nhân viên quản lý tất cả khách hàng)
+        "/api/khachhang",               // GET: Xem danh sách tất cả khách hàng
+        "/api/khachhang/*",        // GET: Xem chi tiết khách hàng, PUT: Cập nhật khách hàng
+        "/api/khachhang/admin/**",      // Quản lý khách hàng (nếu có sub-path admin)
         
         // Quản lý kho cơ bản - CHỈ XEM
         "/api/tonkhochitiet",           // GET: Xem tồn kho
@@ -219,12 +229,17 @@ public class SecurityConfig {
         // Tạo hóa đơn từ giỏ hàng - thay thế đơn hàng
         "/api/hoadon/from-cart",       // POST: Tạo hóa đơn từ giỏ hàng
         
-        // Quản lý hóa đơn - FULL CRUD
-        "/api/hoadon/**",      // Quản lý hóa đơn (nhân viên)
-        "/api/chitiethoadon/**", // Quản lý chi tiết hóa đơn (nhân viên)
+        // Quản lý hóa đơn - FULL CRUD (nhân viên quản lý tất cả hóa đơn)
+        "/api/hoadon",                  // GET: Xem danh sách tất cả hóa đơn
+        "/api/hoadon/*",           // GET: Xem chi tiết hóa đơn, PUT: Cập nhật hóa đơn
+        "/api/hoadon/employee/**",      // Quản lý hóa đơn (nếu có sub-path employee)
+        "/api/chitiethoadon",           // GET: Xem danh sách chi tiết hóa đơn
+        "/api/chitiethoadon/*",  // GET: Xem chi tiết cụ thể, PUT: Cập nhật chi tiết
         
         // Quản lý thanh toán - XỬ LÝ
-        "/api/thanhtoan/**",   // Xử lý thanh toán (nhân viên)
+        "/api/thanhtoan",               // GET: Xem danh sách thanh toán
+        "/api/thanhtoan/*",        // GET: Xem chi tiết thanh toán, PUT: Cập nhật thanh toán
+        "/api/thanhtoan/employee/**",   // Xử lý thanh toán (nếu có sub-path employee)
         
         // Quản lý khuyến mãi cơ bản - CHỈ XEM VÀ CẬP NHẬT
         "/api/khuyenmai",      // GET: Xem khuyến mãi, PUT: Cập nhật

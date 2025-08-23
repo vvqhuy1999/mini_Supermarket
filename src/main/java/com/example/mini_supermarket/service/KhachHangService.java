@@ -3,6 +3,7 @@ package com.example.mini_supermarket.service;
 import com.example.mini_supermarket.entity.KhachHang;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -55,4 +56,22 @@ public interface KhachHangService {
      * @return KhachHang nếu tìm thấy, null nếu không tìm thấy
      */
     KhachHang findByEmail(String email);
+    
+    /**
+     * Cập nhật thông tin khách hàng theo mã khách hàng
+     * @param maKH Mã khách hàng cần cập nhật
+     * @param hoTen Họ tên mới
+     * @param sdt Số điện thoại mới
+     * @param ngaySinh Ngày sinh mới
+     * @param diaChi Địa chỉ mới
+     * @return KhachHang đã được cập nhật
+     */
+    KhachHang updateCustomerInfo(String maKH, String hoTen, String sdt, LocalDate ngaySinh, String diaChi);
+    
+    /**
+     * Lấy thông tin chi tiết khách hàng theo mã khách hàng
+     * @param maKH Mã khách hàng cần lấy thông tin
+     * @return KhachHang với thông tin đầy đủ
+     */
+    KhachHang getCustomerInfo(String maKH);
 } 
