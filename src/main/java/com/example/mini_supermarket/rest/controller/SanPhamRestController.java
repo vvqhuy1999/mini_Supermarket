@@ -241,6 +241,117 @@ public class SanPhamRestController {
         }
     }
 
+    // === ENDPOINTS TÌM KIẾM ===
+    
+    @Operation(summary = "Tìm kiếm sản phẩm theo tên và mô tả", description = "Tìm kiếm sản phẩm theo tên sản phẩm và mô tả (tìm kiếm mờ - LIKE)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "400", description = "Tham số tìm kiếm không hợp lệ"),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/search")
+    public ResponseEntity<List<SanPhamOptimizedDto>> searchSanPham(
+            @Parameter(description = "Từ khóa tìm kiếm (tên sản phẩm hoặc mô tả)", required = false)
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @Parameter(description = "Tìm kiếm theo tên sản phẩm", required = false)
+            @RequestParam(value = "tensp", required = false) String tensp,
+            @Parameter(description = "Tìm kiếm theo mô tả", required = false)
+            @RequestParam(value = "mota", required = false) String mota,
+            @Parameter(description = "Chỉ lấy sản phẩm đang kinh doanh", required = false)
+            @RequestParam(value = "activeOnly", defaultValue = "true") boolean activeOnly
+    ) {
+        try {
+            // Lấy tất cả sản phẩm active để filter
+            List<SanPhamOptimizedDto> allSanPhams = activeOnly 
+                ? sanPhamService.findAllActiveOptimized() 
+                : sanPhamService.findAllActiveOptimized(); // Tạm thời dùng findAllActiveOptimized
+            
+            List<SanPhamOptimizedDto> filteredSanPhams = allSanPhams;
+            
+            // Nếu có keyword, tìm kiếm theo cả tên và mô tả
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchTerm = keyword.trim().toLowerCase();
+                filteredSanPhams = allSanPhams.stream()
+                    .filter(sp -> (sp.getTenSP() != null && sp.getTenSP().toLowerCase().contains(searchTerm)) ||
+                                 (sp.getMoTa() != null && sp.getMoTa().toLowerCase().contains(searchTerm)))
+                    .toList();
+            }
+            
+            // Nếu có tensp, tìm kiếm theo tên sản phẩm
+            if (tensp != null && !tensp.trim().isEmpty()) {
+                String searchTerm = tensp.trim().toLowerCase();
+                filteredSanPhams = allSanPhams.stream()
+                    .filter(sp -> sp.getTenSP() != null && sp.getTenSP().toLowerCase().contains(searchTerm))
+                    .toList();
+            }
+            
+            // Nếu có mota, tìm kiếm theo mô tả
+            if (mota != null && !mota.trim().isEmpty()) {
+                String searchTerm = mota.trim().toLowerCase();
+                filteredSanPhams = allSanPhams.stream()
+                    .filter(sp -> sp.getMoTa() != null && sp.getMoTa().toLowerCase().contains(searchTerm))
+                    .toList();
+            }
+            
+            return new ResponseEntity<>(filteredSanPhams, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @Operation(summary = "Tìm kiếm sản phẩm nâng cao", description = "Tìm kiếm sản phẩm với nhiều tiêu chí kết hợp")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = SanPhamOptimizedDto.class))),
+            @ApiResponse(responseCode = "500", description = "Lỗi server")
+    })
+    @GetMapping("/search/advanced")
+    public ResponseEntity<List<SanPhamOptimizedDto>> advancedSearchSanPham(
+            @Parameter(description = "Từ khóa tìm kiếm", required = false)
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @Parameter(description = "Mã loại sản phẩm", required = false)
+            @RequestParam(value = "maLoaiSP", required = false) String maLoaiSP,
+            @Parameter(description = "Chỉ lấy sản phẩm đang kinh doanh", required = false)
+            @RequestParam(value = "activeOnly", defaultValue = "true") boolean activeOnly
+    ) {
+        try {
+            List<SanPhamOptimizedDto> allSanPhams = activeOnly 
+                ? sanPhamService.findAllActiveOptimized() 
+                : sanPhamService.findAllActiveOptimized(); // Tạm thời dùng findAllActiveOptimized
+            
+            List<SanPhamOptimizedDto> filteredSanPhams = allSanPhams;
+            
+            // Filter theo từ khóa
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchTerm = keyword.trim().toLowerCase();
+                filteredSanPhams = filteredSanPhams.stream()
+                    .filter(sp -> (sp.getTenSP() != null && sp.getTenSP().toLowerCase().contains(searchTerm)) ||
+                                 (sp.getMoTa() != null && sp.getMoTa().toLowerCase().contains(searchTerm)))
+                    .toList();
+            }
+            
+            // Filter theo loại sản phẩm
+            if (maLoaiSP != null && !maLoaiSP.trim().isEmpty()) {
+                String searchTerm = maLoaiSP.trim();
+                filteredSanPhams = filteredSanPhams.stream()
+                    .filter(sp -> sp.getLoaiSanPham() != null && 
+                                sp.getLoaiSanPham().getMaLoaiSP() != null &&
+                                sp.getLoaiSanPham().getMaLoaiSP().equals(searchTerm))
+                    .toList();
+            }
+            
+            return new ResponseEntity<>(filteredSanPhams, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // === ENDPOINTS QUẢN LÝ - FULL CRUD ===
 
     // Thêm sản phẩm mới

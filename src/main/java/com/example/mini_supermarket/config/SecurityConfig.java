@@ -119,6 +119,8 @@ public class SecurityConfig {
         "/api/sanpham/category/*/active", // GET: Xem sản phẩm theo category + active
         "/api/sanpham/with-tonkho",     // GET: Xem danh sách sản phẩm với số lượng tồn kho
         "/api/sanpham/*/with-tonkho",   // GET: Xem chi tiết sản phẩm với số lượng tồn kho
+        "/api/sanpham/search",          // GET: Tìm kiếm sản phẩm theo tên và mô tả
+        "/api/sanpham/search/advanced", // GET: Tìm kiếm sản phẩm nâng cao
         "/api/loaisanpham",             // GET: Xem danh sách loại sản phẩm
         "/api/loaisanpham/*",           // GET: Xem chi tiết loại sản phẩm
         "/api/khuyenmai",               // GET: Xem danh sách khuyến mãi
