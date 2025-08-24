@@ -1,4 +1,3 @@
-
 package com.example.mini_supermarket.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -366,30 +365,26 @@ public class SecurityConfig {
             
             // Cấu hình authorization - Phân quyền theo role cụ thể
             .authorizeHttpRequests(authz -> authz
-                // 🔓 TEST MODE: Mở toàn bộ API để test
-                .anyRequest().permitAll()
+                // API công khai - Không cần authentication
+                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 
-                // ⚠️ COMMENT TẤT CẢ PHÂN QUYỀN ĐỂ TEST:
-                // // API công khai - Không cần authentication
-                // .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                // 
-                // // API dành cho khách hàng - Cần authentication
-                // .requestMatchers(CUSTOMER_ENDPOINTS).authenticated()
-                // 
-                // // API dành cho nhân viên - Cần role EMPLOYEE
-                // .requestMatchers(EMPLOYEE_ENDPOINTS).hasRole("EMPLOYEE")
-                // 
-                // // API chung cho cả EMPLOYEE và MANAGER
-                // .requestMatchers(SHARED_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
-                // 
-                // // API dành cho quản lý - Cần role MANAGER
-                // .requestMatchers(MANAGER_ENDPOINTS).hasRole("MANAGER")
-                // 
-                // // API dành cho admin - Cần role ADMIN (đã comment - chưa cần dùng)
-                // // .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
-                // 
-                // // Tất cả request khác - Cần authentication
-                // .anyRequest().authenticated()
+                // API dành cho khách hàng - Cần authentication
+                .requestMatchers(CUSTOMER_ENDPOINTS).authenticated()
+                
+                // API dành cho nhân viên - Cần role EMPLOYEE
+                .requestMatchers(EMPLOYEE_ENDPOINTS).hasRole("EMPLOYEE")
+                
+                // API chung cho cả EMPLOYEE và MANAGER
+                .requestMatchers(SHARED_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
+                
+                // API dành cho quản lý - Cần role MANAGER
+                .requestMatchers(MANAGER_ENDPOINTS).hasRole("MANAGER")
+                
+                // API dành cho admin - Cần role ADMIN (đã comment - chưa cần dùng)
+                // .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                
+                // Tất cả request khác - Cần authentication
+                .anyRequest().authenticated()
             );
         
         return http.build();
