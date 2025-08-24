@@ -380,10 +380,11 @@ INSERT INTO giasanpham (masp, gia, ngaybatdau, lydothaydoi, nguoithaydoi) VALUES
 ('SP139', 87000, '2025-01-01', 'Giá niêm yết', 'NV001'),
 ('SP140', 22000, '2025-01-01', 'Giá niêm yết', 'NV001');
 
-INSERT INTO khuyenmai (makm, tenchuongtrinh, mota, loaikm, giatrikm, coupon_code, dieukienapdung, ngaybatdau, ngayketthuc, soluongtoida, dasudung, maquanly, trangthai) VALUES
+INSERT INTO khuyenmai (makm, tenchuongtrinh, mota, loaikm, giatrikm, couponcode, dieukienapdung, ngaybatdau, ngayketthuc, soluongtoida, dasudung, maquanly, trangthai) VALUES
 ('KMSP001', 'Giảm giá tháng 7', 'Giảm giá cho tất cả mặt hàng', 'PhanTram', 10.0, 'WELCOME-T7', 'Áp dụng cho tất cả sản phẩm', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 1000, 50, 'NV002', 1),
 ('KMSP002', 'Tặng điểm tích lũy', 'Tặng điểm cho khách hàng VIP', 'Diem', 50, 'WELCOME-TL', 'Khách hàng VIP trở lên', '2025-07-01 00:00:00', '2025-07-31 23:59:59', 500, 25, 'NV002', 1),
-('KMSP003', 'Mua 1 tặng 1', 'Áp dụng cho sản phẩm mỹ phẩm', 'MuaXTangY', 0, 'WELCOME-MP', 'Mua 1 sản phẩm tặng 1 sản phẩm cùng loại', '2025-07-10 00:00:00', '2025-07-20 23:59:59', 200, 10, 'NV002', 1);
+('KMSP003', 'Mua 1 tặng 1', 'Áp dụng cho sản phẩm mỹ phẩm', 'MuaXTangY', 0, 'WELCOME-MP', 'Mua 1 sản phẩm tặng 1 sản phẩm cùng loại', '2025-07-10 00:00:00', '2025-07-20 23:59:59', 200, 10, 'NV002', 1),
+('KMSP004', 'Giảm giá tháng 8', 'Giảm giá đặc biệt cho tháng 8', 'PhanTram', 15.0, 'AUGUST-15', 'Áp dụng cho tất cả sản phẩm, giảm 15%', '2025-08-01 00:00:00', '2025-08-31 23:59:59', 1500, 0, 'NV002', 1);
 
 INSERT INTO phuongthucthanhtoan (mapttt, tenpttt, mota, phigiaodich, trangthai) VALUES
 ('PTTT001', 'Tiền Mặt', 'Thanh toán bằng tiền mặt', 0, 1),

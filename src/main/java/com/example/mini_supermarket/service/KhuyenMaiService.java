@@ -15,6 +15,8 @@ public interface KhuyenMaiService {
 
     KhuyenMai findActiveById(String id); // Chỉ lấy record chưa bị xóa
 
+    KhuyenMai findByCouponCode(String couponCode); // Tìm khuyến mãi theo mã coupon
+
     KhuyenMai save(KhuyenMai khuyenMai);
 
     void deleteById(String id); // Hard delete (giữ lại cho tương thích)

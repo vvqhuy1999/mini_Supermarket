@@ -111,7 +111,7 @@ CREATE TABLE khuyenmai (
     tenchuongtrinh VARCHAR(255) NOT NULL,
     mota TEXT,
     loaikm VARCHAR(50) NOT NULL, -- Percentage, Amount, Points, BuyXGetY
-    coupon_code VARCHAR(50) NOT NULL,
+    couponcode VARCHAR(50) NOT NULL,
     giatrikm DECIMAL(15,2) NOT NULL, -- Promotion value (% or amount)
     dieukienapdung TEXT, -- Conditions for applying the promotion
     ngaybatdau TIMESTAMP NOT NULL,

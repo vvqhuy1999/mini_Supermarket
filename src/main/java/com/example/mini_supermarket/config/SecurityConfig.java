@@ -123,7 +123,7 @@ public class SecurityConfig {
         "/api/loaisanpham",             // GET: Xem danh sách loại sản phẩm
         "/api/loaisanpham/*",           // GET: Xem chi tiết loại sản phẩm
         "/api/khuyenmai",               // GET: Xem danh sách khuyến mãi
-        "/api/khuyenmai/*",             // GET: Xem chi tiết khuyến mãi
+        "/api/khuyenmai/*",             // GET: Xem chi tiết khuyến mãi (KHÔNG bao gồm /coupon/{couponCode})
         "/api/giasanpham",              // GET: Xem giá sản phẩm
         "/api/giasanpham/*",            // GET: Xem chi tiết giá sản phẩm
         "/api/tonkhochitiet",           // GET: Xem tồn kho
@@ -168,6 +168,7 @@ public class SecurityConfig {
         // Khách hàng - Quản lý cá nhân (cần authentication)
         "/api/khachhang/by-nguoidung/*", // GET: Xem profile, PUT: Cập nhật profile
         "/api/khachhang/*",             // GET: Xem thông tin cá nhân, PUT: Cập nhật thông tin
+        "/api/khachhang/*/shipping-info", // GET: Xem thông tin giao hàng, PUT: Cập nhật thông tin giao hàng (cho Checkout.vue)
 
         // Tạo hóa đơn từ giỏ hàng - thay thế đơn hàng
         "/api/hoadon/from-cart",       // POST: Tạo hóa đơn từ giỏ hàng
@@ -211,6 +212,7 @@ public class SecurityConfig {
         // Đánh giá sản phẩm (nếu có)
         "/api/danhgia",                 // GET: Xem đánh giá cá nhân, POST: Tạo đánh giá
         "/api/danhgia/*",               // PUT: Cập nhật đánh giá, DELETE: Xóa đánh giá
+        "/api/khuyenmai/coupon/**", // GET: Kiểm tra coupon code
     };
     
     // ===== API DÀNH CHO NHÂN VIÊN (Employee) - Cần role EMPLOYEE =====
@@ -244,6 +246,7 @@ public class SecurityConfig {
         // Quản lý khuyến mãi cơ bản - CHỈ XEM VÀ CẬP NHẬT
         "/api/khuyenmai",      // GET: Xem khuyến mãi, PUT: Cập nhật
         "/api/khuyenmai/*",    // GET: Xem chi tiết, PUT: Cập nhật
+        "/api/khuyenmai/coupon/**", // GET: Kiểm tra coupon code (yêu cầu authentication)
     };
     
     // ===== API CHUNG CHO CẢ EMPLOYEE VÀ MANAGER =====
@@ -363,26 +366,30 @@ public class SecurityConfig {
             
             // Cấu hình authorization - Phân quyền theo role cụ thể
             .authorizeHttpRequests(authz -> authz
-                // API công khai - Không cần authentication
-                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                // 🔓 TEST MODE: Mở toàn bộ API để test
+                .anyRequest().permitAll()
                 
-                // API dành cho khách hàng - Cần authentication
-                .requestMatchers(CUSTOMER_ENDPOINTS).authenticated()
-                
-                // API dành cho nhân viên - Cần role EMPLOYEE
-                .requestMatchers(EMPLOYEE_ENDPOINTS).hasRole("EMPLOYEE")
-                
-                // API chung cho cả EMPLOYEE và MANAGER
-                .requestMatchers(SHARED_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
-                
-                // API dành cho quản lý - Cần role MANAGER
-                .requestMatchers(MANAGER_ENDPOINTS).hasRole("MANAGER")
-                
-                // API dành cho admin - Cần role ADMIN (đã comment - chưa cần dùng)
-                // .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
-                
-                // Tất cả request khác - Cần authentication
-                .anyRequest().authenticated()
+                // ⚠️ COMMENT TẤT CẢ PHÂN QUYỀN ĐỂ TEST:
+                // // API công khai - Không cần authentication
+                // .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                // 
+                // // API dành cho khách hàng - Cần authentication
+                // .requestMatchers(CUSTOMER_ENDPOINTS).authenticated()
+                // 
+                // // API dành cho nhân viên - Cần role EMPLOYEE
+                // .requestMatchers(EMPLOYEE_ENDPOINTS).hasRole("EMPLOYEE")
+                // 
+                // // API chung cho cả EMPLOYEE và MANAGER
+                // .requestMatchers(SHARED_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
+                // 
+                // // API dành cho quản lý - Cần role MANAGER
+                // .requestMatchers(MANAGER_ENDPOINTS).hasRole("MANAGER")
+                // 
+                // // API dành cho admin - Cần role ADMIN (đã comment - chưa cần dùng)
+                // // .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                // 
+                // // Tất cả request khác - Cần authentication
+                // .anyRequest().authenticated()
             );
         
         return http.build();

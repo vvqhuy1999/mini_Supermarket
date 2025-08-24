@@ -30,7 +30,7 @@ public class KhachHang implements Serializable {
     @Column(name = "HoTen", length = 255, nullable = false)
     private String hoTen;
 
-    @Column(name = "SDT", length = 15)
+    @Column(name = "SDT", length = 15, unique = true)
     private String sdt;
 
     @Column(name = "DiaChi", length = 255)

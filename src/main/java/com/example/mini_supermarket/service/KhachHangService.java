@@ -74,4 +74,19 @@ public interface KhachHangService {
      * @return KhachHang với thông tin đầy đủ
      */
     KhachHang getCustomerInfo(String maKH);
+    
+    /**
+     * Lấy thông tin giao hàng của khách hàng
+     * @param maKH Mã khách hàng cần lấy thông tin giao hàng
+     * @return ShippingInfoResponse với thông tin giao hàng
+     */
+    com.example.mini_supermarket.dto.ShippingInfoResponse getShippingInfo(String maKH);
+    
+    /**
+     * Cập nhật thông tin giao hàng của khách hàng
+     * @param maKH Mã khách hàng cần cập nhật
+     * @param request Thông tin giao hàng mới
+     * @return ShippingInfoResponse đã được cập nhật
+     */
+    com.example.mini_supermarket.dto.ShippingInfoResponse updateShippingInfo(String maKH, com.example.mini_supermarket.dto.ShippingInfoRequest request);
 } 

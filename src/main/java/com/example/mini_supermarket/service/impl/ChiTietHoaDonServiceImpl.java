@@ -42,6 +42,7 @@ public class ChiTietHoaDonServiceImpl implements ChiTietHoaDonService {
     @Override
     @Transactional
     public ChiTietHoaDon save(ChiTietHoaDon chiTietHoaDon) {
+        // Tồn kho sẽ được tự động quản lý bởi database trigger
         return chiTietHoaDonRepository.save(chiTietHoaDon);
     }
 
@@ -56,6 +57,7 @@ public class ChiTietHoaDonServiceImpl implements ChiTietHoaDonService {
     public void softDeleteById(Integer id) {
         ChiTietHoaDon chiTietHoaDon = findById(id);
         if (chiTietHoaDon != null) {
+            // Tồn kho sẽ được tự động hoàn trả bởi database trigger
             chiTietHoaDon.setIsDeleted(true);
             chiTietHoaDonRepository.save(chiTietHoaDon);
         }

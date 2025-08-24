@@ -362,6 +362,82 @@ public class KhachHangServiceImpl implements KhachHangService {
         }
     }
     
+    @Override
+    @Transactional(readOnly = true)
+    public com.example.mini_supermarket.dto.ShippingInfoResponse getShippingInfo(String maKH) {
+        try {
+            KhachHang khachHang = findActiveById(maKH);
+            if (khachHang == null) {
+                throw new RuntimeException("Không tìm thấy khách hàng với mã: " + maKH);
+            }
+            
+            // Tạo response từ thông tin khách hàng
+            com.example.mini_supermarket.dto.ShippingInfoResponse response = com.example.mini_supermarket.dto.ShippingInfoResponse.builder()
+                    .maKH(khachHang.getMaKH())
+                    .hoTen(khachHang.getHoTen())
+                    .soDienThoai(khachHang.getSdt())
+                    .email(khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getEmail() : null)
+                    .diaChi(khachHang.getDiaChi())
+                    .ghiChu(null) // Có thể mở rộng sau
+                    .macDinh(true) // Mặc định là địa chỉ chính
+                    .maNguoiDung(khachHang.getNguoiDung() != null ? khachHang.getNguoiDung().getMaNguoiDung() : null)
+                    .build();
+            
+            System.out.println("✅ Lấy thông tin giao hàng thành công: " + maKH);
+            return response;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi lấy thông tin giao hàng: " + e.getMessage());
+            throw new RuntimeException("Lỗi lấy thông tin giao hàng: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public com.example.mini_supermarket.dto.ShippingInfoResponse updateShippingInfo(String maKH, com.example.mini_supermarket.dto.ShippingInfoRequest request) {
+        try {
+            // Tìm khách hàng hiện tại
+            KhachHang existingKhachHang = findActiveById(maKH);
+            if (existingKhachHang == null) {
+                throw new RuntimeException("Không tìm thấy khách hàng với mã: " + maKH);
+            }
+            
+            // Cập nhật thông tin giao hàng
+            if (request.getHoTen() != null && !request.getHoTen().trim().isEmpty()) {
+                existingKhachHang.setHoTen(request.getHoTen().trim());
+            }
+            if (request.getSoDienThoai() != null && !request.getSoDienThoai().trim().isEmpty()) {
+                existingKhachHang.setSdt(request.getSoDienThoai().trim());
+            }
+            if (request.getDiaChi() != null) {
+                existingKhachHang.setDiaChi(request.getDiaChi().trim());
+            }
+            
+            // Lưu thay đổi
+            KhachHang updatedKhachHang = khachHangRepository.save(existingKhachHang);
+            clearKhachHangCache();
+            
+            // Tạo response từ thông tin đã cập nhật
+            com.example.mini_supermarket.dto.ShippingInfoResponse response = com.example.mini_supermarket.dto.ShippingInfoResponse.builder()
+                    .maKH(updatedKhachHang.getMaKH())
+                    .hoTen(updatedKhachHang.getHoTen())
+                    .soDienThoai(updatedKhachHang.getSdt())
+                    .email(updatedKhachHang.getNguoiDung() != null ? updatedKhachHang.getNguoiDung().getEmail() : null)
+                    .diaChi(updatedKhachHang.getDiaChi())
+                    .ghiChu(request.getGhiChu())
+                    .macDinh(request.getMacDinh() != null ? request.getMacDinh() : true)
+                    .maNguoiDung(updatedKhachHang.getNguoiDung() != null ? updatedKhachHang.getNguoiDung().getMaNguoiDung() : null)
+                    .build();
+            
+            System.out.println("✅ Cập nhật thông tin giao hàng thành công: " + maKH);
+            return response;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi cập nhật thông tin giao hàng: " + e.getMessage());
+            throw new RuntimeException("Lỗi cập nhật thông tin giao hàng: " + e.getMessage());
+        }
+    }
+    
     /**
      * Xóa tất cả cache liên quan đến khách hàng
      */

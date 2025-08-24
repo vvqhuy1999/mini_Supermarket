@@ -125,6 +125,13 @@ public class KhuyenMaiServiceImpl implements KhuyenMaiService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public KhuyenMai findByCouponCode(String couponCode) {
+        Optional<KhuyenMai> result = khuyenMaiRepository.findByCouponCode(couponCode);
+        return result.orElse(null);
+    }
+
+    @Override
     @Transactional
     public void softDeleteById(String id) {
         Optional<KhuyenMai> khuyenMaiOpt = khuyenMaiRepository.findActiveById(id);

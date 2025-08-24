@@ -103,6 +103,77 @@ public class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Không tìm thấy hóa đơn với ID - " + hoaDon.getMaHD());
         }
 
+        // Kiểm tra trạng thái hóa đơn (chỉ cho phép cập nhật khi chưa thanh toán)
+        HoaDon existingHoaDonData = existingHoaDon.get();
+        if (existingHoaDonData.getTrangThai() != null && existingHoaDonData.getTrangThai() != 0) {
+            throw new RuntimeException("Chỉ có thể cập nhật hóa đơn chưa thanh toán");
+        }
+
+        // Xử lý khuyến mãi nếu có thay đổi
+        if (hoaDon.getKhuyenMai() != null) {
+            // Kiểm tra khuyến mãi có hợp lệ không
+            KhuyenMai khuyenMai = khuyenMaiService.findById(hoaDon.getKhuyenMai().getMaKM());
+            if (khuyenMai == null) {
+                throw new RuntimeException("Không tìm thấy khuyến mãi với mã: " + hoaDon.getKhuyenMai().getMaKM());
+            }
+
+            // Kiểm tra khuyến mãi có hợp lệ không
+            java.sql.Timestamp now = java.sql.Timestamp.valueOf(LocalDateTime.now());
+            
+            // Kiểm tra ngày bắt đầu
+            if (khuyenMai.getNgayBatDau() != null && now.before(khuyenMai.getNgayBatDau())) {
+                throw new RuntimeException("Khuyến mãi chưa bắt đầu");
+            }
+            
+            // Kiểm tra ngày kết thúc
+            if (khuyenMai.getNgayKetThuc() != null && now.after(khuyenMai.getNgayKetThuc())) {
+                throw new RuntimeException("Khuyến mãi đã hết hạn");
+            }
+            
+            // Kiểm tra số lượng đã sử dụng
+            if (khuyenMai.getSoLuongToiDa() != null && khuyenMai.getDaSuDung() != null) {
+                if (khuyenMai.getDaSuDung() >= khuyenMai.getSoLuongToiDa()) {
+                    throw new RuntimeException("Khuyến mãi đã sử dụng hết");
+                }
+            }
+            
+            // Kiểm tra trạng thái
+            if (khuyenMai.getTrangThai() != null && khuyenMai.getTrangThai() != 1) {
+                throw new RuntimeException("Khuyến mãi không hoạt động");
+            }
+
+            // Tính toán tiền giảm giá
+            BigDecimal tongTienHang = hoaDon.getTongTienHang();
+            if (tongTienHang != null && tongTienHang.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal tienGiamGia = BigDecimal.ZERO;
+                
+                if ("PhanTram".equals(khuyenMai.getLoaiKM())) {
+                    // Giảm theo phần trăm
+                    BigDecimal phanTramGiam = khuyenMai.getGiaTriKM();
+                    if (phanTramGiam != null) {
+                        tienGiamGia = tongTienHang.multiply(phanTramGiam).divide(BigDecimal.valueOf(100));
+                    }
+                } else if ("SoTien".equals(khuyenMai.getLoaiKM())) {
+                    // Giảm theo tiền mặt
+                    tienGiamGia = khuyenMai.getGiaTriKM();
+                }
+                
+                hoaDon.setTienGiamGia(tienGiamGia);
+            }
+
+            // Tăng số lượng đã sử dụng của khuyến mãi
+            if (khuyenMai.getDaSuDung() != null) {
+                khuyenMai.setDaSuDung(khuyenMai.getDaSuDung() + 1);
+                khuyenMaiService.save(khuyenMai);
+            }
+        } else {
+            // Nếu không có khuyến mãi, reset tiền giảm giá
+            hoaDon.setTienGiamGia(BigDecimal.ZERO);
+        }
+
+        // Cập nhật thời gian sửa
+        hoaDon.setNgaySua(java.sql.Timestamp.valueOf(LocalDateTime.now()));
+
         HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
         clearAllRelatedCaches(); // Clear cache sau khi cập nhật
         return savedHoaDon;

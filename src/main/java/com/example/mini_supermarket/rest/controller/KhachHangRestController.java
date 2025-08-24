@@ -567,4 +567,110 @@ public class KhachHangRestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    
+    // ===== API QUẢN LÝ THÔNG TIN GIAO HÀNG =====
+    
+    @Operation(summary = "📦 Lấy thông tin giao hàng", description = """
+        **Chức năng:** Lấy thông tin giao hàng của khách hàng theo mã khách hàng
+        
+        **Thông tin trả về:**
+        - Mã khách hàng (maKH)
+        - Họ tên (hoTen)
+        - Số điện thoại (soDienThoai)
+        - Email (email)
+        - Địa chỉ (diaChi)
+        - Ghi chú (ghiChu)
+        - Địa chỉ mặc định (macDinh)
+        
+        **Sử dụng:**
+        - Hiển thị form checkout
+        - Xem thông tin giao hàng
+        - Kiểm tra địa chỉ giao hàng
+        """)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "✅ Lấy thông tin giao hàng thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = com.example.mini_supermarket.dto.ShippingInfoResponse.class))),
+            @ApiResponse(responseCode = "404", description = "❌ Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    @GetMapping("/{maKH}/shipping-info")
+    public ResponseEntity<?> getShippingInfo(
+            @Parameter(description = "Mã khách hàng cần lấy thông tin giao hàng", required = true) 
+            @PathVariable String maKH) {
+        
+        try {
+            // Lấy thông tin giao hàng
+            com.example.mini_supermarket.dto.ShippingInfoResponse response = khachHangService.getShippingInfo(maKH);
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            // Lỗi không tìm thấy khách hàng
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "success", false,
+                "message", "Lỗi: " + e.getMessage()
+            ));
+            
+        } catch (Exception e) {
+            // Lỗi server
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Lỗi server: " + e.getMessage()
+            ));
+        }
+    }
+    
+    @Operation(summary = "📝 Cập nhật thông tin giao hàng", description = """
+        **Chức năng:** Cập nhật thông tin giao hàng của khách hàng
+        
+        **Dữ liệu cập nhật:**
+        - Họ tên (hoTen)
+        - Số điện thoại (soDienThoai)
+        - Email (email)
+        - Địa chỉ (diaChi)
+        - Ghi chú (ghiChu)
+        - Địa chỉ mặc định (macDinh)
+        
+        **Sử dụng:**
+        - Cập nhật thông tin checkout
+        - Lưu địa chỉ giao hàng mới
+        - Thay đổi thông tin liên hệ
+        """)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "✅ Cập nhật thông tin giao hàng thành công", 
+                    content = @Content(mediaType = "application/json", 
+                            schema = @Schema(implementation = com.example.mini_supermarket.dto.ShippingInfoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "❌ Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "404", description = "❌ Không tìm thấy khách hàng"),
+            @ApiResponse(responseCode = "500", description = "❌ Lỗi server")
+    })
+    @PutMapping("/{maKH}/shipping-info")
+    public ResponseEntity<?> updateShippingInfo(
+            @Parameter(description = "Mã khách hàng cần cập nhật thông tin giao hàng", required = true) 
+            @PathVariable String maKH,
+            @Parameter(description = "Thông tin giao hàng mới", required = true)
+            @RequestBody com.example.mini_supermarket.dto.ShippingInfoRequest request) {
+        
+        try {
+            // Cập nhật thông tin giao hàng
+            com.example.mini_supermarket.dto.ShippingInfoResponse response = khachHangService.updateShippingInfo(maKH, request);
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            // Lỗi không tìm thấy khách hàng
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "success", false,
+                "message", "Lỗi: " + e.getMessage()
+            ));
+            
+        } catch (Exception e) {
+            // Lỗi server
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Lỗi server: " + e.getMessage()
+            ));
+        }
+    }
 } 
