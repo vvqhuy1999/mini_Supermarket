@@ -159,7 +159,7 @@ public class AuthenticationService implements UserDetailsService {
             case 1:
                 return "MANAGER";
             case 2:
-                return "STAFF";
+                return "EMPLOYEE";
             case 3:
                 return "CUSTOMER";
             default:

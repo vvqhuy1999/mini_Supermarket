@@ -126,14 +126,14 @@ public class SecurityConfig {
         "/health"
     };
     
-    // ===== ✅ SỬA: CÁC ENDPOINT DÀNH CHO CUSTOMER - ƯU TIÊN CAO NHẤT =====
+    // ===== CÁC ENDPOINT DÀNH CHO CUSTOMER - ƯU TIÊN CAO NHẤT =====
     private final String[] CUSTOMER_SPECIFIC_ENDPOINTS = {
-        // ✅ QUAN TRỌNG: Thông tin khách hàng cá nhân
+        // Thông tin khách hàng cá nhân
         "/api/khachhang/by-nguoidung/**", // GET thông tin theo người dùng
         "/api/khachhang/*/shipping-info", // GET/PUT thông tin giao hàng
-        "/api/khachhang/*/update-info", // ✅ THÊM: PUT cập nhật thông tin cá nhân
-        "/api/khachhang/*/profile", // ✅ THÊM: GET/PUT profile cá nhân (nếu có)
-        "/api/khachhang/*/change-password", // ✅ THÊM: PUT đổi mật khẩu (nếu có)
+        "/api/khachhang/*/update-info", // PUT cập nhật thông tin cá nhân
+        "/api/khachhang/*/profile", // GET/PUT profile cá nhân
+        "/api/khachhang/*/change-password", // PUT đổi mật khẩu
         
         // Giỏ hàng - CHỈ CUSTOMER
         "/api/giohang/**",
@@ -158,7 +158,7 @@ public class SecurityConfig {
         
         // Quản lý tài khoản cá nhân
         "/api/nguoidung/change-password",
-        "/api/nguoidung/update-profile", // ✅ THÊM: Cập nhật profile người dùng
+        "/api/nguoidung/update-profile",
         
         // Địa chỉ giao hàng cá nhân
         "/api/diachigiaohang/**",
@@ -175,62 +175,77 @@ public class SecurityConfig {
     
     // ===== CÁC ENDPOINT CHỈ DÀNH CHO MANAGER - ƯU TIÊN THỨ 2 =====
     private final String[] MANAGER_ONLY_ENDPOINTS = {
-        "/api/nhanvien/**",
         "/api/cuahang/**",
         "/api/nhacungcap/**",
-        "/api/kho/**",
-        "/api/phieunhaphang/**",
-        "/api/phieuxuatkho/**",
-        "/api/chitietphieunhap/**",
-        "/api/chitietphieuxuat/**",
-        "/api/khuyenmaisanpham/**",
-        "/api/khuyenmaikhachhang/**",
         "/api/upload/**", // Upload file chỉ MANAGER
         "/api/thongkebaocao/**",
         "/api/baocao-doanhthu/**"
     };
     
-    // ===== CÁC ENDPOINT CHO CẢ EMPLOYEE VÀ MANAGER - THỨ TỰ 3 =====
-    private final String[] EMPLOYEE_AND_MANAGER_ENDPOINTS = {
+    // ===== ✅ SỬA: CÁC ENDPOINT CHO CẢ EMPLOYEE VÀ MANAGER - THỨ TỰ 3 =====
+    private final String[] STAFF_AND_MANAGER_ENDPOINTS = {
+        // ✅ QUAN TRỌNG: Quản lý nhân viên cho EMPLOYEE và MANAGER
+        "/api/nhanvien/**",
+        
+        // ✅ QUAN TRỌNG: Quản lý kho và phiếu xuất nhập cho EMPLOYEE và MANAGER
+        "/api/kho/**",
+        "/api/phieunhaphang/**",
+        "/api/phieuxuatkho/**",
+        "/api/chitietphieunhap/**",
+        "/api/chitietphieuxuat/**",
+        
+        // Khuyến mãi sản phẩm và khách hàng
+        "/api/khuyenmaisanpham/**",
+        "/api/khuyenmaikhachhang/**",
+        
         // CRUD sản phẩm cho EMPLOYEE và MANAGER
         "/api/sanpham/**", // POST, PUT, DELETE sản phẩm
         "/api/loaisanpham/**", // POST, PUT, DELETE loại sản phẩm
         
-        // ✅ SỬA: Quản lý khách hàng - CHỈ các endpoint quản lý ADMIN
+        // Quản lý khách hàng - CHỈ các endpoint quản lý ADMIN
         "/api/khachhang", // GET danh sách tất cả khách hàng
-        "/api/khachhang/KH*", // GET/PUT/DELETE khách hàng theo ID hệ thống (KH001, KH002, v.v.)
+        "/api/khachhang/KH*", // GET/PUT/DELETE khách hàng theo ID hệ thống
         "/api/khachhang/search/**", // Tìm kiếm khách hàng
-        "/api/khachhang/admin/**", // ✅ THÊM: Các endpoint admin quản lý khách hàng
-        // ❌ KHÔNG BAO GỒM: "/api/khachhang/**" để tránh xung đột với customer endpoints
+        "/api/khachhang/admin/**", // Các endpoint admin quản lý khách hàng
         
-        // Quản lý hóa đơn
+        // ✅ QUAN TRỌNG: Quản lý hóa đơn cho EMPLOYEE
         "/api/hoadon/employee/**",
         "/api/hoadon", // GET tất cả hóa đơn
         "/api/hoadon/HD*", // GET/PUT/DELETE hóa đơn theo ID
-        "/api/hoadon/admin/**", // ✅ THÊM: Admin quản lý hóa đơn
+        "/api/hoadon/admin/**", // Admin quản lý hóa đơn
+        "/api/hoadon/complete-data", // ✅ THÊM: API lấy dữ liệu đầy đủ đơn hàng
+        "/api/hoadon/with-details/**", // ✅ THÊM: Hóa đơn với chi tiết
+        
+        "/api/hoadon/*/trangthai/**", // ✅ THÊM: Cập nhật trạng thái hóa đơn
+        "/api/hoadon/*/cancel", // ✅ THÊM: Hủy hóa đơn
         
         // Chi tiết hóa đơn
         "/api/chitiethoadon", // GET tất cả
         "/api/chitiethoadon/CTH*", // GET/PUT/DELETE theo ID
-        "/api/chitiethoadon/admin/**", // ✅ THÊM: Admin quản lý chi tiết hóa đơn
+        "/api/chitiethoadon/admin/**", // Admin quản lý chi tiết hóa đơn
         
         // Quản lý thanh toán
         "/api/thanhtoan", // GET tất cả thanh toán
         "/api/thanhtoan/TT*", // GET/PUT/DELETE theo ID
         "/api/thanhtoan/employee/**",
-        "/api/thanhtoan/admin/**", // ✅ THÊM: Admin quản lý thanh toán
+        "/api/thanhtoan/admin/**", // Admin quản lý thanh toán
         
         // Quản lý kho và giá
         "/api/tonkhochitiet/**", // Tất cả CRUD tồn kho
         "/api/giasanpham/**", // Tất cả CRUD giá sản phẩm
         
         // Khuyến mãi
-        "/api/khuyenmai/**", // Tất cả CRUD khuyến mãi (trừ coupon đã định nghĩa ở customer)
+        "/api/khuyenmai/**", // Tất cả CRUD khuyến mãi
         
         // Quản lý ca làm việc
         "/api/calamviec/**",
         "/api/lichlamviec/**",
         "/api/bangluong/**"
+    };
+    
+    // ===== CÁC ENDPOINT KẾT HỢP - CUSTOMER VÀ EMPLOYEE CÙNG SỬ DỤNG =====
+    private final String[] COMBINED_CUSTOMER_EMPLOYEE_ENDPOINTS = {
+       
     };
     
     @Bean
@@ -269,21 +284,24 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler())
             )
             
-            // ===== THỨ TỰ ƯU TIÊN QUAN TRỌNG! =====
+            // ===== ✅ SỬA: THỨ TỰ ƯU TIÊN VÀ ROLE MATCHING =====
             .authorizeHttpRequests(authz -> authz
                 // 1. API công khai - KHÔNG cần authentication
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 
-                // 2. ✅ QUAN TRỌNG: API CUSTOMER phải đặt TRƯỚC để tránh bị chặn
+                // 2. API CUSTOMER phải đặt TRƯỚC để tránh bị chặn
                 .requestMatchers(CUSTOMER_SPECIFIC_ENDPOINTS).hasAnyRole("KHACH_HANG", "CUSTOMER")
                 
-                // 3. API chỉ dành cho MANAGER
+                // 3. API kết hợp - CUSTOMER và EMPLOYEE cùng sử dụng
+                .requestMatchers(COMBINED_CUSTOMER_EMPLOYEE_ENDPOINTS).hasAnyRole("KHACH_HANG", "CUSTOMER", "EMPLOYEE", "MANAGER")
+                
+                // 4. API chỉ dành cho MANAGER
                 .requestMatchers(MANAGER_ONLY_ENDPOINTS).hasRole("MANAGER")
                 
-                // 4. API cho cả EMPLOYEE và MANAGER
-                .requestMatchers(EMPLOYEE_AND_MANAGER_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
+                // 5. ✅ QUAN TRỌNG: API cho cả EMPLOYEE và MANAGER
+                .requestMatchers(STAFF_AND_MANAGER_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
                 
-                // 5. Tất cả request khác - Cần authentication
+                // 6. Tất cả request khác - Cần authentication
                 .anyRequest().authenticated()
             )
             
@@ -294,15 +312,19 @@ public class SecurityConfig {
             
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             
-            // ✅ SỬA: Debug filter chỉ log các endpoint quan trọng
+            // ✅ SỬA: Debug filter với thông tin role EMPLOYEE chi tiết
             .addFilterBefore((request, response, chain) -> {
                 HttpServletRequest req = (HttpServletRequest) request;
                 String uri = req.getRequestURI();
                 String method = req.getMethod();
                 
-                // Log các API customer quan trọng
-                if (uri.contains("/api/khachhang") && (uri.contains("update-info") || uri.contains("by-nguoidung"))) {
-                    System.out.println("🔍 === CUSTOMER API REQUEST ===");
+                // Log các API employee quan trọng
+                if ((uri.contains("/api/hoadon") && !uri.contains("by-khachhang")) || 
+                    uri.contains("/api/phieuxuatkho") || 
+                    uri.contains("/api/chitietphieuxuat") ||
+                    uri.contains("/api/nhanvien") ||
+                    uri.contains("/api/kho")) {
+                    System.out.println("🔍 === EMPLOYEE API REQUEST ===");
                     System.out.println("🔍 " + method + " " + uri);
                     String authHeader = req.getHeader("Authorization");
                     System.out.println("🔍 Has Auth: " + (authHeader != null && authHeader.startsWith("Bearer ")));
@@ -316,122 +338,130 @@ public class SecurityConfig {
                 String uri = req.getRequestURI();
                 String method = req.getMethod();
                 
-                // Log kết quả authentication cho các API customer quan trọng
-                if (uri.contains("/api/khachhang") && (uri.contains("update-info") || uri.contains("by-nguoidung"))) {
-                    System.out.println("🔍 === CUSTOMER AUTH RESULT ===");
+                // Log kết quả authentication cho các API employee quan trọng
+                if ((uri.contains("/api/hoadon") && !uri.contains("by-khachhang")) || 
+                    uri.contains("/api/phieuxuatkho") || 
+                    uri.contains("/api/chitietphieuxuat") ||
+                    uri.contains("/api/nhanvien") ||
+                    uri.contains("/api/kho")) {
+                    System.out.println("🔍 === EMPLOYEE AUTH RESULT ===");
                     System.out.println("🔍 " + method + " " + uri);
                     var auth = SecurityContextHolder.getContext().getAuthentication();
                     if (auth != null) {
                         System.out.println("🔍 ✅ User: " + auth.getName());
-                        System.out.println("🔍 ✅ Roles: " + auth.getAuthorities());
-                        System.out.println("🔍 ✅ Has KHACH_HANG role: " + 
-                            auth.getAuthorities().stream().anyMatch(a -> 
-                                a.getAuthority().equals("ROLE_KHACH_HANG") || 
-                                a.getAuthority().equals("ROLE_CUSTOMER")
-                            )
+                        System.out.println("🔍 ✅ All Roles: " + auth.getAuthorities());
+                        System.out.println("🔍 ✅ Has EMPLOYEE role: " + 
+                            auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"))
+                        );
+                        System.out.println("🔍 ✅ Has MANAGER role: " + 
+                            auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"))
+                        );
+                        System.out.println("🔍 ✅ Has CUSTOMER role: " + 
+                            auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER") || a.getAuthority().equals("ROLE_KHACH_HANG"))
                         );
                     } else {
                         System.out.println("🔍 ❌ NO AUTHENTICATION!");
                     }
-                    System.out.println("🔍 === END CUSTOMER AUTH RESULT ===");
+                    System.out.println("🔍 === END EMPLOYEE AUTH RESULT ===");
                 }
                 
                 chain.doFilter(request, response);
             }, UsernamePasswordAuthenticationFilter.class);
-        
-        System.out.println("🔧 === END SECURITY CONFIG DEBUG ===");
-        return http.build();
-    }
-    
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:8080",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:8080",
-            customerFrontendUrl,
-            employeeFrontendUrl
-        ));
-        
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-    
-    private static class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
-        @Override
-        public void commence(HttpServletRequest request, HttpServletResponse response,
-                           AuthenticationException authException) throws IOException, ServletException {
             
-            String requestURI = request.getRequestURI();
-            String method = request.getMethod();
+            System.out.println("🔧 === END SECURITY CONFIG DEBUG ===");
+            return http.build();
+        }
+        
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+            CorsConfiguration configuration = new CorsConfiguration();
             
-            System.out.println("🚨 === AUTHENTICATION REQUIRED ===");
-            System.out.println("🚨 " + method + " " + requestURI);
-            System.out.println("🚨 Reason: " + authException.getMessage());
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:8080",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:8080",
+                customerFrontendUrl,
+                employeeFrontendUrl
+            ));
             
-            if (requestURI.startsWith("/api/")) {
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.setCharacterEncoding("UTF-8");
+            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+            configuration.setAllowedHeaders(Arrays.asList("*"));
+            configuration.setAllowCredentials(true);
+            configuration.setMaxAge(3600L);
+            
+            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+            source.registerCorsConfiguration("/**", configuration);
+            return source;
+        }
+        
+        private static class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+            @Override
+            public void commence(HttpServletRequest request, HttpServletResponse response,
+                               AuthenticationException authException) throws IOException, ServletException {
                 
-                String jsonResponse = String.format(
-                    "{\"error\":\"Chưa xác thực\",\"message\":\"Vui lòng đăng nhập để tiếp tục\",\"status\":401,\"path\":\"%s\",\"method\":\"%s\"}",
-                    requestURI, method
-                );
+                String requestURI = request.getRequestURI();
+                String method = request.getMethod();
                 
-                response.getWriter().write(jsonResponse);
-            } else {
-                response.sendRedirect("/oauth2/authorization/google");
+                System.out.println("🚨 === AUTHENTICATION REQUIRED ===");
+                System.out.println("🚨 " + method + " " + requestURI);
+                System.out.println("🚨 Reason: " + authException.getMessage());
+                
+                if (requestURI.startsWith("/api/")) {
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.setCharacterEncoding("UTF-8");
+                    
+                    String jsonResponse = String.format(
+                        "{\"error\":\"Chưa xác thực\",\"message\":\"Vui lòng đăng nhập để tiếp tục\",\"status\":401,\"path\":\"%s\",\"method\":\"%s\"}",
+                        requestURI, method
+                    );
+                    
+                    response.getWriter().write(jsonResponse);
+                } else {
+                    response.sendRedirect("/oauth2/authorization/google");
+                }
+            }
+        }
+        
+        private static class CustomAccessDeniedHandler implements AccessDeniedHandler {
+            @Override
+            public void handle(HttpServletRequest request, HttpServletResponse response,
+                             org.springframework.security.access.AccessDeniedException accessDeniedException) 
+                             throws IOException, ServletException {
+                
+                String requestURI = request.getRequestURI();
+                String method = request.getMethod();
+                var auth = SecurityContextHolder.getContext().getAuthentication();
+                
+                System.out.println("🚫 === ACCESS DENIED ===");
+                System.out.println("🚫 " + method + " " + requestURI);
+                if (auth != null) {
+                    System.out.println("🚫 User: " + auth.getName());
+                    System.out.println("🚫 Current Roles: " + auth.getAuthorities());
+                    System.out.println("🚫 Expected: ROLE_EMPLOYEE or ROLE_MANAGER");
+                } else {
+                    System.out.println("🚫 No authentication found");
+                }
+                
+                if (requestURI.startsWith("/api/")) {
+                    response.setStatus(HttpStatus.FORBIDDEN.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.setCharacterEncoding("UTF-8");
+                    
+                    String currentRoles = auth != null ? auth.getAuthorities().toString() : "No authentication";
+                    String jsonResponse = String.format(
+                        "{\"error\":\"Không đủ quyền\",\"message\":\"Bạn không có quyền truy cập tài nguyên này\",\"status\":403,\"path\":\"%s\",\"method\":\"%s\",\"currentRoles\":\"%s\",\"requiredRoles\":\"ROLE_EMPLOYEE or ROLE_MANAGER\"}",
+                        requestURI, method, currentRoles
+                    );
+                    
+                    response.getWriter().write(jsonResponse);
+                } else {
+                    response.sendError(HttpStatus.FORBIDDEN.value(), "Truy cập bị từ chối");
+                }
             }
         }
     }
     
-    private static class CustomAccessDeniedHandler implements AccessDeniedHandler {
-        @Override
-        public void handle(HttpServletRequest request, HttpServletResponse response,
-                         org.springframework.security.access.AccessDeniedException accessDeniedException) 
-                         throws IOException, ServletException {
-            
-            String requestURI = request.getRequestURI();
-            String method = request.getMethod();
-            var auth = SecurityContextHolder.getContext().getAuthentication();
-            
-            System.out.println("🚫 === ACCESS DENIED ===");
-            System.out.println("🚫 " + method + " " + requestURI);
-            if (auth != null) {
-                System.out.println("🚫 User: " + auth.getName());
-                System.out.println("🚫 Current Roles: " + auth.getAuthorities());
-                System.out.println("🚫 Expected: ROLE_KHACH_HANG or ROLE_CUSTOMER");
-            } else {
-                System.out.println("🚫 No authentication found");
-            }
-            
-            if (requestURI.startsWith("/api/")) {
-                response.setStatus(HttpStatus.FORBIDDEN.value());
-                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.setCharacterEncoding("UTF-8");
-                
-                String currentRoles = auth != null ? auth.getAuthorities().toString() : "No authentication";
-                String jsonResponse = String.format(
-                    "{\"error\":\"Không đủ quyền\",\"message\":\"Bạn không có quyền cập nhật thông tin này\",\"status\":403,\"path\":\"%s\",\"method\":\"%s\",\"currentRoles\":\"%s\",\"requiredRoles\":\"ROLE_KHACH_HANG or ROLE_CUSTOMER\"}",
-                    requestURI, method, currentRoles
-                );
-                
-                response.getWriter().write(jsonResponse);
-            } else {
-                response.sendError(HttpStatus.FORBIDDEN.value(), "Truy cập bị từ chối");
-            }
-        }
-    }
-}
