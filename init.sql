@@ -4,424 +4,440 @@
 
 -- Bảng quản lý thông tin người dùng hệ thống
 CREATE TABLE nguoidung (
-    manguoidung VARCHAR(50) PRIMARY KEY,
-    email VARCHAR(50) UNIQUE NOT NULL,
-    matkhau VARCHAR(255) NOT NULL,
-    sub VARCHAR(255),
-    vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    
-    -- Các cột cho chức năng OTP và Reset Password
-    otp_code VARCHAR(6),
-    otp_generated_time TIMESTAMP,
-    otp_attempts INT DEFAULT 0,
-    reset_password_token VARCHAR(255),
-    reset_password_token_expiry TIMESTAMP,
+                           manguoidung VARCHAR(50) PRIMARY KEY,
+                           email VARCHAR(50) UNIQUE NOT NULL,
+                           matkhau VARCHAR(255) NOT NULL,
+                           sub VARCHAR(255),
+                           vaitro INT NOT NULL DEFAULT 3, -- 0=Quản trị, 1=Quản lý, 2=Nhân viên, 3=Khách hàng
+                           ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
+    -- Các cột cho chức năng OTP và Reset Password
+                           otp_code VARCHAR(6),
+                           otp_generated_time TIMESTAMP,
+                           otp_attempts INT DEFAULT 0,
+                           reset_password_token VARCHAR(255),
+                           reset_password_token_expiry TIMESTAMP,
+
+                           CONSTRAINT check_vaitro CHECK (vaitro IN (0, 1, 2, 3))
 );
 
 -- Table to manage store information
 CREATE TABLE cuahang (
-    mach VARCHAR(50) PRIMARY KEY,
-    tench VARCHAR(255) NOT NULL,
-    diachi VARCHAR(255),
-    sdt VARCHAR(15),
-    ngaythanhlap DATE,
-    trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                         mach VARCHAR(50) PRIMARY KEY,
+                         tench VARCHAR(255) NOT NULL,
+                         diachi VARCHAR(255),
+                         sdt VARCHAR(15),
+                         ngaythanhlap DATE,
+                         trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
+                         isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to manage supplier information
 CREATE TABLE nhacungcap (
-    mancc VARCHAR(50) PRIMARY KEY,
-    tenncc VARCHAR(255) NOT NULL,
-    diachi VARCHAR(255),
-    sdt VARCHAR(15),
-    email VARCHAR(100),
-    thongtinhopdong TEXT,
-    ngayhoptac DATE,
-    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                            mancc VARCHAR(50) PRIMARY KEY,
+                            tenncc VARCHAR(255) NOT NULL,
+                            diachi VARCHAR(255),
+                            sdt VARCHAR(15),
+                            email VARCHAR(100),
+                            thongtinhopdong TEXT,
+                            ngayhoptac DATE,
+                            trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+                            isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to manage employee information
 CREATE TABLE nhanvien (
-    manv VARCHAR(50) PRIMARY KEY,
-    manguoidung VARCHAR(50),
-    hoten VARCHAR(255) NOT NULL,
-    sdt VARCHAR(15),
-    diachi VARCHAR(255),
-    ngaysinh DATE,
-    ngayvaolam DATE,
-    chucvu VARCHAR(100),
-    maquanly VARCHAR(50), -- Direct manager's employee ID
-    mach VARCHAR(50), -- Store where the employee works
-    trangthai INT DEFAULT 1, -- 0=Resigned, 1=Working
-    isdeleted BOOLEAN DEFAULT FALSE,
+                          manv VARCHAR(50) PRIMARY KEY,
+                          manguoidung VARCHAR(50),
+                          hoten VARCHAR(255) NOT NULL,
+                          sdt VARCHAR(15),
+                          diachi VARCHAR(255),
+                          ngaysinh DATE,
+                          ngayvaolam DATE,
+                          chucvu VARCHAR(100),
+                          maquanly VARCHAR(50), -- Direct manager's employee ID
+                          mach VARCHAR(50), -- Store where the employee works
+                          trangthai INT DEFAULT 1, -- 0=Resigned, 1=Working
+                          isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_nhanvien_ngaysinh CHECK (ngaysinh < ngayvaolam)
+                          CONSTRAINT chk_nhanvien_ngaysinh CHECK (ngaysinh < ngayvaolam)
 );
 
 -- Table to manage customer information and loyalty points
 CREATE TABLE khachhang (
-    makh VARCHAR(50) PRIMARY KEY,
-    manguoidung VARCHAR(50),
-    hoten VARCHAR(255) NOT NULL,
-    sdt VARCHAR(15),
-    diachi VARCHAR(255),
-    ngaysinh DATE,
-    diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
-    loaikhachhang VARCHAR(50) DEFAULT 'Thường', -- Regular, VIP, Silver, Gold, Diamond
-    ngaydangky TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                           makh VARCHAR(50) PRIMARY KEY,
+                           manguoidung VARCHAR(50),
+                           hoten VARCHAR(255) NOT NULL,
+                           sdt VARCHAR(15),
+                           diachi VARCHAR(255),
+                           ngaysinh DATE,
+                           diemtichluy INT DEFAULT 0, -- Loyalty points from purchases
+                           loaikhachhang VARCHAR(50) DEFAULT 'Thường', -- Regular, VIP, Silver, Gold, Diamond
+                           ngaydangky TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_khachhang_diemtichluy CHECK (diemtichluy >= 0)
+                           CONSTRAINT chk_khachhang_diemtichluy CHECK (diemtichluy >= 0)
 );
 
 -- Table for product categories
 CREATE TABLE loaisanpham (
-    maloaisp VARCHAR(50) PRIMARY KEY,
-    tenloai VARCHAR(255) NOT NULL,
-    mota TEXT,
-    maloaicha VARCHAR(50), -- For multi-level category tree
-    thutuhienthi INT DEFAULT 0,
-    isdeleted BOOLEAN DEFAULT FALSE
+                             maloaisp VARCHAR(50) PRIMARY KEY,
+                             tenloai VARCHAR(255) NOT NULL,
+                             mota TEXT,
+                             maloaicha VARCHAR(50), -- For multi-level category tree
+                             thutuhienthi INT DEFAULT 0,
+                             isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for detailed product information
 CREATE TABLE sanpham (
-    masp VARCHAR(50) PRIMARY KEY,
-    maloaisp VARCHAR(50) NOT NULL,
-    tensp VARCHAR(255) NOT NULL,
-    mota TEXT,
-    donvitinh VARCHAR(50) DEFAULT 'Cái',
-    trongluong DECIMAL(10,3), -- Product weight (kg)
-    kichthuoc VARCHAR(100), -- Product dimensions
-    hansudung INT, -- Shelf life in days
-    trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                         masp VARCHAR(50) PRIMARY KEY,
+                         maloaisp VARCHAR(50) NOT NULL,
+                         tensp VARCHAR(255) NOT NULL,
+                         mota TEXT,
+                         donvitinh VARCHAR(50) DEFAULT 'Cái',
+                         trongluong DECIMAL(10,3), -- Product weight (kg)
+                         kichthuoc VARCHAR(100), -- Product dimensions
+                         hansudung INT, -- Shelf life in days
+                         trangthai INT DEFAULT 1, -- 0=Discontinued, 1=Available
+                         ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                         isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for promotion programs
 CREATE TABLE khuyenmai (
-    makm VARCHAR(50) PRIMARY KEY,
-    tenchuongtrinh VARCHAR(255) NOT NULL,
-    mota TEXT,
-    loaikm VARCHAR(50) NOT NULL, -- Percentage, Amount, Points, BuyXGetY
-    couponcode VARCHAR(50) NOT NULL,
-    giatrikm DECIMAL(15,2) NOT NULL, -- Promotion value (% or amount)
-    dieukienapdung TEXT, -- Conditions for applying the promotion
-    ngaybatdau TIMESTAMP NOT NULL,
-    ngayketthuc TIMESTAMP NOT NULL,
-    soluongtoida INT, -- Maximum number of applications
-    dasudung INT DEFAULT 0, -- Number of times used
-    maquanly VARCHAR(50), -- Manager in charge of the promotion
-    trangthai INT DEFAULT 1, -- 0=Paused, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE,
+                           makm VARCHAR(50) PRIMARY KEY,
+                           tenchuongtrinh VARCHAR(255) NOT NULL,
+                           mota TEXT,
+                           loaikm VARCHAR(50) NOT NULL, -- Percentage, Amount, Points, BuyXGetY
+                           couponcode VARCHAR(50) NOT NULL,
+                           giatrikm DECIMAL(15,2) NOT NULL, -- Promotion value (% or amount)
+                           dieukienapdung TEXT, -- Conditions for applying the promotion
+                           ngaybatdau TIMESTAMP NOT NULL,
+                           ngayketthuc TIMESTAMP NOT NULL,
+                           soluongtoida INT, -- Maximum number of applications
+                           dasudung INT DEFAULT 0, -- Number of times used
+                           maquanly VARCHAR(50), -- Manager in charge of the promotion
+                           trangthai INT DEFAULT 1, -- 0=Paused, 1=Active
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_khuyenmai_ngay CHECK (ngaybatdau < ngayketthuc),
-    CONSTRAINT chk_khuyenmai_soluongtoida CHECK (soluongtoida IS NULL OR soluongtoida > 0),
-    CONSTRAINT chk_khuyenmai_dasudung CHECK (dasudung >= 0)
+                           CONSTRAINT chk_khuyenmai_ngay CHECK (ngaybatdau < ngayketthuc),
+                           CONSTRAINT chk_khuyenmai_soluongtoida CHECK (soluongtoida IS NULL OR soluongtoida > 0),
+                           CONSTRAINT chk_khuyenmai_dasudung CHECK (dasudung >= 0)
 );
 
 -- Table for accepted payment methods
 CREATE TABLE phuongthucthanhtoan (
-    mapttt VARCHAR(50) PRIMARY KEY,
-    tenpttt VARCHAR(100) NOT NULL,
-    mota TEXT,
-    phigiaodich DECIMAL(10,4) DEFAULT 0, -- Transaction fee (%)
-    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                                     mapttt VARCHAR(50) PRIMARY KEY,
+                                     tenpttt VARCHAR(100) NOT NULL,
+                                     mota TEXT,
+                                     phigiaodich DECIMAL(10,4) DEFAULT 0, -- Transaction fee (%)
+                                     trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+                                     isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for warehouse information
 CREATE TABLE kho (
-    makho SERIAL PRIMARY KEY,
-    tenkho VARCHAR(255) NOT NULL,
-    diachi VARCHAR(255),
-    dientich DECIMAL(10,2), -- Warehouse area (m²)
-    succhua DECIMAL(15,2), -- Maximum capacity
-    mach VARCHAR(50), -- Store managing the warehouse
-    trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE
+                     makho SERIAL PRIMARY KEY,
+                     tenkho VARCHAR(255) NOT NULL,
+                     diachi VARCHAR(255),
+                     dientich DECIMAL(10,2), -- Warehouse area (m²)
+                     succhua DECIMAL(15,2), -- Maximum capacity
+                     mach VARCHAR(50), -- Store managing the warehouse
+                     trangthai INT DEFAULT 1, -- 0=Closed, 1=Active
+                     isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to define work shifts
 CREATE TABLE calamviec (
-    maca SERIAL PRIMARY KEY,
-    tenca VARCHAR(100) NOT NULL,
-    giobatdau TIME NOT NULL, -- Shift start time
-    gioketthuc TIME NOT NULL, -- Shift end time
-    sogiolam DECIMAL(4,2) GENERATED ALWAYS AS (
-        CAST(
-            EXTRACT(EPOCH FROM (
-                CASE
-                    WHEN gioketthuc < giobatdau THEN gioketthuc::time + interval '1 day'
+                           maca SERIAL PRIMARY KEY,
+                           tenca VARCHAR(100) NOT NULL,
+                           giobatdau TIME NOT NULL, -- Shift start time
+                           gioketthuc TIME NOT NULL, -- Shift end time
+                           sogiolam DECIMAL(4,2) GENERATED ALWAYS AS (
+                               CAST(
+                                       EXTRACT(EPOCH FROM (
+                                           CASE
+                                               WHEN gioketthuc < giobatdau THEN gioketthuc::time + interval '1 day'
                     ELSE gioketthuc::time
                 END - giobatdau::time
-            )) / 3600
-        AS DECIMAL(4,2))
-    ) STORED, -- Calculated work hours
-    trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
-    isdeleted BOOLEAN DEFAULT FALSE,
+                                           )) / 3600
+                                   AS DECIMAL(4,2))
+                               ) STORED, -- Calculated work hours
+                           trangthai INT DEFAULT 1, -- 0=Inactive, 1=Active
+                           isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_calamviec_gio CHECK (giobatdau != gioketthuc)
-);
+                           CONSTRAINT chk_calamviec_gio CHECK (giobatdau != gioketthuc)
+    );
 
 -- Bảng quản lý lịch làm việc của nhân viên
 CREATE TABLE lichlamviec (
-    malich SERIAL PRIMARY KEY,
-    manv VARCHAR(50) NOT NULL,
-    maca INT NOT NULL,
-    ngaylam DATE NOT NULL,
-    manvquanly VARCHAR(50),
-    trangthai INT DEFAULT 0,
-    ngayduyet TIMESTAMP,
-    ghichu TEXT,
-    giovao TIME,
-    giora TIME,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    UNIQUE (manv, ngaylam, maca)
+                             malich SERIAL PRIMARY KEY,
+                             manv VARCHAR(50) NOT NULL,
+                             maca INT NOT NULL,
+                             ngaylam DATE NOT NULL,
+                             manvquanly VARCHAR(50),
+                             trangthai INT DEFAULT 0,
+                             ngayduyet TIMESTAMP,
+                             ghichu TEXT,
+                             giovao TIME,
+                             giora TIME,
+                             isdeleted BOOLEAN DEFAULT FALSE,
+                             UNIQUE (manv, ngaylam, maca)
 );
 
 -- Table for monthly employee payroll
 CREATE TABLE bangluong (
-    maluong SERIAL PRIMARY KEY,
-    manv VARCHAR(50) NOT NULL,
-    thangluong INT NOT NULL,
-    namluong INT NOT NULL,
-    luongcoban DECIMAL(15,2) NOT NULL,
-    phucap DECIMAL(15,2) DEFAULT 0,
-    thuong DECIMAL(15,2) DEFAULT 0,
-    khautru DECIMAL(15,2) DEFAULT 0,
-    tongluong DECIMAL(15,2) GENERATED ALWAYS AS (luongcoban + phucap + thuong - khautru) STORED,
-    songaylam INT DEFAULT 0,
-    sogiolam DECIMAL(8,2) DEFAULT 0,
-    ghichu TEXT,
-    trangthai INT DEFAULT 0,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ngaythanhtoan TIMESTAMP NULL,
-    nguoithanhtoan VARCHAR(50) NULL,
-    isdeleted BOOLEAN DEFAULT FALSE,
-    CONSTRAINT check_thang_luong CHECK (thangluong >= 1 AND thangluong <= 12),
-    CONSTRAINT check_nam_luong CHECK (namluong >= 2020),
-    CONSTRAINT check_luong_co_ban CHECK (luongcoban >= 0),
-    CONSTRAINT check_phu_cap CHECK (phucap >= 0),
-    CONSTRAINT check_thuong CHECK (thuong >= 0),
-    CONSTRAINT check_khau_tru CHECK (khautru >= 0),
-    CONSTRAINT check_so_ngay_lam CHECK (songaylam >= 0),
-    CONSTRAINT check_so_gio_lam CHECK (sogiolam >= 0),
-    UNIQUE (manv, thangluong, namluong)
+                           maluong SERIAL PRIMARY KEY,
+                           manv VARCHAR(50) NOT NULL,
+                           thangluong INT NOT NULL,
+                           namluong INT NOT NULL,
+                           luongcoban DECIMAL(15,2) NOT NULL,
+                           phucap DECIMAL(15,2) DEFAULT 0,
+                           thuong DECIMAL(15,2) DEFAULT 0,
+                           khautru DECIMAL(15,2) DEFAULT 0,
+                           tongluong DECIMAL(15,2) GENERATED ALWAYS AS (luongcoban + phucap + thuong - khautru) STORED,
+                           songaylam INT DEFAULT 0,
+                           sogiolam DECIMAL(8,2) DEFAULT 0,
+                           ghichu TEXT,
+                           trangthai INT DEFAULT 0,
+                           ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           ngaythanhtoan TIMESTAMP NULL,
+                           nguoithanhtoan VARCHAR(50) NULL,
+                           isdeleted BOOLEAN DEFAULT FALSE,
+                           CONSTRAINT check_thang_luong CHECK (thangluong >= 1 AND thangluong <= 12),
+                           CONSTRAINT check_nam_luong CHECK (namluong >= 2020),
+                           CONSTRAINT check_luong_co_ban CHECK (luongcoban >= 0),
+                           CONSTRAINT check_phu_cap CHECK (phucap >= 0),
+                           CONSTRAINT check_thuong CHECK (thuong >= 0),
+                           CONSTRAINT check_khau_tru CHECK (khautru >= 0),
+                           CONSTRAINT check_so_ngay_lam CHECK (songaylam >= 0),
+                           CONSTRAINT check_so_gio_lam CHECK (sogiolam >= 0),
+                           UNIQUE (manv, thangluong, namluong)
 );
 
 -- Table for product images
 CREATE TABLE hinhanh (
-    mahinh SERIAL PRIMARY KEY,
-    masp VARCHAR(50) NOT NULL,
-    url VARCHAR(500) NOT NULL,
-    mota VARCHAR(255),
-    lachinh BOOLEAN DEFAULT FALSE, -- Marks the main product image
-    thutuhienthi INT DEFAULT 0, -- Display order
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                         mahinh SERIAL PRIMARY KEY,
+                         masp VARCHAR(50) NOT NULL,
+                         url VARCHAR(500) NOT NULL,
+                         mota VARCHAR(255),
+                         lachinh BOOLEAN DEFAULT FALSE, -- Marks the main product image
+                         thutuhienthi INT DEFAULT 0, -- Display order
+                         ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                         isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for product price history
 CREATE TABLE giasanpham (
-    magia SERIAL PRIMARY KEY,
-    masp VARCHAR(50) NOT NULL,
-    gia DECIMAL(15,2) NOT NULL,
-    ngaybatdau DATE NOT NULL, -- Start date for the new price
-    ngayketthuc DATE, -- End date for the price
-    lydothaydoi VARCHAR(255),
-    nguoithaydoi VARCHAR(50),
-    isdeleted BOOLEAN DEFAULT FALSE,
+                            magia SERIAL PRIMARY KEY,
+                            masp VARCHAR(50) NOT NULL,
+                            gia DECIMAL(15,2) NOT NULL,
+                            ngaybatdau DATE NOT NULL, -- Start date for the new price
+                            ngayketthuc DATE, -- End date for the price
+                            lydothaydoi VARCHAR(255),
+                            nguoithaydoi VARCHAR(50),
+                            isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_giasanpham_gia CHECK (gia > 0),
-    CONSTRAINT chk_giasanpham_ngay CHECK (ngayketthuc IS NULL OR ngaybatdau <= ngayketthuc)
+                            CONSTRAINT chk_giasanpham_gia CHECK (gia > 0),
+                            CONSTRAINT chk_giasanpham_ngay CHECK (ngayketthuc IS NULL OR ngaybatdau <= ngayketthuc)
 );
 
 -- Table to track product inventory
 CREATE TABLE tonkhochitiet (
-    matkct SERIAL PRIMARY KEY,
-    masp VARCHAR(50) NOT NULL,
-    makho INT NOT NULL,
-    soluongton INT DEFAULT 0, -- Current stock quantity
-    soluongtoithieu INT DEFAULT 0, -- Minimum stock level
-    soluongtoida INT, -- Maximum stock level
-    ngaycapnhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                               matkct SERIAL PRIMARY KEY,
+                               masp VARCHAR(50) NOT NULL,
+                               makho INT NOT NULL,
+                               soluongton INT DEFAULT 0, -- Current stock quantity
+                               soluongtoithieu INT DEFAULT 0, -- Minimum stock level
+                               soluongtoida INT, -- Maximum stock level
+                               ngaycapnhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_tonkhochitiet_soluongton CHECK (soluongton >= 0)
+                               CONSTRAINT chk_tonkhochitiet_soluongton CHECK (soluongton >= 0)
 );
 
 -- Table for goods receipt notes from suppliers
 CREATE TABLE phieunhaphang (
-    mapn SERIAL PRIMARY KEY,
-    mancc VARCHAR(50) NOT NULL,
-    makho INT NOT NULL,
-    manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
-    ngaynhap TIMESTAMP NOT NULL,
-    tongtiennhap DECIMAL(15,2) DEFAULT 0,
-    trangthai INT DEFAULT 0, -- 0=Pending, 1=Stocked, 2=Rejected, 3=Canceled
-    ghichu TEXT,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                               mapn SERIAL PRIMARY KEY,
+                               mancc VARCHAR(50) NOT NULL,
+                               makho INT NOT NULL,
+                               manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
+                               ngaynhap TIMESTAMP NOT NULL,
+                               tongtiennhap DECIMAL(15,2) DEFAULT 0,
+                               trangthai INT DEFAULT 0, -- 0=Pending, 1=Stocked, 2=Rejected, 3=Canceled
+                               ghichu TEXT,
+                               ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for details of goods receipt notes
 CREATE TABLE chitietphieunhap (
-    mactpn SERIAL PRIMARY KEY,
-    mapn INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluongnhap INT NOT NULL,
-    dongianhap DECIMAL(15,2) NOT NULL,
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongnhap * dongianhap) STORED,
-    ngayhethan DATE, -- Product expiration date
-    solo VARCHAR(50), -- Production batch number
-    ngaysanxuat DATE,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                                  mactpn SERIAL PRIMARY KEY,
+                                  mapn INT NOT NULL,
+                                  masp VARCHAR(50) NOT NULL,
+                                  soluongnhap INT NOT NULL,
+                                  dongianhap DECIMAL(15,2) NOT NULL,
+                                  thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongnhap * dongianhap) STORED,
+                                  ngayhethan DATE, -- Product expiration date
+                                  solo VARCHAR(50), -- Production batch number
+                                  ngaysanxuat DATE,
+                                  isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_chitietphieunhap_soluongnhap CHECK (soluongnhap > 0),
-    CONSTRAINT chk_chitietphieunhap_dongianhap CHECK (dongianhap > 0)
+                                  CONSTRAINT chk_chitietphieunhap_soluongnhap CHECK (soluongnhap > 0),
+                                  CONSTRAINT chk_chitietphieunhap_dongianhap CHECK (dongianhap > 0)
 );
 
 -- Table for goods issue notes
 CREATE TABLE phieuxuatkho (
-    mapxk SERIAL PRIMARY KEY,
-    makho INT NOT NULL,
-    manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
-    ngayxuat TIMESTAMP NOT NULL,
-    tongsoluong INT DEFAULT 0,
-    tonggiatri DECIMAL(15,2) DEFAULT 0,
-    lydoxuat VARCHAR(255),
-    trangthai INT DEFAULT 0, -- 0=Pending, 1=Issued, 2=Rejected, 3=Canceled
-    ghichu TEXT,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                              mapxk SERIAL PRIMARY KEY,
+                              makho INT NOT NULL,
+                              manvlap VARCHAR(50) NOT NULL, -- Employee who created the note
+                              ngayxuat TIMESTAMP NOT NULL,
+                              tongsoluong INT DEFAULT 0,
+                              tonggiatri DECIMAL(15,2) DEFAULT 0,
+                              lydoxuat VARCHAR(255),
+                              trangthai INT DEFAULT 0, -- 0=Pending, 1=Issued, 2=Rejected, 3=Canceled
+                              ghichu TEXT,
+                              ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for details of goods issue notes
 CREATE TABLE chitietphieuxuat (
-    mactpxk SERIAL PRIMARY KEY,
-    mapxk INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluongxuat INT NOT NULL,
-    dongiaxuat DECIMAL(15,2) NOT NULL,
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongxuat * dongiaxuat) STORED,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                                  mactpxk SERIAL PRIMARY KEY,
+                                  mapxk INT NOT NULL,
+                                  masp VARCHAR(50) NOT NULL,
+                                  soluongxuat INT NOT NULL,
+                                  dongiaxuat DECIMAL(15,2) NOT NULL,
+                                  thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluongxuat * dongiaxuat) STORED,
+                                  isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_chitietphieuxuat_soluongxuat CHECK (soluongxuat > 0),
-    CONSTRAINT chk_chitietphieuxuat_dongiaxuat CHECK (dongiaxuat > 0)
+                                  CONSTRAINT chk_chitietphieuxuat_soluongxuat CHECK (soluongxuat > 0),
+                                  CONSTRAINT chk_chitietphieuxuat_dongiaxuat CHECK (dongiaxuat > 0)
 );
 
 
 -- Table for sales invoices
 CREATE TABLE hoadon (
-    mahd SERIAL PRIMARY KEY,
-    makh VARCHAR(50),
-    manvlap VARCHAR(50) NOT NULL, -- Employee who created the invoice
-    makm VARCHAR(50), -- Applied promotion code
-    ngaylap TIMESTAMP NOT NULL,
-    tongtienhang DECIMAL(15,2) DEFAULT 0,
-    tiengiamgia DECIMAL(15,2) DEFAULT 0,
-    tongtien DECIMAL(15,2) GENERATED ALWAYS AS (tongtienhang - tiengiamgia) STORED,
-    trangthai INT DEFAULT 0, -- 0=Pending, 1=Paid, 2=Processing, 3=Canceled, 4=Returned
-    diemtichluy INT DEFAULT 0, -- Points earned from this invoice
-    ghichu TEXT,
-    ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    nguoitao VARCHAR(50),
-    ngaysua TIMESTAMP,
-    nguoisua VARCHAR(50),
-    isdeleted BOOLEAN DEFAULT FALSE
+                        mahd SERIAL PRIMARY KEY,
+                        makh VARCHAR(50),
+                        manvlap VARCHAR(50) NOT NULL, -- Employee who created the invoice
+                        makm VARCHAR(50), -- Applied promotion code
+                        ngaylap TIMESTAMP NOT NULL,
+                        tongtienhang DECIMAL(15,2) DEFAULT 0,
+                        tiengiamgia DECIMAL(15,2) DEFAULT 0,
+                        tongtien DECIMAL(15,2) GENERATED ALWAYS AS (tongtienhang - tiengiamgia) STORED,
+                        trangthai INT DEFAULT 0, -- 0=Pending, 1=Paid, 2=Processing, 3=Canceled, 4=Returned
+                        diemtichluy INT DEFAULT 0, -- Points earned from this invoice
+                        ghichu TEXT,
+                        ngaytao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        nguoitao VARCHAR(50),
+                        ngaysua TIMESTAMP,
+                        nguoisua VARCHAR(50),
+                        isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for invoice details
 CREATE TABLE chitiethoadon (
-    macthd SERIAL PRIMARY KEY,
-    mahd INT NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    soluong INT NOT NULL,
-    dongiaban DECIMAL(15,2) NOT NULL,
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiaban) STORED,
-    giamgia DECIMAL(15,2) DEFAULT 0,
-    thanhtiensaugiam DECIMAL(15,2) GENERATED ALWAYS AS ((soluong * dongiaban) - giamgia) STORED,
-    isdeleted BOOLEAN DEFAULT FALSE,
+                               macthd SERIAL PRIMARY KEY,
+                               mahd INT NOT NULL,
+                               masp VARCHAR(50) NOT NULL,
+                               soluong INT NOT NULL,
+                               dongiaban DECIMAL(15,2) NOT NULL,
+                               thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiaban) STORED,
+                               giamgia DECIMAL(15,2) DEFAULT 0,
+                               thanhtiensaugiam DECIMAL(15,2) GENERATED ALWAYS AS ((soluong * dongiaban) - giamgia) STORED,
+                               isdeleted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT chk_chitiethoadon_soluong CHECK (soluong > 0)
+                               CONSTRAINT chk_chitiethoadon_soluong CHECK (soluong > 0)
 );
 
 -- Table to apply promotions to products
 CREATE TABLE khuyenmaisanpham (
-    makmsp SERIAL PRIMARY KEY,
-    makm VARCHAR(50) NOT NULL,
-    masp VARCHAR(50) NOT NULL,
-    ngaybatdau TIMESTAMP,
-    ngayketthuc TIMESTAMP,
-    isdeleted BOOLEAN DEFAULT FALSE
+                                  makmsp SERIAL PRIMARY KEY,
+                                  makm VARCHAR(50) NOT NULL,
+                                  masp VARCHAR(50) NOT NULL,
+                                  ngaybatdau TIMESTAMP,
+                                  ngayketthuc TIMESTAMP,
+                                  isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table to apply promotions to customers
 CREATE TABLE khuyenmaikhachhang (
-    makmkh SERIAL PRIMARY KEY,
-    makm VARCHAR(50) NOT NULL,
-    makh VARCHAR(50) NOT NULL,
-    ngayapdung TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dasudung BOOLEAN DEFAULT FALSE,
-    isdeleted BOOLEAN DEFAULT FALSE
+                                    makmkh SERIAL PRIMARY KEY,
+                                    makm VARCHAR(50) NOT NULL,
+                                    makh VARCHAR(50) NOT NULL,
+                                    ngayapdung TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                    dasudung BOOLEAN DEFAULT FALSE,
+                                    isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Table for payment transactions
 CREATE TABLE thanhtoan (
-    matt SERIAL PRIMARY KEY,
-    mahd INT NOT NULL,
-    mapttt VARCHAR(50) NOT NULL,
-    sotienthanhtoan DECIMAL(15,2) NOT NULL,
-    ngaygiott TIMESTAMP NOT NULL,
-    trangthaitt INT DEFAULT 0, -- 0=Pending, 1=Success, 2=Failed, 3=Canceled, 4=Refunded
-    magiaodichnganhang VARCHAR(100), -- Transaction ID from the bank
-    ghichu TEXT,
-    isdeleted BOOLEAN DEFAULT FALSE
+                           matt SERIAL PRIMARY KEY,
+                           mahd INT NOT NULL,
+                           mapttt VARCHAR(50) NOT NULL,
+                           sotienthanhtoan DECIMAL(15,2) NOT NULL,
+                           ngaygiott TIMESTAMP NOT NULL,
+                           trangthaitt INT DEFAULT 0, -- 0=Pending, 1=Success, 2=Failed, 3=Canceled, 4=Refunded
+                           magiaodichnganhang VARCHAR(100), -- Transaction ID from the bank
+                           ghichu TEXT,
+                           isdeleted BOOLEAN DEFAULT FALSE
 );
 
 -- Merged table for shopping cart and its details
 CREATE TABLE giohang_chitiet (
-    maghct SERIAL PRIMARY KEY, -- Unique ID for each row
-    makh VARCHAR(50), -- Customer ID
-    manv VARCHAR(50), -- Assisting employee (if any)
-    masp VARCHAR(50) NOT NULL, -- Product ID
-    soluong INT NOT NULL, -- Product quantity
-    dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
-    thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
-    ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
-    ngaycapnhat TIMESTAMP, -- Last update time
-    trangthai INT DEFAULT 0, 
+                                 maghct SERIAL PRIMARY KEY, -- Unique ID for each row
+                                 makh VARCHAR(50), -- Customer ID
+                                 manv VARCHAR(50), -- Assisting employee (if any)
+                                 masp VARCHAR(50) NOT NULL, -- Product ID
+                                 soluong INT NOT NULL, -- Product quantity
+                                 dongiahientai DECIMAL(15,2) NOT NULL, -- Price at the time of adding to cart
+                                 thanhtien DECIMAL(15,2) GENERATED ALWAYS AS (soluong * dongiahientai) STORED, -- Total price
+                                 ngaythem TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Date and time when the product was added to the cart
+                                 ngaycapnhat TIMESTAMP, -- Last update time
+                                 trangthai INT DEFAULT 0,
 
     -- Constraints
-    CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
-    CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
+                                 CONSTRAINT chk_giohang_chitiet_soluong CHECK (soluong > 0),
+                                 CONSTRAINT chk_giohang_chitiet_dongia CHECK (dongiahientai > 0)
 );
 
 -- Table for statistics and reports
 CREATE TABLE thongkebaocao (
-    mabaocao SERIAL PRIMARY KEY,
-    mach VARCHAR(50),
-    manv VARCHAR(50) NOT NULL, -- Employee who created the report
-    loaibaocao VARCHAR(100) NOT NULL, -- Report type: Revenue, Expense, Inventory, etc.
-    tenbaocao VARCHAR(255) NOT NULL,
-    thoigiantu TIMESTAMP,
-    thoigianden TIMESTAMP,
-    sotien DECIMAL(15,2),
-    soluong INT,
-    ngaybaocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    noidung TEXT,
-    filedinhkem VARCHAR(500),
-    trangthai INT DEFAULT 1, -- 0=Draft, 1=Completed
-    isdeleted BOOLEAN DEFAULT FALSE
+                               mabaocao SERIAL PRIMARY KEY,
+                               mach VARCHAR(50),
+                               manv VARCHAR(50) NOT NULL, -- Employee who created the report
+                               loaibaocao VARCHAR(100) NOT NULL, -- Report type: Revenue, Expense, Inventory, etc.
+                               tenbaocao VARCHAR(255) NOT NULL,
+                               thoigiantu TIMESTAMP,
+                               thoigianden TIMESTAMP,
+                               sotien DECIMAL(15,2),
+                               soluong INT,
+                               ngaybaocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               noidung TEXT,
+                               filedinhkem VARCHAR(500),
+                               trangthai INT DEFAULT 1, -- 0=Draft, 1=Completed
+                               isdeleted BOOLEAN DEFAULT FALSE
 );
+
+CREATE TABLE BaoCaoDoanhThu_HangNgay (
+    id SERIAL PRIMARY KEY,
+    ngay_ban DATE NOT NULL, -- Ngày bán hàng
+    mach VARCHAR(50), -- Mã cửa hàng (nếu hệ thống có nhiều cửa hàng)
+    masp VARCHAR(50) NOT NULL, -- Mã sản phẩm được bán
+    soluong_ban INT NOT NULL, -- Tổng số lượng sản phẩm bán ra trong ngày
+    doanhthu DECIMAL(15, 2) NOT NULL, -- Tổng doanh thu (sau khi đã trừ giảm giá)
+    von_trungbinh DECIMAL(15, 2), -- Tổng tiền vốn trung bình của các sản phẩm đã bán
+    loinhuan DECIMAL(15, 2) GENERATED ALWAYS AS (doanhthu - von_trungbinh) STORED, -- Lợi nhuận được tự động tính
+
+    -- Ràng buộc UNIQUE để đảm bảo mỗi ngày, mỗi sản phẩm tại mỗi cửa hàng
+    -- chỉ có duy nhất một dòng dữ liệu tổng hợp.
+    CONSTRAINT uq_baocao_ngay_sp_ch UNIQUE (ngay_ban, masp, mach)
+);
+
 
 -- ===================================
 -- ADD UNIQUE CONSTRAINTS
@@ -434,6 +450,15 @@ ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT uq_khuyenmai_khachhang UNIQUE (mak
 -- ===================================
 -- ADD FOREIGN KEYS
 -- ===================================
+
+-- Thêm khóa ngoại để liên kết với bảng 'cuahang'
+ALTER TABLE BaoCaoDoanhThu_HangNgay
+ADD CONSTRAINT fk_baocao_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach);
+
+-- Thêm khóa ngoại để liên kết với bảng 'sanpham'
+ALTER TABLE BaoCaoDoanhThu_HangNgay
+ADD CONSTRAINT fk_baocao_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp);
+
 
 -- Foreign key for loaisanpham (self-referencing)
 ALTER TABLE loaisanpham ADD CONSTRAINT fk_loaisanpham_loaicha FOREIGN KEY (maloaicha) REFERENCES loaisanpham(maloaisp);
@@ -528,6 +553,11 @@ ALTER TABLE thongkebaocao ADD CONSTRAINT fk_thongkebaocao_nhanvien FOREIGN KEY (
 -- CREATE INDEXES
 -- ===================================
 
+-- Tạo Index (chỉ mục) để tăng tốc độ truy vấn trên các cột thường dùng để lọc và tìm kiếm
+CREATE INDEX idx_baocao_ngay_ban ON BaoCaoDoanhThu_HangNgay(ngay_ban);
+CREATE INDEX idx_baocao_masp ON BaoCaoDoanhThu_HangNgay(masp);
+CREATE INDEX idx_baocao_mach ON BaoCaoDoanhThu_HangNgay(mach);
+
 CREATE INDEX idx_nguoidung_email ON nguoidung(email);
 CREATE INDEX idx_nguoidung_vaitro ON nguoidung(vaitro);
 CREATE INDEX idx_cuahang_trangthai ON cuahang(trangthai);
@@ -599,25 +629,25 @@ BEGIN
       NEW.ngaysua = CURRENT_TIMESTAMP;
    ELSIF TG_TABLE_NAME = 'giohang_chitiet' THEN
       NEW.ngaycapnhat = CURRENT_TIMESTAMP;
-   END IF;
-   RETURN NEW;
+END IF;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger for tonkhochitiet to update ngaycapnhat
 CREATE TRIGGER trg_tonkhochitiet_updatedate
-BEFORE UPDATE ON tonkhochitiet
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_timestamp();
+    BEFORE UPDATE ON tonkhochitiet
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_update_timestamp();
 
 -- Trigger for hoadon to update ngaysua
 CREATE TRIGGER trg_hoadon_updatedate
-BEFORE UPDATE ON hoadon
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_timestamp();
+    BEFORE UPDATE ON hoadon
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_update_timestamp();
 
 -- Trigger for giohang_chitiet to update ngaycapnhat
 CREATE TRIGGER trg_giohang_chitiet_updatedate
-BEFORE UPDATE ON giohang_chitiet
-FOR EACH ROW
-EXECUTE FUNCTION fn_update_timestamp();
+    BEFORE UPDATE ON giohang_chitiet
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_update_timestamp();

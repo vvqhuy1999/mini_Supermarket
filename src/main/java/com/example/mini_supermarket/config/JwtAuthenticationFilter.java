@@ -26,14 +26,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
+        System.out.println("🔍 === JWT FILTER DEBUG ===");
+        System.out.println("🔍 Request URI: " + request.getRequestURI());
+        System.out.println("🔍 Request Method: " + request.getMethod());
+        
         try {
             // Lấy JWT token từ Authorization header
             String jwt = getJwtFromRequest(request);
+            System.out.println("🔍 JWT Token found: " + (jwt != null ? "YES" : "NO"));
             
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
+                System.out.println("🔍 JWT Token is valid");
+                
                 // Lấy thông tin từ token
                 String username = jwtUtil.getUsernameFromToken(jwt);
                 String role = jwtUtil.getRoleFromToken(jwt);
+                
+                System.out.println("🔍 Username from token: " + username);
+                System.out.println("🔍 Role from token: " + role);
                 
                 if (StringUtils.hasText(username) && StringUtils.hasText(role)) {
                     // Tạo authentication object
@@ -46,14 +56,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Set authentication vào SecurityContext
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     
-                    System.out.println("🔐 JWT Filter - Authenticated user: " + username + " with role: " + role);
+                    System.out.println("✅ JWT Filter - Successfully authenticated user: " + username + " with role: " + role);
+                    System.out.println("✅ SecurityContext authentication set: " + SecurityContextHolder.getContext().getAuthentication());
+                } else {
+                    System.out.println("❌ JWT Filter - Username or role is empty");
                 }
+            } else {
+                System.out.println("❌ JWT Filter - Token is empty or invalid");
             }
         } catch (Exception e) {
             System.err.println("❌ JWT Filter error: " + e.getMessage());
+            e.printStackTrace();
             // Không set authentication nếu có lỗi
         }
         
+        System.out.println("🔍 === END JWT FILTER DEBUG ===");
         filterChain.doFilter(request, response);
     }
 

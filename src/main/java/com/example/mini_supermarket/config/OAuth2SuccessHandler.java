@@ -29,8 +29,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private OAuth2AuthorizedClientService authorizedClientService;
     
-    @Value("${oauth2.frontend.base-url:http://localhost:3000}")
-    private String frontendBaseUrl;
+    @Value("${oauth2.frontend.customer.base-url:http://localhost:3000}")
+    private String customerFrontendUrl;
+    
+    @Value("${oauth2.frontend.employee.base-url:http://localhost:5173}")
+    private String employeeFrontendUrl;
     
     @Value("${oauth2.frontend.success-path:/oauth2/success}")
     private String frontendSuccessPath;
@@ -50,14 +53,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             AuthenticationResponse authResponse = processOAuth2Login(oauth2User);
             
             if (authResponse.isAuthenticated()) {
-                // Tạo redirect URL với token và user info
-                String redirectUrl = buildRedirectUrl(authResponse);
+                // Xác định role của user để redirect về đúng frontend
+                String baseUrl = determineFrontendUrl(authentication);
+                String redirectUrl = buildRedirectUrl(authResponse, baseUrl);
                 
                 System.out.println("✅ OAuth2 Success - Redirecting to frontend: " + redirectUrl);
                 response.sendRedirect(redirectUrl);
             } else {
-                // Redirect to error page
-                String errorUrl = frontendBaseUrl + "/login?error=authentication_failed&message=" + 
+                // Redirect to error page (mặc định về customer frontend)
+                String errorUrl = customerFrontendUrl + "/login?error=authentication_failed&message=" + 
                     URLEncoder.encode(authResponse.getMessage(), StandardCharsets.UTF_8);
                 response.sendRedirect(errorUrl);
             }
@@ -66,8 +70,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             System.err.println("❌ OAuth2 Success Handler Error: " + e.getMessage());
             e.printStackTrace();
             
-            // Redirect to error page
-            String errorUrl = frontendBaseUrl + "/login?error=server_error&message=" + 
+            // Redirect to error page (mặc định về customer frontend)
+            String errorUrl = customerFrontendUrl + "/login?error=server_error&message=" + 
                 URLEncoder.encode("Internal server error during OAuth2 processing", StandardCharsets.UTF_8);
             response.sendRedirect(errorUrl);
         }
@@ -131,9 +135,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         }
     }
     
-    private String buildRedirectUrl(AuthenticationResponse authResponse) {
+    private String buildRedirectUrl(AuthenticationResponse authResponse, String baseUrl) {
         StringBuilder url = new StringBuilder();
-        url.append(frontendBaseUrl).append(frontendSuccessPath);
+        url.append(baseUrl).append(frontendSuccessPath);
         
         String jwtToken = authResponse.getToken();
         
@@ -163,5 +167,25 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         System.out.println("🔗 Redirect URL: " + url.toString());
         
         return url.toString();
+    }
+    
+    /**
+     * Xác định frontend URL dựa trên role của user
+     * @param authentication Thông tin authentication của user
+     * @return URL của frontend tương ứng
+     */
+    private String determineFrontendUrl(Authentication authentication) {
+        // Kiểm tra role của user
+        boolean isEmployee = authentication.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals("ROLE_EMPLOYEE") || 
+                                 authority.getAuthority().equals("ROLE_MANAGER"));
+        
+        if (isEmployee) {
+            System.out.println("👨‍💼 User is Employee/Manager - Redirecting to employee frontend: " + employeeFrontendUrl);
+            return employeeFrontendUrl;
+        } else {
+            System.out.println("🛒 User is Customer - Redirecting to customer frontend: " + customerFrontendUrl);
+            return customerFrontendUrl;
+        }
     }
 }

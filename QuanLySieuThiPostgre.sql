@@ -423,6 +423,22 @@ CREATE TABLE thongkebaocao (
                                isdeleted BOOLEAN DEFAULT FALSE
 );
 
+CREATE TABLE BaoCaoDoanhThu_HangNgay (
+    id SERIAL PRIMARY KEY,
+    ngay_ban DATE NOT NULL, -- Ngày bán hàng
+    mach VARCHAR(50), -- Mã cửa hàng (nếu hệ thống có nhiều cửa hàng)
+    masp VARCHAR(50) NOT NULL, -- Mã sản phẩm được bán
+    soluong_ban INT NOT NULL, -- Tổng số lượng sản phẩm bán ra trong ngày
+    doanhthu DECIMAL(15, 2) NOT NULL, -- Tổng doanh thu (sau khi đã trừ giảm giá)
+    von_trungbinh DECIMAL(15, 2), -- Tổng tiền vốn trung bình của các sản phẩm đã bán
+    loinhuan DECIMAL(15, 2) GENERATED ALWAYS AS (doanhthu - von_trungbinh) STORED, -- Lợi nhuận được tự động tính
+
+    -- Ràng buộc UNIQUE để đảm bảo mỗi ngày, mỗi sản phẩm tại mỗi cửa hàng
+    -- chỉ có duy nhất một dòng dữ liệu tổng hợp.
+    CONSTRAINT uq_baocao_ngay_sp_ch UNIQUE (ngay_ban, masp, mach)
+);
+
+
 -- ===================================
 -- ADD UNIQUE CONSTRAINTS
 -- ===================================
@@ -434,6 +450,15 @@ ALTER TABLE khuyenmaikhachhang ADD CONSTRAINT uq_khuyenmai_khachhang UNIQUE (mak
 -- ===================================
 -- ADD FOREIGN KEYS
 -- ===================================
+
+-- Thêm khóa ngoại để liên kết với bảng 'cuahang'
+ALTER TABLE BaoCaoDoanhThu_HangNgay
+ADD CONSTRAINT fk_baocao_cuahang FOREIGN KEY (mach) REFERENCES cuahang(mach);
+
+-- Thêm khóa ngoại để liên kết với bảng 'sanpham'
+ALTER TABLE BaoCaoDoanhThu_HangNgay
+ADD CONSTRAINT fk_baocao_sanpham FOREIGN KEY (masp) REFERENCES sanpham(masp);
+
 
 -- Foreign key for loaisanpham (self-referencing)
 ALTER TABLE loaisanpham ADD CONSTRAINT fk_loaisanpham_loaicha FOREIGN KEY (maloaicha) REFERENCES loaisanpham(maloaisp);
@@ -527,6 +552,11 @@ ALTER TABLE thongkebaocao ADD CONSTRAINT fk_thongkebaocao_nhanvien FOREIGN KEY (
 -- ===================================
 -- CREATE INDEXES
 -- ===================================
+
+-- Tạo Index (chỉ mục) để tăng tốc độ truy vấn trên các cột thường dùng để lọc và tìm kiếm
+CREATE INDEX idx_baocao_ngay_ban ON BaoCaoDoanhThu_HangNgay(ngay_ban);
+CREATE INDEX idx_baocao_masp ON BaoCaoDoanhThu_HangNgay(masp);
+CREATE INDEX idx_baocao_mach ON BaoCaoDoanhThu_HangNgay(mach);
 
 CREATE INDEX idx_nguoidung_email ON nguoidung(email);
 CREATE INDEX idx_nguoidung_vaitro ON nguoidung(vaitro);
@@ -622,6 +652,7 @@ CREATE TRIGGER trg_giohang_chitiet_updatedate
     FOR EACH ROW
     EXECUTE FUNCTION fn_update_timestamp();
 
+
 -- ===================================
 -- INSERT SAMPLE DATA
 -- ===================================
@@ -629,30 +660,30 @@ CREATE TRIGGER trg_giohang_chitiet_updatedate
 -- Thêm dữ liệu mẫu cho bảng chính
 -- vaitro: 0=Admin, 1=QuanLy, 2=NhanVien, 3=KhachHang
 INSERT INTO nguoidung (manguoidung, email, matkhau, sub, vaitro) VALUES
-                                                                     ('ND001', 'admin1@gmail.com', 'pass123', null, 0),
-                                                                     ('ND002', 'quanly1@gmail.com', 'pass123', null, 1),
-                                                                     ('ND003', 'nhanvien1@gmail.com', 'pass123', null, 2),
-                                                                     ('ND004', 'nhanvien2@gmail.com', 'pass123', null, 2),
-                                                                     ('ND005', 'nhanvien3@gmail.com', 'pass123', null, 2),
-                                                                     ('ND006', 'nhanvien4@gmail.com', 'pass123', null, 2),
-                                                                     ('ND007', 'nhanvien5@gmail.com', 'pass123', null, 2),
-                                                                     ('ND008', 'quanly2@gmail.com', 'pass123', null, 1),
-                                                                     ('ND009', 'nhanvien6@gmail.com', 'pass123', null, 2),
-                                                                     ('ND010', 'nhanvien7@gmail.com', 'pass123', null, 2),
-                                                                     ('ND011', 'nhanvien8@gmail.com', 'pass123', null, 2),
-                                                                     ('ND012', 'nhanvien9@gmail.com', 'pass123', null, 2),
-                                                                     ('ND013', 'nhanvien10@gmail.com', 'pass123', null, 2),
-                                                                     ('ND014', 'nhanvien11@gmail.com', 'pass123', null,2),
-                                                                     ('ND015', 'khach1@gmail.com', 'pass456', null, 3),
-                                                                     ('ND016', 'khach2@gmail.com', 'pass456', null, 3),
-                                                                     ('ND017', 'khach3@gmail.com', 'pass456', null, 3),
-                                                                     ('ND018', 'khach4@gmail.com', 'pass456', null, 3),
-                                                                     ('ND019', 'khach5@gmail.com', 'pass456', null, 3),
-                                                                     ('ND020', 'khach6@gmail.com', 'pass456', null, 3),
-                                                                     ('ND021', 'khach7@gmail.com', 'pass456', null, 3),
-                                                                     ('ND022', 'khach8@gmail.com', 'pass456', null, 3),
-                                                                     ('ND023', 'khach9@gmail.com', 'pass456', null, 3),
-                                                                     ('ND024', 'khach10@gmail.com', 'pass456', null, 3);
+                                                                     ('ND001', 'admin1@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 0),
+                                                                     ('ND002', 'quanly1@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 1),
+                                                                     ('ND003', 'nhanvien1@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND004', 'nhanvien2@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND005', 'nhanvien3@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND006', 'nhanvien4@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND007', 'nhanvien5@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND008', 'quanly2@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 1),
+                                                                     ('ND009', 'nhanvien6@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND010', 'nhanvien7@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND011', 'nhanvien8@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND012', 'nhanvien9@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND013', 'nhanvien10@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 2),
+                                                                     ('ND014', 'nhanvien11@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null,2),
+                                                                     ('ND015', 'khach1@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND016', 'khach2@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND017', 'khach3@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND018', 'khach4@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND019', 'khach5@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND020', 'khach6@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND021', 'khach7@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND022', 'khach8@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND023', 'khach9@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3),
+                                                                     ('ND024', 'khach10@gmail.com', '$2a$12$ntNvEXnRqn/49TBSrvdBpulEHHw52NUXtT4i/dB1wwuLuO8mmY0PC', null, 3);
 
 INSERT INTO cuahang (mach, tench, diachi, sdt, ngaythanhlap, trangthai) VALUES
                                                                             ('CH001', 'Cửa Hàng EasyMart1', '123 Lê Lợi, Q1', '0909123456', '2020-01-01', 1),
@@ -1553,3 +1584,77 @@ FROM information_schema.triggers
 WHERE trigger_name LIKE '%inventory%'
 ORDER BY trigger_name;
 
+-- =================================================================================
+-- FUNCTION ĐỂ TÍNH TOÁN VÀ CẬP NHẬT BẢNG BAOCAODOANHTHU_HANGNGAY TỪ HÓA ĐƠN
+-- =================================================================================
+-- Function này nhận vào một ngày cụ thể (vd: '2024-10-26') và sẽ tổng hợp
+-- toàn bộ doanh thu của ngày đó rồi lưu vào bảng báo cáo.
+
+CREATE OR REPLACE FUNCTION CapNhatBaoCaoDoanhThu(ngay_cap_nhat DATE)
+RETURNS VOID AS $$
+BEGIN
+
+    -- Sử dụng INSERT ... ON CONFLICT để thêm mới hoặc cập nhật nếu đã có dữ liệu của ngày đó
+    -- Điều này giúp bạn có thể chạy lại function cho một ngày cũ mà không sợ bị trùng lặp dữ liệu.
+    INSERT INTO BaoCaoDoanhThu_HangNgay (ngay_ban, mach, masp, soluong_ban, doanhthu, von_trungbinh)
+    WITH
+    -- Bước 1: Lấy giá vốn trung bình cho mỗi sản phẩm từ các phiếu nhập
+    GiaVon AS (
+        SELECT
+            masp,
+            AVG(dongianhap) AS gia_von_trung_binh
+        FROM chitietphieunhap
+        GROUP BY masp
+    ),
+    -- Bước 2: Tổng hợp dữ liệu bán hàng trong ngày được chỉ định từ hóa đơn
+    DoanhThuTrongNgay AS (
+        SELECT
+            hd.ngaylap::DATE AS ngay_ban,
+            nv.mach, -- Lấy mã cửa hàng từ bảng nhân viên
+            cthd.masp,
+            SUM(cthd.soluong) AS tong_soluong,
+            SUM(cthd.thanhtiensaugiam) AS tong_doanhthu
+        FROM hoadon hd
+        JOIN chitiethoadon cthd ON hd.mahd = cthd.mahd
+        JOIN nhanvien nv ON hd.manvlap = nv.manv
+        WHERE
+            hd.ngaylap::DATE = ngay_cap_nhat
+            AND hd.trangthai = 1 -- Chỉ tính các hóa đơn đã thanh toán thành công
+        GROUP BY
+            hd.ngaylap::DATE,
+            nv.mach,
+            cthd.masp
+    )
+    -- Bước 3: Kết hợp dữ liệu doanh thu và giá vốn để đưa vào bảng báo cáo
+    SELECT
+        dtn.ngay_ban,
+        dtn.mach,
+        dtn.masp,
+        dtn.tong_soluong,
+        dtn.tong_doanhthu,
+        -- Lấy giá vốn trung bình, nếu sản phẩm chưa từng nhập hàng thì giá vốn là 0
+        COALESCE(gv.gia_von_trung_binh, 0) * dtn.tong_soluong AS tong_von
+    FROM DoanhThuTrongNgay dtn
+    LEFT JOIN GiaVon gv ON dtn.masp = gv.masp
+
+    -- Lệnh ON CONFLICT:
+    -- Nếu trong bảng BaoCaoDoanhThu_HangNgay đã tồn tại một dòng có cùng (ngay_ban, masp, mach)
+    -- thì thay vì báo lỗi, nó sẽ thực hiện lệnh UPDATE.
+    ON CONFLICT (ngay_ban, masp, mach) DO UPDATE
+    SET
+        soluong_ban = EXCLUDED.soluong_ban,
+        doanhthu = EXCLUDED.doanhthu,
+        von_trungbinh = EXCLUDED.von_trungbinh;
+
+END;
+$$ LANGUAGE plpgsql;
+
+-- =================================================================================
+-- CÁCH SỬ DỤNG
+-- =================================================================================
+
+-- Để chạy cập nhật báo cáo cho ngày hôm nay (ví dụ: 26/10/2024), bạn chỉ cần gọi lệnh:
+-- SELECT CapNhatBaoCaoDoanhThu('2024-10-26');
+
+-- Hoặc cho ngày hôm qua:
+-- SELECT CapNhatBaoCaoDoanhThu(CURRENT_DATE - INTERVAL '1 day');
