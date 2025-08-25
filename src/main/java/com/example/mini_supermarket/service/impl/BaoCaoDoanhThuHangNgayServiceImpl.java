@@ -207,7 +207,9 @@ public class BaoCaoDoanhThuHangNgayServiceImpl implements BaoCaoDoanhThuHangNgay
             "SELECT CapNhatBaoCaoDoanhThu(:ngayCapNhat)"
         );
         query.setParameter("ngayCapNhat", ngayCapNhat);
-        query.executeUpdate();
+        // Function RETURNS VOID nhưng SELECT vẫn trả về một hàng 'void'.
+        // Cần đọc (consume) kết quả thay vì executeUpdate để tránh lỗi JDBC.
+        query.getSingleResult();
     }
     
     @Override
