@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -24,12 +23,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 
+// ===== MAIN SECURITY CONFIGURATION =====
 @Configuration
 @EnableWebSecurity
 @ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true", matchIfMissing = true)
@@ -38,8 +39,7 @@ public class SecurityConfig {
     @Autowired
     private OAuth2SuccessHandler oAuth2SuccessHandler;
     
-    @Autowired
-    private ClientRegistrationRepository clientRegistrationRepository;
+    // Removed unused ClientRegistrationRepository bean
     
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -77,7 +77,7 @@ public class SecurityConfig {
         // Quên mật khẩu và OTP
         "/api/forgot-password/**",
         
-        // API sản phẩm công khai - CHỈ ĐỌC
+        // API sản phẩm công khai - CHỈ ĐỌC - ✅ SỬA: Đảm bảo pattern đúng
         "/api/sanpham", // GET danh sách
         "/api/sanpham/SP*", // GET chi tiết sản phẩm theo ID
         "/api/sanpham/optimized",
@@ -86,7 +86,7 @@ public class SecurityConfig {
         "/api/sanpham/*/with-tonkho",
         "/api/sanpham/search/**",
         
-        // API loại sản phẩm công khai
+        // API loại sản phẩm công khai - ✅ SỬA: Đảm bảo pattern đúng
         "/api/loaisanpham", // GET danh sách
         "/api/loaisanpham/LSP*", // GET chi tiết loại sản phẩm
         
@@ -107,7 +107,7 @@ public class SecurityConfig {
         "/api/khachhang/by-email/*",
         "/api/nguoidung/email/*",
         
-        // Media & Images
+        // Media & Images - ✅ SỬA: Đảm bảo tất cả image endpoints đều public
         "/api/hinhanh/**",
         "/api/upload/serve-image/**",
         "/api/upload/serve-image-by-id/**",
@@ -117,13 +117,19 @@ public class SecurityConfig {
         "/images/**",
         "/uploads/**",
         
-        // VNPay callback
+        // VNPay callback - ✅ SỬA: Đảm bảo VNPay endpoints public
         "/api/thanhtoan/vnpay/return",
+        "/api/thanhtoan/vnpay/ipn",
         "/api/phuongthucthanhtoan",
         
         // Health check
         "/actuator/health/**",
-        "/health"
+        "/health",
+        
+        // Favicon và static resources
+        "/favicon.ico",
+        "/static/**",
+        "/public/**"
     };
     
     // ===== CÁC ENDPOINT DÀNH CHO CUSTOMER - ƯU TIÊN CAO NHẤT =====
@@ -138,27 +144,50 @@ public class SecurityConfig {
         // Giỏ hàng - CHỈ CUSTOMER
         "/api/giohang/**",
         
-        // Hóa đơn của khách hàng cá nhân
-        "/api/hoadon/from-cart",
-        "/api/hoadon/by-khachhang/**",
-        "/api/hoadon/*/full-details",
-        "/api/hoadon/status/**",
-        "/api/hoadon/date-range",
-        "/api/hoadon/optimized",
-        "/api/hoadon/count/**",
-        "/api/hoadon/*/cancel",
-        "/api/hoadon/*/status",
-        "/api/hoadon/*/trangthai/**",
+        // ✅ HÓA ĐƠN CỦA KHÁCH HÀNG CÁ NHÂN - CHỈ CUSTOMER - SỬA: Pattern cụ thể hơn
+        // 🛒 Checkout Flow
+        "/api/hoadon/from-cart", // POST - Tạo hóa đơn từ giỏ hàng
+        "/api/hoadon/by-khachhang/**", // GET - Lấy hóa đơn theo khách hàng
+        "/api/hoadon/*/full-details", // GET - Chi tiết hóa đơn cá nhân (full-details)
+        "/api/hoadon/by-khachhang/*/full-details", // GET - Chi tiết đầy đủ theo khách hàng
+        
+        // 📊 Statistics & Counting cho khách hàng cá nhân
+        "/api/hoadon/count/**", // GET - Đếm hóa đơn cá nhân
+        "/api/hoadon/count/trangthai/**", // GET - Đếm theo trạng thái
+        "/api/hoadon/count/khachhang/**", // GET - Đếm theo khách hàng
+        
+        // 🔍 Filtering & Searching cho khách hàng cá nhân
+        "/api/hoadon/status/**", // GET - Lấy hóa đơn theo trạng thái
+        "/api/hoadon/by-khachhang/*/status/**", // GET - Lấy hóa đơn theo khách hàng và trạng thái
+        "/api/hoadon/date-range", // GET - Lấy hóa đơn theo khoảng ngày
+        "/api/hoadon/by-khachhang/*/date-range", // GET - Lấy hóa đơn theo khách hàng và khoảng ngày
+        "/api/hoadon/search", // GET - Tìm kiếm hóa đơn
+        
+        // 📈 Statistics cho khách hàng cá nhân
+        "/api/hoadon/by-khachhang/*/statistics", // GET - Thống kê hóa đơn cá nhân
+        "/api/hoadon/by-khachhang/*/count-by-status", // GET - Đếm hóa đơn theo trạng thái cá nhân
+        
+        // ❌ Cancellation & Status Update cho khách hàng cá nhân - SỬA: Pattern cụ thể hơn
+        "/api/hoadon/*/cancel", // PATCH - Hủy hóa đơn cá nhân
+        "/api/hoadon/*/trangthai", // PATCH - Cập nhật trạng thái cá nhân
+        
+        // ✅ THÊM: Endpoint cập nhật trạng thái hóa đơn cho customer (cụ thể hơn)
+        "/api/hoadon/*/trangthai/*", // PUT - Cập nhật trạng thái hóa đơn cá nhân
+        
+        // ✅ THÊM: Endpoint cập nhật hóa đơn cá nhân (cụ thể hơn)
+        "/api/hoadon/HD*", // PUT - Cập nhật hóa đơn cá nhân (chỉ HD* pattern)
         
         // Chi tiết hóa đơn của khách hàng
-        "/api/chitiethoadon/hoadon/**",
+        "/api/chitiethoadon/hoadon/**", // GET - Chi tiết theo hóa đơn
         
-        // Thanh toán VNPay
-        "/api/thanhtoan/vnpay/**",
+        // Thanh toán VNPay - CHỈ CUSTOMER
+        "/api/thanhtoan/vnpay", // POST - Tạo URL thanh toán VNPay
+        "/api/thanhtoan/vnpay/**", // Tất cả VNPay endpoints cho customer
         
         // Quản lý tài khoản cá nhân
         "/api/nguoidung/change-password",
         "/api/nguoidung/update-profile",
+        "/api/nguoidung/profile", // GET - Lấy thông tin profile cá nhân
         
         // Địa chỉ giao hàng cá nhân
         "/api/diachigiaohang/**",
@@ -171,13 +200,19 @@ public class SecurityConfig {
         
         // Khuyến mãi coupon
         "/api/khuyenmai/coupon/**"
+        
+        // ❌ SỬA: Bỏ "/api/hoadon/*" vì quá rộng và gây xung đột với STAFF_AND_MANAGER_ENDPOINTS
     };
     
     // ===== CÁC ENDPOINT CHỈ DÀNH CHO MANAGER - ƯU TIÊN THỨ 2 =====
     private final String[] MANAGER_ONLY_ENDPOINTS = {
         "/api/cuahang/**",
         "/api/nhacungcap/**",
-        "/api/upload/**", // Upload file chỉ MANAGER
+        // ✅ SỬA: Upload file chỉ MANAGER - Tránh xung đột với public image serving
+        "/api/upload/upload-image/**", // POST - Upload ảnh mới
+        "/api/upload/update-image/**", // PUT - Cập nhật ảnh
+        "/api/upload/delete-image/**", // DELETE - Xóa ảnh
+        "/api/upload/admin/**", // Admin quản lý upload
         "/api/thongkebaocao/**",
         "/api/baocao-doanhthu/**"
     };
@@ -198,9 +233,15 @@ public class SecurityConfig {
         "/api/khuyenmaisanpham/**",
         "/api/khuyenmaikhachhang/**",
         
-        // CRUD sản phẩm cho EMPLOYEE và MANAGER
-        "/api/sanpham/**", // POST, PUT, DELETE sản phẩm
-        "/api/loaisanpham/**", // POST, PUT, DELETE loại sản phẩm
+        // CRUD sản phẩm cho EMPLOYEE và MANAGER - ✅ SỬA: Tránh xung đột với public endpoints
+        "/api/sanpham/create", // POST - Tạo sản phẩm mới
+        "/api/sanpham/update/**", // PUT - Cập nhật sản phẩm
+        "/api/sanpham/delete/**", // DELETE - Xóa sản phẩm
+        "/api/sanpham/admin/**", // Admin quản lý sản phẩm
+        "/api/loaisanpham/create", // POST - Tạo loại sản phẩm mới
+        "/api/loaisanpham/update/**", // PUT - Cập nhật loại sản phẩm
+        "/api/loaisanpham/delete/**", // DELETE - Xóa loại sản phẩm
+        "/api/loaisanpham/admin/**", // Admin quản lý loại sản phẩm
         
         // Quản lý khách hàng - CHỈ các endpoint quản lý ADMIN
         "/api/khachhang", // GET danh sách tất cả khách hàng
@@ -208,17 +249,28 @@ public class SecurityConfig {
         "/api/khachhang/search/**", // Tìm kiếm khách hàng
         "/api/khachhang/admin/**", // Các endpoint admin quản lý khách hàng
         
-        // ✅ QUAN TRỌNG: Quản lý hóa đơn cho EMPLOYEE
-        "/api/hoadon/employee/**",
-        "/api/hoadon", // GET tất cả hóa đơn
-        "/api/hoadon/HD*", // GET/PUT/DELETE hóa đơn theo ID
+        // ✅ QUAN TRỌNG: Quản lý hóa đơn cho EMPLOYEE và MANAGER - SỬA: Pattern cụ thể hơn
+        "/api/hoadon/employee/**", // API dành cho employee
+        "/api/hoadon", // GET tất cả hóa đơn (quản lý)
+        "/api/hoadon/HD*", // GET/PUT/DELETE hóa đơn theo ID (quản lý) - SỬA: Pattern cụ thể hơn
         "/api/hoadon/admin/**", // Admin quản lý hóa đơn
         "/api/hoadon/complete-data", // ✅ THÊM: API lấy dữ liệu đầy đủ đơn hàng
         "/api/hoadon/with-details/**", // ✅ THÊM: Hóa đơn với chi tiết
         
-        "/api/hoadon/*/trangthai/**", // ✅ THÊM: Cập nhật trạng thái hóa đơn
-        "/api/hoadon/*/cancel", // ✅ THÊM: Hủy hóa đơn
+        // ✅ THÊM: Endpoint quản lý tổng quan cho staff/manager (không trùng với customer)
+        "/api/hoadon/management/**", // API quản lý tổng quan
+        "/api/hoadon/reports/**", // API báo cáo
+        "/api/hoadon/analytics/**", // API phân tích dữ liệu
         
+        // ✅ LƯU Ý: Các endpoint hóa đơn được phân tách như sau:
+        // - CUSTOMER: Chỉ truy cập hóa đơn của chính mình (by-khachhang, full-details, cancel, status cá nhân)
+        // - EMPLOYEE/MANAGER: Truy cập tất cả hóa đơn để quản lý (GET all, CRUD, thống kê, báo cáo)
+        // - Pattern matching: 
+        //   + /api/hoadon/*/by-khachhang/** = Customer (GET)
+        //   + /api/hoadon/*/trangthai/* = Customer (PUT status)
+        //   + /api/hoadon/HD* = Staff/Manager (CRUD)
+        //   + /api/hoadon/management/** = Staff/Manager (quản lý)
+        // - TRÁNH XUNG ĐỘT: Không để endpoint trùng lặp giữa CUSTOMER và STAFF/MANAGER
         // Chi tiết hóa đơn
         "/api/chitiethoadon", // GET tất cả
         "/api/chitiethoadon/CTH*", // GET/PUT/DELETE theo ID
@@ -249,11 +301,6 @@ public class SecurityConfig {
     };
     
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
-    }
-    
-    @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return new CustomAuthenticationEntryPoint();
     }
@@ -261,6 +308,11 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return new CustomAccessDeniedHandler();
+    }
+    
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
     }
     
     @Bean
@@ -464,4 +516,3 @@ public class SecurityConfig {
             }
         }
     }
-    

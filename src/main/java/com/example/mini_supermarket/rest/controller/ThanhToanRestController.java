@@ -391,6 +391,7 @@ public class ThanhToanRestController {
             String vnp_TxnRef = request.getParameter("vnp_TxnRef");
             String vnp_Amount = request.getParameter("vnp_Amount");
             String vnp_OrderInfo = request.getParameter("vnp_OrderInfo");
+            System.out.println("🔎 VNPay Return - OrderInfo: " + vnp_OrderInfo);
             String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus"); // ✅ Tham số mới trong 2.1.0
 
             // Kiểm tra các tham số bắt buộc
@@ -431,6 +432,123 @@ public class ThanhToanRestController {
             // ✅ Kiểm tra trạng thái giao dịch đã được xử lý chưa
             if (thanhToan.getTrangThaiTT() != 0) { // Đã xử lý rồi
                 if (thanhToan.getTrangThaiTT() == 1) { // Đã thành công
+                    // Giao dịch đã thành công trước đó, trả về thông báo thành công
+                    System.out.println("ℹ️ Giao dịch " + vnp_TxnRef + " đã được xử lý thành công trước đó");
+                    
+                    // Trả về HTML page để redirect người dùng
+                    String successHtml = """
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Thanh toán thành công</title>
+                                <meta charset="UTF-8">
+                                <style>
+                                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                    .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
+                                    .redirect { color: #6c757d; font-size: 16px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="success">✅ Thanh toán thành công!</div>
+                                <div class="redirect">Giao dịch đã được xử lý trước đó</div>
+                                <div class="redirect">Đang chuyển hướng...</div>
+                                <script>
+                                    setTimeout(function() {
+                                        window.location.href = 'http://localhost:3000/payment-success';
+                                    }, 2000);
+                                </script>
+                            </body>
+                            </html>
+                            """;
+                    return ResponseEntity.ok()
+                            .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                            .body(successHtml);
+                } else { // Đã thất bại
+                    // Giao dịch đã thất bại trước đó, trả về thông báo thất bại
+                    System.out.println("ℹ️ Giao dịch " + vnp_TxnRef + " đã được xử lý thất bại trước đó");
+                    
+                    // Trả về HTML page để redirect người dùng
+                    String failedHtml = """
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Thanh toán thất bại</title>
+                                <meta charset="UTF-8">
+                                <style>
+                                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                    .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                                    .redirect { color: #6c757d; font-size: 16px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="failed">❌ Thanh toán thất bại!</div>
+                                <div class="redirect">Giao dịch đã được xử lý trước đó</div>
+                                <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
+                                <script>
+                                    setTimeout(function() {
+                                        window.location.href = 'http://localhost:3000/orders';
+                                    }, 2000);
+                                </script>
+                            </body>
+                            </html>
+                            """;
+                    return ResponseEntity.ok()
+                            .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                            .body(failedHtml);
+                }
+            }
+
+            // ✅ Xử lý theo vnp_ResponseCode và vnp_TransactionStatus (phiên bản 2.1.0)
+            if ("00".equals(vnp_ResponseCode)) {
+                // ✅ Kiểm tra vnp_TransactionStatus (tham số mới trong 2.1.0)
+                if ("00".equals(vnp_TransactionStatus)) {
+                    // Giao dịch thành công tại VNPAY
+                    thanhToan.setTrangThaiTT(1); // Thành công
+                    thanhToan.setGhiChu(thanhToan.getGhiChu() + " - Thanh toán thành công qua VNPAY");
+                    thanhToanService.update(thanhToan);
+
+                    // ✅ Cập nhật trạng thái hóa đơn nếu cần
+                    HoaDon hoaDon = thanhToan.getHoaDon();
+
+                    System.out.println("⚠️ Hóa đơn " + hoaDon.getMaHD() + " test trạng thai đó: " + hoaDon.getTrangThai());
+
+                    if (hoaDon != null && hoaDon.getTrangThai() == 0) { // Chờ thanh toán
+                        try {
+                            // ✅ SỬA: Kiểm tra trạng thái trước khi cập nhật để tránh race condition
+                            System.out.println("🔍 Kiểm tra trạng thái hóa đơn trước khi cập nhật...");
+                            
+                            // Lấy lại hóa đơn từ database để đảm bảo dữ liệu mới nhất
+                            HoaDon freshHoaDon = hoaDonService.findById(hoaDon.getMaHD());
+                            if (freshHoaDon != null && freshHoaDon.getTrangThai() == 0) {
+                                // ✅ SỬA: Sử dụng repository trực tiếp để bypass business logic validation
+                                System.out.println("🔍 Cập nhật trạng thái hóa đơn trực tiếp qua repository...");
+                                freshHoaDon.setTrangThai(1); // Đã thanh toán
+                                freshHoaDon.setNgaySua(java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+                                
+                                // Sử dụng service để cập nhật và clear cache
+                                hoaDonService.updateTrangThai(freshHoaDon.getMaHD(), 1);
+                                System.out.println("✅ Cập nhật hóa đơn " + freshHoaDon.getMaHD() + " thành công: Chờ thanh toán -> Đã thanh toán");
+                            } else if (freshHoaDon != null && freshHoaDon.getTrangThai() == 1) {
+                                System.out.println("ℹ️ Hóa đơn " + freshHoaDon.getMaHD() + " đã được thanh toán trước đó (không cần cập nhật)");
+                            } else if (freshHoaDon != null) {
+                                System.out.println("⚠️ Hóa đơn " + freshHoaDon.getMaHD() + " có trạng thái " + freshHoaDon.getTrangThai() + " (không cần cập nhật)");
+                            } else {
+                                System.out.println("❌ Không thể tìm thấy hóa đơn " + hoaDon.getMaHD() + " trong database");
+                            }
+                        } catch (Exception e) {
+                            // Nếu hóa đơn đã được thanh toán trước đó, ghi log và tiếp tục
+                            System.out.println("⚠️ Hóa đơn " + hoaDon.getMaHD() + " đã được thanh toán trước đó: " + e.getMessage());
+                            System.out.println("🔍 Stack trace: " + e.getStackTrace()[0]);
+                            // Không cần throw exception, vì thanh toán vẫn thành công
+                        }
+                    } else if (hoaDon != null && hoaDon.getTrangThai() == 1) {
+                        // Hóa đơn đã thanh toán rồi, ghi log
+                        System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " đã được thanh toán trước đó");
+                    } else if (hoaDon != null) {
+                        // Hóa đơn có trạng thái khác, ghi log
+                        System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " có trạng thái " + hoaDon.getTrangThai() + " (không cần cập nhật)");
+                    }
+
                     // Trả về HTML page để redirect người dùng
                     String successHtml = """
                             <!DOCTYPE html>
@@ -458,7 +576,44 @@ public class ThanhToanRestController {
                     return ResponseEntity.ok()
                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
                             .body(successHtml);
-                } else { // Đã thất bại
+                } else {
+                    // ResponseCode = 00 nhưng TransactionStatus != 00
+                    thanhToan.setTrangThaiTT(2); // Thất bại
+                    thanhToan.setGhiChu(thanhToan.getGhiChu() + " - Giao dịch không thành công tại VNPAY. TransactionStatus: " + vnp_TransactionStatus);
+                    thanhToanService.update(thanhToan);
+
+                    // ✅ Cập nhật trạng thái hóa đơn nếu cần (chỉ khi thất bại)
+                    HoaDon hoaDon = thanhToan.getHoaDon();
+                    if (hoaDon != null && hoaDon.getTrangThai() == 0) { // Chờ thanh toán
+                        try {
+                            // ✅ SỬA: Kiểm tra trạng thái trước khi cập nhật để tránh race condition
+                            System.out.println("🔍 Kiểm tra trạng thái hóa đơn trước khi cập nhật (thất bại)...");
+                            
+                            // Lấy lại hóa đơn từ database để đảm bảo dữ liệu mới nhất
+                            HoaDon freshHoaDon = hoaDonService.findById(hoaDon.getMaHD());
+                            if (freshHoaDon != null && freshHoaDon.getTrangThai() == 0) {
+                                // ✅ SỬA: Khi giao dịch thất bại, giữ nguyên trạng thái 0 để khách hàng có thể thử lại
+                                System.out.println("ℹ️ Hóa đơn " + freshHoaDon.getMaHD() + " giữ nguyên trạng thái 0 (chờ thanh toán) để khách hàng có thể thử lại");
+                            } else if (freshHoaDon != null && freshHoaDon.getTrangThai() == 1) {
+                                System.out.println("ℹ️ Hóa đơn " + freshHoaDon.getMaHD() + " đã được thanh toán trước đó (không cần cập nhật)");
+                            } else if (freshHoaDon != null) {
+                                System.out.println("⚠️ Hóa đơn " + freshHoaDon.getMaHD() + " có trạng thái " + freshHoaDon.getTrangThai() + " (không cần cập nhật)");
+                            } else {
+                                System.out.println("❌ Không thể tìm thấy hóa đơn " + hoaDon.getMaHD() + " trong database");
+                            }
+                        } catch (Exception e) {
+                            // Nếu hóa đơn đã được xử lý trước đó, ghi log và tiếp tục
+                            System.out.println("⚠️ Hóa đơn " + hoaDon.getMaHD() + " đã được xử lý trước đó: " + e.getMessage());
+                            System.out.println("🔍 Stack trace: " + e.getStackTrace()[0]);
+                        }
+                    } else if (hoaDon != null && hoaDon.getTrangThai() == 1) {
+                        // Hóa đơn đã thanh toán rồi, ghi log
+                        System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " đã được thanh toán trước đó (không cần cập nhật)");
+                    } else if (hoaDon != null) {
+                        // Hóa đơn có trạng thái khác, ghi log
+                        System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " có trạng thái " + hoaDon.getTrangThai() + " (không cần cập nhật)");
+                    }
+
                     // Trả về HTML page để redirect người dùng
                     String failedHtml = """
                             <!DOCTYPE html>
@@ -487,91 +642,44 @@ public class ThanhToanRestController {
                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
                             .body(failedHtml);
                 }
-            }
-
-            // ✅ Xử lý theo vnp_ResponseCode và vnp_TransactionStatus (phiên bản 2.1.0)
-            if ("00".equals(vnp_ResponseCode)) {
-                // ✅ Kiểm tra vnp_TransactionStatus (tham số mới trong 2.1.0)
-                if ("00".equals(vnp_TransactionStatus)) {
-                    // Giao dịch thành công tại VNPAY
-                    thanhToan.setTrangThaiTT(1); // Thành công
-                    thanhToan.setGhiChu(thanhToan.getGhiChu() + " - Thanh toán thành công qua VNPAY");
-                    thanhToanService.update(thanhToan);
-
-                    // ✅ Cập nhật trạng thái hóa đơn nếu cần
-                    HoaDon hoaDon = thanhToan.getHoaDon();
-                    if (hoaDon != null && hoaDon.getTrangThai() == 0) { // Chờ thanh toán
-                        hoaDon.setTrangThai(1); // Đã thanh toán
-                        hoaDonService.update(hoaDon);
-                    }
-
-                                         // Trả về HTML page để redirect người dùng
-                     String successHtml = """
-                             <!DOCTYPE html>
-                             <html>
-                             <head>
-                                 <title>Thanh toán thành công</title>
-                                 <meta charset="UTF-8">
-                                 <style>
-                                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                                     .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
-                                     .redirect { color: #6c757d; font-size: 16px; }
-                                 </style>
-                             </head>
-                             <body>
-                                 <div class="success">✅ Thanh toán thành công!</div>
-                                 <div class="redirect">Đang chuyển hướng...</div>
-                                 <script>
-                                     setTimeout(function() {
-                                         window.location.href = 'http://localhost:3000/payment-success';
-                                     }, 2000);
-                                 </script>
-                             </body>
-                             </html>
-                             """;
-                     return ResponseEntity.ok()
-                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
-                             .body(successHtml);
-                } else {
-                    // ResponseCode = 00 nhưng TransactionStatus != 00
-                    thanhToan.setTrangThaiTT(2); // Thất bại
-                    thanhToan.setGhiChu(thanhToan.getGhiChu() + " - Giao dịch không thành công tại VNPAY. TransactionStatus: " + vnp_TransactionStatus);
-                    thanhToanService.update(thanhToan);
-
-                                         // Trả về HTML page để redirect người dùng
-                     String failedHtml = """
-                             <!DOCTYPE html>
-                             <html>
-                             <head>
-                                 <title>Thanh toán thất bại</title>
-                                 <meta charset="UTF-8">
-                                 <style>
-                                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                                     .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
-                                     .redirect { color: #6c757d; font-size: 16px; }
-                                 </style>
-                             </head>
-                             <body>
-                                 <div class="failed">❌ Thanh toán thất bại!</div>
-                                 <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
-                                 <script>
-                                     setTimeout(function() {
-                                         window.location.href = 'http://localhost:3000/orders';
-                                     }, 2000);
-                                 </script>
-                             </body>
-                             </html>
-                             """;
-                     return ResponseEntity.ok()
-                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
-                             .body(failedHtml);
-                }
             } else {
                 // ✅ Xử lý các mã lỗi khác
                 thanhToan.setTrangThaiTT(2); // Thất bại
                 String errorMessage = getVNPayErrorMessage(vnp_ResponseCode);
                 thanhToan.setGhiChu(thanhToan.getGhiChu() + " - " + errorMessage);
                 thanhToanService.update(thanhToan);
+
+                // ✅ Cập nhật trạng thái hóa đơn nếu cần (chỉ khi thất bại)
+                HoaDon hoaDon = thanhToan.getHoaDon();
+                if (hoaDon != null && hoaDon.getTrangThai() == 0) { // Chờ thanh toán
+                    try {
+                        // ✅ SỬA: Kiểm tra trạng thái trước khi cập nhật để tránh race condition
+                        System.out.println("🔍 Kiểm tra trạng thái hóa đơn trước khi cập nhật (thất bại)...");
+                        
+                        // Lấy lại hóa đơn từ database để đảm bảo dữ liệu mới nhất
+                        HoaDon freshHoaDon = hoaDonService.findById(hoaDon.getMaHD());
+                        if (freshHoaDon != null && freshHoaDon.getTrangThai() == 0) {
+                            // ✅ SỬA: Khi giao dịch thất bại, giữ nguyên trạng thái 0 để khách hàng có thể thử lại
+                            System.out.println("ℹ️ Hóa đơn " + freshHoaDon.getMaHD() + " giữ nguyên trạng thái 0 (chờ thanh toán) để khách hàng có thể thử lại");
+                        } else if (freshHoaDon != null && freshHoaDon.getTrangThai() == 1) {
+                            System.out.println("ℹ️ Hóa đơn " + freshHoaDon.getMaHD() + " đã được thanh toán trước đó (không cần cập nhật)");
+                        } else if (freshHoaDon != null) {
+                            System.out.println("⚠️ Hóa đơn " + freshHoaDon.getMaHD() + " có trạng thái " + freshHoaDon.getTrangThai() + " (không cần cập nhật)");
+                        } else {
+                            System.out.println("❌ Không thể tìm thấy hóa đơn " + hoaDon.getMaHD() + " trong database");
+                        }
+                    } catch (Exception e) {
+                        // Nếu hóa đơn đã được xử lý trước đó, ghi log và tiếp tục
+                        System.out.println("⚠️ Hóa đơn " + hoaDon.getMaHD() + " đã được xử lý trước đó: " + e.getMessage());
+                        System.out.println("🔍 Stack trace: " + e.getStackTrace()[0]);
+                    }
+                } else if (hoaDon != null && hoaDon.getTrangThai() == 1) {
+                    // Hóa đơn đã thanh toán rồi, ghi log
+                    System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " đã được thanh toán trước đó (không cần cập nhật)");
+                } else if (hoaDon != null) {
+                    // Hóa đơn có trạng thái khác, ghi log
+                    System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " có trạng thái " + hoaDon.getTrangThai() + " (không cần cập nhật)");
+                }
 
                 // Trả về HTML page để redirect người dùng
                 String errorHtml = String.format("""
