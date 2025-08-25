@@ -549,33 +549,33 @@ public class ThanhToanRestController {
                         System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " có trạng thái " + hoaDon.getTrangThai() + " (không cần cập nhật)");
                     }
 
-                    // Trả về HTML page để redirect người dùng
-                    String successHtml = """
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Thanh toán thành công</title>
-                                <meta charset="UTF-8">
-                                <style>
-                                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                                    .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
-                                    .redirect { color: #6c757d; font-size: 16px; }
-                                </style>
-                            </head>
-                            <body>
-                                <div class="success">✅ Thanh toán thành công!</div>
-                                <div class="redirect">Đang chuyển hướng...</div>
-                                <script>
-                                    setTimeout(function() {
-                                        window.location.href = 'http://localhost:3000/payment-success';
-                                    }, 2000);
-                                </script>
-                            </body>
-                            </html>
-                            """;
-                    return ResponseEntity.ok()
-                            .contentType(org.springframework.http.MediaType.TEXT_HTML)
-                            .body(successHtml);
+                                         // Trả về HTML page để redirect người dùng
+                     String successHtml = """
+                             <!DOCTYPE html>
+                             <html>
+                             <head>
+                                 <title>Thanh toán thành công</title>
+                                 <meta charset="UTF-8">
+                                 <style>
+                                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                     .success { color: #28a745; font-size: 24px; margin-bottom: 20px; }
+                                     .redirect { color: #6c757d; font-size: 16px; }
+                                 </style>
+                             </head>
+                             <body>
+                                 <div class="success">✅ Thanh toán thành công!</div>
+                                 <div class="redirect">Đang chuyển hướng...</div>
+                                 <script>
+                                     setTimeout(function() {
+                                         window.location.href = 'http://localhost:3000/payment-success';
+                                     }, 2000);
+                                 </script>
+                             </body>
+                             </html>
+                             """;
+                     return ResponseEntity.ok()
+                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                             .body(successHtml);
                 } else {
                     // ResponseCode = 00 nhưng TransactionStatus != 00
                     thanhToan.setTrangThaiTT(2); // Thất bại
@@ -614,33 +614,33 @@ public class ThanhToanRestController {
                         System.out.println("ℹ️ Hóa đơn " + hoaDon.getMaHD() + " có trạng thái " + hoaDon.getTrangThai() + " (không cần cập nhật)");
                     }
 
-                    // Trả về HTML page để redirect người dùng
-                    String failedHtml = """
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Thanh toán thất bại</title>
-                                <meta charset="UTF-8">
-                                <style>
-                                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                                    .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
-                                    .redirect { color: #6c757d; font-size: 16px; }
-                                </style>
-                            </head>
-                            <body>
-                                <div class="failed">❌ Thanh toán thất bại!</div>
-                                <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
-                                <script>
-                                    setTimeout(function() {
-                                        window.location.href = 'http://localhost:3000/orders';
-                                    }, 2000);
-                                </script>
-                            </body>
-                            </html>
-                            """;
-                    return ResponseEntity.ok()
-                            .contentType(org.springframework.http.MediaType.TEXT_HTML)
-                            .body(failedHtml);
+                                         // Trả về HTML page để redirect người dùng
+                     String failedHtml = """
+                             <!DOCTYPE html>
+                             <html>
+                             <head>
+                                 <title>Thanh toán thất bại</title>
+                                 <meta charset="UTF-8">
+                                 <style>
+                                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                                     .failed { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                                     .redirect { color: #6c757d; font-size: 16px; }
+                                 </style>
+                             </head>
+                             <body>
+                                 <div class="failed">❌ Thanh toán thất bại!</div>
+                                 <div class="redirect">Đang chuyển hướng về trang đơn hàng...</div>
+                                 <script>
+                                     setTimeout(function() {
+                                         window.location.href = 'http://localhost:3000/orders';
+                                     }, 2000);
+                                 </script>
+                             </body>
+                             </html>
+                             """;
+                     return ResponseEntity.ok()
+                             .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                             .body(failedHtml);
                 }
             } else {
                 // ✅ Xử lý các mã lỗi khác

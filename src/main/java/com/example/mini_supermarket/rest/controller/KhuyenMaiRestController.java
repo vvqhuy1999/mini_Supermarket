@@ -148,7 +148,7 @@ public class KhuyenMaiRestController {
                             schema = @Schema(implementation = KhuyenMai.class))),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     @PostMapping
     public ResponseEntity<KhuyenMai> createKhuyenMai(@RequestBody KhuyenMai khuyenMai) {
         try {
@@ -169,7 +169,7 @@ public class KhuyenMaiRestController {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy khuyến mãi"),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<KhuyenMai> updateKhuyenMai(
             @Parameter(description = "ID của khuyến mãi", required = true) @PathVariable String id, 
@@ -196,7 +196,7 @@ public class KhuyenMaiRestController {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy khuyến mãi"),
             @ApiResponse(responseCode = "500", description = "Lỗi server")
     })
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteKhuyenMai(
             @Parameter(description = "ID của khuyến mãi", required = true) @PathVariable String id) {

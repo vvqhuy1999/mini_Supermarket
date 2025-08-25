@@ -218,7 +218,7 @@ public class SecurityConfig {
     };
     
     // ===== ✅ SỬA: CÁC ENDPOINT CHO CẢ EMPLOYEE VÀ MANAGER - THỨ TỰ 3 =====
-    private final String[] STAFF_AND_MANAGER_ENDPOINTS = {
+    private final String[] CUSTOMER_AND_MANAGER_ENDPOINTS = {
         // ✅ QUAN TRỌNG: Quản lý nhân viên cho EMPLOYEE và MANAGER
         "/api/nhanvien/**",
         
@@ -351,7 +351,7 @@ public class SecurityConfig {
                 .requestMatchers(MANAGER_ONLY_ENDPOINTS).hasRole("MANAGER")
                 
                 // 5. ✅ QUAN TRỌNG: API cho cả EMPLOYEE và MANAGER
-                .requestMatchers(STAFF_AND_MANAGER_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
+                .requestMatchers(CUSTOMER_AND_MANAGER_ENDPOINTS).hasAnyRole("EMPLOYEE", "MANAGER")
                 
                 // 6. Tất cả request khác - Cần authentication
                 .anyRequest().authenticated()
