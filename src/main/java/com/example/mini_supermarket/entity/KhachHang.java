@@ -8,13 +8,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "KhachHang", indexes = {
     @Index(name = "idx_khachhang_sdt", columnList = "SDT"),
-    @Index(name = "idx_khachhang_email", columnList = "Email"),
     @Index(name = "idx_khachhang_loai", columnList = "LoaiKhachHang")
 })
 @Data
@@ -22,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class KhachHang implements Serializable {
     @Id
-    @Column(name = "MaKH", length = 10)
+    @Column(name = "MaKH", length = 50)
     private String maKH;
 
     @ManyToOne
@@ -32,11 +30,8 @@ public class KhachHang implements Serializable {
     @Column(name = "HoTen", length = 255, nullable = false)
     private String hoTen;
 
-    @Column(name = "SDT", length = 15)
+    @Column(name = "SDT", length = 15, unique = true)
     private String sdt;
-
-    @Column(name = "Email", length = 100)
-    private String email;
 
     @Column(name = "DiaChi", length = 255)
     private String diaChi;
@@ -51,7 +46,8 @@ public class KhachHang implements Serializable {
     private String loaiKhachHang = "Thường"; // Thường, VIP, Bạc, Vàng, Kim cương
 
     @Column(name = "NgayDangKy")
-    private LocalDateTime ngayDangKy = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayDangKy;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
@@ -63,7 +59,7 @@ public class KhachHang implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "khachHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<GioHang> gioHangs;
+    private List<GioHangChiTiet> gioHangChiTiets;
 
     @JsonIgnore
     @OneToMany(mappedBy = "khachHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

@@ -22,4 +22,5 @@ public interface PhuongThucThanhToanService {
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     PhuongThucThanhToan update(PhuongThucThanhToan phuongThucThanhToan);
+    PhuongThucThanhToan findActiveBytenPTTT(String id);
 } 

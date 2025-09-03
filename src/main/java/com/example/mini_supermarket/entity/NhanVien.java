@@ -20,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class NhanVien implements Serializable {
     @Id
-    @Column(name = "MaNV", length = 10)
+    @Column(name = "MaNV", length = 50)
     private String maNV;
 
     @ManyToOne
@@ -66,7 +66,7 @@ public class NhanVien implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<GioHang> gioHangs;
+    private List<GioHangChiTiet> gioHangChiTiets;
 
     @JsonIgnore
     @OneToMany(mappedBy = "nhanVienLap", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

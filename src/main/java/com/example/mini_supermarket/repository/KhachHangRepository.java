@@ -21,4 +21,8 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
     // Tìm khách hàng theo ID (bao gồm cả đã xóa)
     @Query("SELECT k FROM KhachHang k WHERE k.maKH = :id")
     Optional<KhachHang> findByIdIncludeDeleted(@Param("id") String id);
+    
+    // Kiểm tra mã khách hàng đã tồn tại chưa
+    @Query("SELECT COUNT(k) > 0 FROM KhachHang k WHERE k.maKH = :maKH")
+    boolean existsByMaKH(@Param("maKH") String maKH);
 } 

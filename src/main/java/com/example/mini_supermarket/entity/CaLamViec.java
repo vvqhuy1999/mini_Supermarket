@@ -2,13 +2,13 @@ package com.example.mini_supermarket.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -41,6 +41,16 @@ public class CaLamViec implements Serializable {
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted = false;
+    
+    // Manual setter for isDeleted
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+    
+    // Manual getter for isDeleted
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
 
     // Quan hệ OneToMany
     @JsonIgnore

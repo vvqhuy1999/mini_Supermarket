@@ -3,8 +3,10 @@ package com.example.mini_supermarket.service.impl;
 import com.example.mini_supermarket.repository.KhoRepository;
 import com.example.mini_supermarket.entity.Kho;
 import com.example.mini_supermarket.service.KhoService;
+import com.example.mini_supermarket.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,33 +18,40 @@ public class KhoServiceImpl implements KhoService {
     private KhoRepository khoRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<Kho> findAll() {
-        return khoRepository.findAll();
+        return khoRepository.findAllActive();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Kho findById(Integer id) {
-        Optional<Kho> kho = khoRepository.findById(id);
-        if (kho.isPresent()) {
-            return kho.get();
-        } else {
-            throw new RuntimeException("Không tìm thấy kho có id: " + id);
-        }
+        return khoRepository.findActiveById(id).orElse(null);
     }
 
     @Override
+    @Transactional
     public Kho save(Kho kho) {
+        // Đặt giá trị mặc định
+        if (kho.getIsDeleted() == null) {
+            kho.setIsDeleted(false);
+        }
+        
+        // MaKho được tự động generate bởi @GeneratedValue
         return khoRepository.save(kho);
     }
 
     @Override
+    @Transactional
     public void deleteById(Integer id) {
         khoRepository.deleteById(id);
     }
 
     @Override
+    @Transactional
     public Kho update(Kho kho) {
-        if (khoRepository.existsById(kho.getMaKho())) {
+        Optional<Kho> existingKho = khoRepository.findActiveById(kho.getMaKho());
+        if (existingKho.isPresent()) {
             return khoRepository.save(kho);
         } else {
             throw new RuntimeException("Không tìm thấy kho có id: " + kho.getMaKho());
@@ -50,17 +59,20 @@ public class KhoServiceImpl implements KhoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Kho> findAllActive() {
         return khoRepository.findAllActive();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Kho findActiveById(Integer id) {
         Optional<Kho> result = khoRepository.findActiveById(id);
         return result.orElse(null);
     }
 
     @Override
+    @Transactional
     public void softDeleteById(Integer id) {
         Optional<Kho> khoOpt = khoRepository.findActiveById(id);
         if (khoOpt.isPresent()) {

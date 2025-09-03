@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: mini_supermarket_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quanlysieuthi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./QuanLySieuThiPostgre.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mini_supermarket_network
+
+  app:
+    build: .
+    container_name: mini_supermarket_app
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/quanlysieuthi
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+    networks:
+      - mini_supermarket_network
+
+volumes:
+  postgres_data:
+
+networks:
+  mini_supermarket_network:
+    driver: bridge

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "ThongKeBaoCao", indexes = {
@@ -39,10 +39,12 @@ public class ThongKeBaoCao implements Serializable {
     private String tenBaoCao;
 
     @Column(name = "ThoiGianTu")
-    private LocalDateTime thoiGianTu;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp thoiGianTu;
 
     @Column(name = "ThoiGianDen")
-    private LocalDateTime thoiGianDen;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp thoiGianDen;
 
     @Column(name = "SoTien", precision = 15, scale = 2)
     private BigDecimal soTien;
@@ -51,9 +53,10 @@ public class ThongKeBaoCao implements Serializable {
     private Integer soLuong;
 
     @Column(name = "NgayBaoCao")
-    private LocalDateTime ngayBaoCao = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayBaoCao;
 
-    @Column(name = "NoiDung", columnDefinition = "LONGTEXT")
+    @Column(name = "NoiDung", columnDefinition = "TEXT")
     private String noiDung;
 
     @Column(name = "FileDinhKem", length = 500)

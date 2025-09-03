@@ -21,4 +21,10 @@ public interface ChiTietHoaDonRepository extends JpaRepository<ChiTietHoaDon, In
     // Tìm chi tiết hóa đơn theo ID (bao gồm cả đã xóa)
     @Query("SELECT c FROM ChiTietHoaDon c WHERE c.maCTHD = :id")
     Optional<ChiTietHoaDon> findByIdIncludeDeleted(@Param("id") Integer id);
+    
+    // ===== ENHANCED QUERIES =====
+    
+    // Lấy chi tiết hóa đơn theo mã hóa đơn
+    @Query("SELECT c FROM ChiTietHoaDon c WHERE c.hoaDon.maHD = :maHD AND c.isDeleted = false ORDER BY c.maCTHD")
+    List<ChiTietHoaDon> findByHoaDonId(@Param("maHD") Integer maHD);
 } 

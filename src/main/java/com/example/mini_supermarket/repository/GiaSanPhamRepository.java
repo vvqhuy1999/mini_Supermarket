@@ -21,4 +21,14 @@ public interface GiaSanPhamRepository extends JpaRepository<GiaSanPham, Integer>
     // Tìm giá sản phẩm theo ID (bao gồm cả đã xóa)
     @Query("SELECT g FROM GiaSanPham g WHERE g.maGia = :id")
     Optional<GiaSanPham> findByIdIncludeDeleted(@Param("id") Integer id);
+
+    // Giá hiện tại: GiaSanPham có ngayBatDau <= CURRENT_DATE và (ngayKetThuc IS NULL hoặc ngayKetThuc >= CURRENT_DATE)
+    @Query("SELECT g FROM GiaSanPham g WHERE g.sanPham.maSP = :maSP AND g.isDeleted = false " +
+           "AND g.ngayBatDau <= CURRENT_DATE AND (g.ngayKetThuc IS NULL OR g.ngayKetThuc >= CURRENT_DATE) " +
+           "ORDER BY g.ngayBatDau DESC")
+    List<GiaSanPham> findApplicablePrices(@Param("maSP") String maSP);
+
+    // Lấy bản ghi giá mới nhất bất kể ngày kết thúc (fallback)
+    @Query("SELECT g FROM GiaSanPham g WHERE g.sanPham.maSP = :maSP AND g.isDeleted = false ORDER BY g.ngayBatDau DESC")
+    List<GiaSanPham> findLatestPrices(@Param("maSP") String maSP);
 } 

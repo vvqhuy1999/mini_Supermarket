@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Entity
@@ -21,29 +21,34 @@ import java.util.List;
 @AllArgsConstructor
 public class KhuyenMai implements Serializable {
     @Id
-    @Column(name = "MaKM", length = 10)
+    @Column(name = "MaKM", length = 50)
     private String maKM;
 
     @Column(name = "TenChuongTrinh", length = 255, nullable = false)
     private String tenChuongTrinh;
 
-    @Column(name = "MoTa", columnDefinition = "LONGTEXT")
+    @Column(name = "MoTa", columnDefinition = "TEXT")
     private String moTa;
 
     @Column(name = "LoaiKM", length = 50, nullable = false)
     private String loaiKM; // PhầnTrăm, SốTiền, Điểm, MuaXTangY
 
+    @Column(name = "CouponCode", length = 50, nullable = false)
+    private String couponCode; 
+
     @Column(name = "GiaTriKM", precision = 15, scale = 2, nullable = false)
     private BigDecimal giaTriKM;
 
-    @Column(name = "DieuKienApDung", columnDefinition = "LONGTEXT")
+    @Column(name = "DieuKienApDung", columnDefinition = "TEXT")
     private String dieuKienApDung; // Điều kiện để áp dụng khuyến mãi
 
     @Column(name = "NgayBatDau", nullable = false)
-    private LocalDateTime ngayBatDau;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayBatDau;
 
     @Column(name = "NgayKetThuc", nullable = false)
-    private LocalDateTime ngayKetThuc;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayKetThuc;
 
     @Column(name = "SoLuongToiDa")
     private Integer soLuongToiDa; // Số lượng tối đa có thể áp dụng

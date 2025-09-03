@@ -1,0 +1,91 @@
+# Local PostgreSQL Configuration - Tối ưu cho development
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/quanlysieuthi}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    
+    # Connection Pool Configuration - Tối ưu cho local PostgreSQL
+    hikari:
+      maximum-pool-size: 10         # Local PostgreSQL có thể dùng nhiều kết nối
+      minimum-idle: 5               # Giữ 5 kết nối idle
+      connection-timeout: 30000     # 30 giây
+      idle-timeout: 600000          # 10 phút
+      max-lifetime: 1800000         # 30 phút
+      leak-detection-threshold: 60000 # 1 phút
+      connection-test-query: SELECT 1
+      validation-timeout: 5000      # 5 giây
+      
+      # Cấu hình để đóng kết nối nhanh hơn
+      auto-commit: true
+      read-only: false
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      
+      # PostgreSQL specific settings - Tối ưu cho local
+      data-source-properties:
+        # Disable prepared statement cache
+        cachePrepStmts: false
+        prepStmtCacheSize: 0
+        prepStmtCacheSqlLimit: 0
+        useServerPrepStmts: false
+        
+        # Connection settings
+        reWriteBatchedInserts: false
+        socketTimeout: 30000         # 30 giây
+        connectTimeout: 30000        # 30 giây
+        
+        # Force disable prepared statements
+        prepareThreshold: 0
+        statementCacheSize: 0
+        simpleQuery: true
+        
+        # Additional PostgreSQL settings
+        tcpKeepAlive: true
+        defaultRowPrefetch: 100      # Tối ưu cho local
+        unknownLength: 2147483647
+        
+  jpa:
+    show-sql: true                  # Bật SQL logging cho development
+    hibernate:
+      ddl-auto: none                # Không tự động tạo schema
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true             # Format SQL cho dễ đọc
+        
+        # Minimal Hibernate configuration
+        jdbc:
+          batch_size: 0
+          use_get_generated_keys: false
+        connection:
+          provider_disables_autocommit: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        
+        # Disable all optimizations
+        generate_statistics: false
+        globally_quoted_identifiers: false
+        order_inserts: false
+        order_updates: false
+        batch_fetch_style: DYNAMIC
+        
+        # Disable schema validation
+        hbm2ddl:
+          auto: none
+        metadata_builder: none
+        
+        # Force simple queries
+        query:
+          fail_on_pagination_over_collection_fetch: false
+
+# Logging configuration
+logging:
+  level:
+    com.zaxxer.hikari: INFO         # Log HikariCP ở mức INFO
+    org.hibernate.SQL: DEBUG        # Log SQL queries cho development
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Log parameter values

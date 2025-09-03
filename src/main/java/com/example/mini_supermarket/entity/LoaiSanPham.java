@@ -18,13 +18,13 @@ import java.util.List;
 @AllArgsConstructor
 public class LoaiSanPham implements Serializable {
     @Id
-    @Column(name = "MaLoaiSP", length = 10)
+    @Column(name = "MaLoaiSP", length = 50)
     private String maLoaiSP;
 
     @Column(name = "TenLoai", length = 255, nullable = false)
     private String tenLoai;
 
-    @Column(name = "MoTa", columnDefinition = "LONGTEXT")
+    @Column(name = "MoTa", columnDefinition = "TEXT")
     private String moTa;
 
     @ManyToOne

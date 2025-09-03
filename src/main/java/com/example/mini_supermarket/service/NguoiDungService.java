@@ -22,4 +22,11 @@ public interface NguoiDungService {
     void softDeleteById(String id); // Soft delete - set isDeleted = true
 
     NguoiDung update(NguoiDung nguoiDung);
+    
+    /**
+     * Tìm người dùng theo email
+     * @param email Email cần tìm
+     * @return NguoiDung nếu tìm thấy, null nếu không tìm thấy
+     */
+    NguoiDung findByEmail(String email);
 } 

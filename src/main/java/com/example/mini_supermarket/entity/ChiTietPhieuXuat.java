@@ -36,7 +36,7 @@ public class ChiTietPhieuXuat implements Serializable {
     @Column(name = "DonGiaXuat", precision = 15, scale = 2, nullable = false)
     private BigDecimal donGiaXuat;
 
-    @Column(name = "ThanhTien", precision = 15, scale = 2)
+    @Column(name = "ThanhTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal thanhTien; // SoLuongXuat * DonGiaXuat (computed)
 
     @Column(name = "IsDeleted")

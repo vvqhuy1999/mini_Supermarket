@@ -21,4 +21,7 @@ public interface NhaCungCapRepository extends JpaRepository<NhaCungCap, String> 
     // Tìm nhà cung cấp theo ID (bao gồm cả đã xóa)
     @Query("SELECT n FROM NhaCungCap n WHERE n.maNCC = :id")
     Optional<NhaCungCap> findByIdIncludeDeleted(@Param("id") String id);
+    
+    // Kiểm tra mã nhà cung cấp có tồn tại không
+    boolean existsByMaNCC(String maNCC);
 } 

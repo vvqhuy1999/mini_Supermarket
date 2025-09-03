@@ -19,13 +19,13 @@ import java.util.List;
 @AllArgsConstructor
 public class PhuongThucThanhToan implements Serializable {
     @Id
-    @Column(name = "MaPTTT", length = 10)
+    @Column(name = "MaPTTT", length = 50)
     private String maPTTT;
 
     @Column(name = "TenPTTT", length = 100, nullable = false)
     private String tenPTTT;
 
-    @Column(name = "MoTa", columnDefinition = "LONGTEXT")
+    @Column(name = "MoTa", columnDefinition = "TEXT")
     private String moTa;
 
     @Column(name = "PhiGiaoDich", precision = 10, scale = 4)
@@ -38,10 +38,6 @@ public class PhuongThucThanhToan implements Serializable {
     private Boolean isDeleted = false;
 
     // Quan hệ OneToMany
-    @JsonIgnore
-    @OneToMany(mappedBy = "phuongThucThanhToan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<HoaDon> hoaDons;
-
     @JsonIgnore
     @OneToMany(mappedBy = "phuongThucThanhToan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ThanhToan> thanhToans;

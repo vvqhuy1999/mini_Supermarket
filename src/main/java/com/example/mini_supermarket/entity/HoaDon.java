@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Entity
@@ -40,7 +40,8 @@ public class HoaDon implements Serializable {
     private KhuyenMai khuyenMai;
 
     @Column(name = "NgayLap", nullable = false)
-    private LocalDateTime ngayLap;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayLap;
 
     @Column(name = "TongTienHang", precision = 15, scale = 2)
     private BigDecimal tongTienHang = BigDecimal.ZERO;
@@ -48,31 +49,29 @@ public class HoaDon implements Serializable {
     @Column(name = "TienGiamGia", precision = 15, scale = 2)
     private BigDecimal tienGiamGia = BigDecimal.ZERO;
 
-    @Column(name = "TongTien", precision = 15, scale = 2)
+    @Column(name = "TongTien", precision = 15, scale = 2, insertable = false, updatable = false)
     private BigDecimal tongTien;
 
-    @ManyToOne
-    @JoinColumn(name = "MaPTTT")
-    private PhuongThucThanhToan phuongThucThanhToan;
-
     @Column(name = "TrangThai")
-    private Integer trangThai = 0; // 0=Chờ xử lý, 1=Đã thanh toán, 2=Đang xử lý, 3=Hủy, 4=Hoàn trả
+    private Integer trangThai = 0; // 0=Chờ thanh toán, 1=Đã thanh toán, 3=Hủy, 4=Hoàn trả
 
     @Column(name = "DiemTichLuy")
     private Integer diemTichLuy = 0; // Điểm tích lũy từ hóa đơn này
 
-    @Column(name = "GhiChu", columnDefinition = "LONGTEXT")
+    @Column(name = "GhiChu", columnDefinition = "TEXT")
     private String ghiChu;
 
     @Column(name = "NgayTao")
-    private LocalDateTime ngayTao = LocalDateTime.now();
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngayTao;
 
     @ManyToOne
     @JoinColumn(name = "NguoiTao")
     private NhanVien nguoiTao;
 
     @Column(name = "NgaySua")
-    private LocalDateTime ngaySua;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.sql.Timestamp ngaySua;
 
     @ManyToOne
     @JoinColumn(name = "NguoiSua")

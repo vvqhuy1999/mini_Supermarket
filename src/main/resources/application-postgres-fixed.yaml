@@ -1,0 +1,88 @@
+# Fixed PostgreSQL configuration - No prepared statements at all
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?user=postgres.ibzwvhbggxskgcpvgzrc&password=hiMNmUpgqU2scexE}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:hiMNmUpgqU2scexE}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      # Force disable all prepared statement features
+      data-source-properties:
+        cachePrepStmts: false
+        prepStmtCacheSize: 0
+        prepStmtCacheSqlLimit: 0
+        useServerPrepStmts: false
+        prepareThreshold: 0
+        statementCacheSize: 0
+        simpleQuery: true
+        reWriteBatchedInserts: false
+  
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        # Disable ALL optimizations and prepared statements
+        jdbc:
+          batch_size: 0
+          use_get_generated_keys: false
+        connection:
+          provider_disables_autocommit: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        # Force simple SQL generation
+        globally_quoted_identifiers: false
+        # Disable prepared statements
+        use_sql_comments: false
+        generate_statistics: false
+        # Disable all optimizations
+        order_inserts: false
+        order_updates: false
+        batch_fetch_style: DYNAMIC
+        # Disable schema validation
+        hbm2ddl:
+          auto: none
+        # Force simple metadata extraction
+        metadata_builder: none
+        # Force simple queries
+        query:
+          fail_on_pagination_over_collection_fetch: false
+
+  security:
+    enabled: true
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:test}
+            client-secret: ${GOOGLE_CLIENT_SECRET:test}
+            scope:
+              - email
+              - profile
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+            authorization-grant-type: authorization_code
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-here-make-it-long-enough-for-hs512-algorithm-at-least-64-bytes}
+  expiration: ${JWT_EXPIRATION:86400}
+
+# File Upload Configuration
+app:
+  images:
+    upload-dir: ./uploads/images
+    static-dir: ./static/images
+    allowed-extensions: jpg,jpeg,png,gif,webp,jfif
+    max-size: 10485760

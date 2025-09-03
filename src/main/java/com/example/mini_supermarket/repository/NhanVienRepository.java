@@ -21,4 +21,7 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, String> {
     // Tìm nhân viên theo ID (bao gồm cả đã xóa)
     @Query("SELECT n FROM NhanVien n WHERE n.maNV = :id")
     Optional<NhanVien> findByIdIncludeDeleted(@Param("id") String id);
+    
+    // Kiểm tra mã nhân viên có tồn tại không
+    boolean existsByMaNV(String maNV);
 } 

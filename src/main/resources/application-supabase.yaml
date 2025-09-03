@@ -1,0 +1,92 @@
+# Supabase PostgreSQL Configuration - Tối ưu cho connection pool
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?user=postgres.ibzwvhbggxskgcpvgzrc&password=hiMNmUpgqU2scexE}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:hiMNmUpgqU2scexE}
+    driver-class-name: org.postgresql.Driver
+    
+    # Connection Pool Configuration - Tối ưu cho Supabase (giới hạn kết nối thấp)
+    hikari:
+      maximum-pool-size: 3          # Giảm xuống 3 để tránh quá tải
+      minimum-idle: 1               # Chỉ giữ 1 kết nối idle
+      connection-timeout: 15000     # Timeout nhanh hơn
+      idle-timeout: 180000          # 3 phút
+      max-lifetime: 600000          # 10 phút
+      leak-detection-threshold: 20000 # Phát hiện leak nhanh hơn
+      connection-test-query: SELECT 1
+      validation-timeout: 2000      # Validation nhanh hơn
+      
+      # Cấu hình để đóng kết nối nhanh hơn
+      auto-commit: true
+      read-only: false
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      
+      # PostgreSQL specific settings - Tối ưu cho Supabase
+      data-source-properties:
+        # Disable prepared statement cache
+        cachePrepStmts: false
+        prepStmtCacheSize: 0
+        prepStmtCacheSqlLimit: 0
+        useServerPrepStmts: false
+        
+        # Connection settings
+        reWriteBatchedInserts: false
+        socketTimeout: 20000         # Giảm timeout
+        connectTimeout: 15000        # Giảm timeout
+        
+        # Force disable prepared statements
+        prepareThreshold: 0
+        statementCacheSize: 0
+        simpleQuery: true
+        
+        # Additional PostgreSQL settings
+        tcpKeepAlive: true
+        # Thêm cấu hình để đóng kết nối nhanh hơn
+        defaultRowPrefetch: 50       # Giảm xuống
+        unknownLength: 2147483647
+        
+  jpa:
+    show-sql: false                 # Tắt SQL logging để giảm overhead
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false            # Tắt format SQL
+        
+        # Minimal Hibernate configuration
+        jdbc:
+          batch_size: 0
+          use_get_generated_keys: false
+        connection:
+          provider_disables_autocommit: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        
+        # Disable all optimizations
+        generate_statistics: false
+        globally_quoted_identifiers: false
+        order_inserts: false
+        order_updates: false
+        batch_fetch_style: DYNAMIC
+        
+        # Disable schema validation
+        hbm2ddl:
+          auto: none
+        metadata_builder: none
+        
+        # Force simple queries
+        query:
+          fail_on_pagination_over_collection_fetch: false
+
+# Logging configuration
+logging:
+  level:
+    com.zaxxer.hikari: DEBUG        # Log HikariCP để debug connection pool
+    org.hibernate.SQL: WARN         # Chỉ log SQL errors
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

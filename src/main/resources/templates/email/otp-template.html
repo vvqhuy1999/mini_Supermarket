@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mã xác thực OTP</title>
+    <style>
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-family: Arial, sans-serif;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .otp-container {
+            background-color: #f8f9fa;
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .otp-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #007bff;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .expiry-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            color: #856404;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .warning {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 15px;
+            color: #721c24;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🔐 Xác Thực Tài Khoản</h1>
+            <p>Mã xác thực đặt lại mật khẩu</p>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Xin chào <strong th:text="${userName}">Người dùng</strong>!
+            </div>
+            
+            <div class="otp-container">
+                <div class="otp-label">Mã xác thực của bạn</div>
+                <div class="otp-code" th:text="${otpCode}">123456</div>
+            </div>
+            
+            <div class="expiry-info">
+                ⏰ <strong>Lưu ý:</strong> Mã này sẽ hết hạn sau <strong th:text="${expirationTime}">5</strong> phút.
+            </div>
+            
+            <div class="warning">
+                ⚠️ <strong>Bảo mật:</strong> Vui lòng không chia sẻ mã này với ai. Mã OTP chỉ dành riêng cho bạn.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Email này được gửi tự động từ hệ thống Mini Supermarket</p>
+            <p>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này</p>
+            <p>© <span th:text="${currentYear}">2024</span> Mini Supermarket. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+# Minimal PostgreSQL configuration - No prepared statements
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://db.xxx.supabase.co:5432/postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:your-supabase-password}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        # Disable ALL optimizations
+        jdbc:
+          batch_size: 0
+        connection:
+          provider_disables_autocommit: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        # Force simple SQL
+        globally_quoted_identifiers: false
+        # Disable prepared statements
+        use_sql_comments: false
+        # Minimal configuration
+        generate_statistics: false
+
+  security:
+    enabled: true
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:test}
+            client-secret: ${GOOGLE_CLIENT_SECRET:test}
+            scope:
+              - email
+              - profile
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+            authorization-grant-type: authorization_code
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-super-secret-jwt-key-here-make-it-long-enough-for-hs512-algorithm-at-least-64-bytes}
+  expiration: ${JWT_EXPIRATION:86400}
+
+# File Upload Configuration
+app:
+  images:
+    upload-dir: ./uploads/images
+    static-dir: ./static/images
+    allowed-extensions: jpg,jpeg,png,gif,webp,jfif
+    max-size: 10485760
